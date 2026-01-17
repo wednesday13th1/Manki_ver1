@@ -1,0 +1,62 @@
+[
+  {
+    "word": "benevolent",
+    "meaning": "well-meaning and kindly",
+    "example": "The benevolent woman donated a large sum to the local shelter.",
+    "emotion": "positive"
+  },
+  {
+    "word": "cacophony",
+    "meaning": "a harsh, discordant mixture of sounds",
+    "example": "The cacophony of the city traffic kept him awake all night.",
+    "emotion": "negative"
+  },
+  {
+    "word": "candid",
+    "meaning": "truthful and straightforward",
+    "example": "She gave a candid assessment of the team's performance.",
+    "emotion": "neutral"
+  },
+  {
+    "word": "diligent",
+    "meaning": "showing care and effort in your work or duties",
+    "example": "He is a diligent student who always completes his assignments on time.",
+    "emotion": "motivational"
+  },
+  {
+    "word": "ephemeral",
+    "meaning": "lasting for a very short time",
+    "example": "The beauty of the sunset was ephemeral, fading quickly into the night.",
+    "emotion": "sad"
+  },
+  {
+    "word": "fortuitous",
+    "meaning": "happening by accident or chance rather than design",
+    "example": "Their fortuitous meeting led to a wonderful partnership.",
+    "emotion": "happy"
+  },
+  {
+    "word": "gregarious",
+    "meaning": "fond of company; sociable",
+    "example": "She was a gregarious person who loved to host large parties.",
+    "emotion": "happy"
+  },
+  {
+    "word": "jaunty",
+    "meaning": "having a lively, cheerful, and self-confident manner",
+    "example": "He walked in with a jaunty step, full of energy.",
+    "emotion": "happy"
+  },
+  {
+    "word": "meticulous",
+    "meaning": "showing great attention to detail; very careful and precise",
+    "example": "Her meticulous nature made her a great editor.",
+    "emotion": "calm"
+  },
+  {
+    "word": "quixotic",
+    "meaning": "exceedingly idealistic; unrealistic and impractical",
+    "example": "His quixotic quest to change the world often resulted in disappointment.",
+    "emotion": "surprise"
+  }
+]
