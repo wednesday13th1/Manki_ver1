@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>GeminiImageModel</key>
+	<string>gemini-2.5-flash-image</string>
 	<key>NanoBananaAPIKey</key>
 	<string>e99712a8f5327b7a88c513c68ad8e471</string>
 	<key>NanoBananaCallbackURL</key>
@@ -11,7 +13,7 @@
 	<string>nb_9fA3kLmQ2ZxR8T7VwP1E
 </string>
 	<key>GeminiAPIKey</key>
-	<string>AIzaSyAaT2QsiritK8--nSn1l2q-eARnmM8j2_o</string>
+	<string>AIzaSyAtv_nsoWZsoPhYuXq33Q-KsLAYqZ4ffDg</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

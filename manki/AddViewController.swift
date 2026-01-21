@@ -12,6 +12,9 @@ final class AddViewController: UIViewController {
     @IBOutlet private var englishTextField: UITextField!
     @IBOutlet private var japaneseTextField: UITextField!
 
+    private let generateImageButton = UIButton(type: .system)
+    private let previewImageView = UIImageView()
+
     private struct AIWord: Codable {
         let word: String
         let meaning: String
@@ -25,6 +28,10 @@ final class AddViewController: UIViewController {
     private var lastGeneratedJapanese: String?
     private var scenarioTask: URLSessionDataTask?
     private var imageTask: URLSessionDataTask?
+    private var pendingImageFileName: String?
+    private var lastImageEnglish: String?
+    private var lastImageJapanese: String?
+    private let imageLoadingIndicator = UIActivityIndicatorView(style: .medium)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,12 +39,14 @@ final class AddViewController: UIViewController {
         aiWords = loadAIWordsFromBundle()
         englishTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         japaneseTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
+        configurePreviewImageView()
     }
 
     @objc private func textFieldEdited() {
         pendingScenario = nil
         lastGeneratedEnglish = nil
         lastGeneratedJapanese = nil
+        clearPendingImage(removeFile: true)
     }
 
     @IBAction private func saveWord() {
@@ -53,13 +62,18 @@ final class AddViewController: UIViewController {
         } else {
             scenario = nil
         }
+        let imageFileName: String?
+        if english == lastImageEnglish, japanese == lastImageJapanese {
+            imageFileName = pendingImageFileName
+        } else {
+            imageFileName = nil
+            clearPendingImage(removeFile: true)
+        }
         savedWords.append(SavedWord(english: english,
                                     japanese: japanese,
-                                    illustrationScenario: scenario))
+                                    illustrationScenario: scenario,
+                                    illustrationImageFileName: imageFileName))
         saveSavedWords()
-        generateComicImageIfNeeded(for: SavedWord(english: english,
-                                                  japanese: japanese,
-                                                  illustrationScenario: scenario))
         showAlert(title: "保存しました", message: "単語を追加しました。") { [weak self] in
             self?.navigationController?.popViewController(animated: true)
         }
@@ -75,7 +89,18 @@ final class AddViewController: UIViewController {
         lastGeneratedEnglish = random.word
         lastGeneratedJapanese = random.meaning
         pendingScenario = nil
+        clearPendingImage(removeFile: true)
         generateIllustrationScenario(english: random.word, japanese: random.meaning)
+    }
+
+    @objc private func generateIllustrationImageTapped() {
+        let english = englishTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let japanese = japaneseTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !english.isEmpty, !japanese.isEmpty else {
+            showAlert(title: "入力エラー", message: "英語と日本語を入力してください。")
+            return
+        }
+        generateIllustrationImage(english: english, japanese: japanese)
     }
 
     private func savedWordsFileURL() -> URL {
@@ -94,7 +119,8 @@ final class AddViewController: UIViewController {
         if !legacy.isEmpty {
             let migrated = legacy.map { SavedWord(english: $0["english"] ?? "",
                                                   japanese: $0["japanese"] ?? "",
-                                                  illustrationScenario: nil) }
+                                                  illustrationScenario: nil,
+                                                  illustrationImageFileName: nil) }
             savedWords = migrated
             saveSavedWords()
             return migrated
@@ -122,6 +148,70 @@ final class AddViewController: UIViewController {
             onOK?()
         })
         present(alert, animated: true)
+    }
+
+    private func configurePreviewImageView() {
+        generateImageButton.translatesAutoresizingMaskIntoConstraints = false
+        generateImageButton.setTitle("画像生成", for: .normal)
+        generateImageButton.addTarget(self, action: #selector(generateIllustrationImageTapped), for: .touchUpInside)
+
+        previewImageView.translatesAutoresizingMaskIntoConstraints = false
+        previewImageView.backgroundColor = UIColor.systemGray6
+        previewImageView.contentMode = .scaleAspectFit
+        previewImageView.layer.cornerRadius = 8
+        previewImageView.clipsToBounds = true
+
+        imageLoadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        imageLoadingIndicator.hidesWhenStopped = true
+        previewImageView.addSubview(imageLoadingIndicator)
+        NSLayoutConstraint.activate([
+            imageLoadingIndicator.centerXAnchor.constraint(equalTo: previewImageView.centerXAnchor),
+            imageLoadingIndicator.centerYAnchor.constraint(equalTo: previewImageView.centerYAnchor),
+        ])
+
+        view.addSubview(generateImageButton)
+        view.addSubview(previewImageView)
+
+        let anchorButton = findButton(in: view, title: "AI生成")
+        let topAnchor = anchorButton?.bottomAnchor ?? view.safeAreaLayoutGuide.topAnchor
+        let topConstant: CGFloat = anchorButton == nil ? 200 : 16
+
+        NSLayoutConstraint.activate([
+            generateImageButton.topAnchor.constraint(equalTo: topAnchor, constant: topConstant),
+            generateImageButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
+            generateImageButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            generateImageButton.heightAnchor.constraint(equalToConstant: 44),
+
+            previewImageView.topAnchor.constraint(equalTo: generateImageButton.bottomAnchor, constant: 12),
+            previewImageView.leadingAnchor.constraint(equalTo: generateImageButton.leadingAnchor),
+            previewImageView.trailingAnchor.constraint(equalTo: generateImageButton.trailingAnchor),
+            previewImageView.heightAnchor.constraint(equalToConstant: 180),
+        ])
+    }
+
+    private func findButton(in root: UIView, title: String) -> UIButton? {
+        for subview in root.subviews {
+            if let button = subview as? UIButton,
+               button.title(for: .normal) == title {
+                return button
+            }
+            if let found = findButton(in: subview, title: title) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    private func clearPendingImage(removeFile: Bool) {
+        imageTask?.cancel()
+        if removeFile, let fileName = pendingImageFileName {
+            try? FileManager.default.removeItem(at: imageFileURL(fileName: fileName))
+        }
+        pendingImageFileName = nil
+        lastImageEnglish = nil
+        lastImageJapanese = nil
+        previewImageView.image = nil
+        imageLoadingIndicator.stopAnimating()
     }
 
     private func generateIllustrationScenario(english: String, japanese: String) {
@@ -185,206 +275,148 @@ final class AddViewController: UIViewController {
         scenarioTask?.resume()
     }
 
+    private func generateIllustrationImage(english: String, japanese: String) {
+        imageTask?.cancel()
+        clearPendingImage(removeFile: true)
+        guard let apiKey = Bundle.main.object(forInfoDictionaryKey: "GeminiAPIKey") as? String,
+              !apiKey.isEmpty else {
+            showAlert(title: "APIキー未設定", message: "GeminiAPIKeyをInfo.plistに設定してください。")
+            return
+        }
+        let modelName = loadGeminiImageModel()
+
+        let prompt = """
+        Create a clean, friendly illustration that represents the English word "\(english)" (Japanese: "\(japanese)"). No text, no letters, no speech bubbles. Simple, centered subject, clear action if needed, white background.
+        """
+
+        let requestBody = GeminiImageRequest(
+            contents: [
+                .init(parts: [.init(text: prompt)])
+            ],
+            generationConfig: .init(responseModalities: ["IMAGE"])
+        )
+
+        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelName):generateContent?key=\(apiKey)") else {
+            showAlert(title: "生成エラー", message: "API URLが不正です。")
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONEncoder().encode(requestBody)
+
+        imageLoadingIndicator.startAnimating()
+        imageTask = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
+            if let error {
+                DispatchQueue.main.async {
+                    self.imageLoadingIndicator.stopAnimating()
+                    self.showAlert(title: "生成エラー", message: "通信に失敗しました: \(error.localizedDescription)")
+                }
+                return
+            }
+            guard let data else {
+                DispatchQueue.main.async {
+                    self.imageLoadingIndicator.stopAnimating()
+                    self.showAlert(title: "生成エラー", message: "レスポンスが空でした。")
+                }
+                return
+            }
+            guard let decoded = Self.decodeImageData(from: data) else {
+                let apiMessage = Self.decodeGeminiErrorMessage(from: data)
+                DispatchQueue.main.async {
+                    self.imageLoadingIndicator.stopAnimating()
+                    if let apiMessage, !apiMessage.isEmpty {
+                        self.showAlert(title: "生成エラー", message: apiMessage)
+                    } else {
+                        self.showAlert(title: "生成エラー", message: "画像データを取得できませんでした。")
+                    }
+                }
+                return
+            }
+            guard let image = UIImage(data: decoded.data) else {
+                DispatchQueue.main.async {
+                    self.imageLoadingIndicator.stopAnimating()
+                    self.showAlert(title: "生成エラー", message: "画像データの読み込みに失敗しました。")
+                }
+                return
+            }
+            let fileName = self.saveGeneratedImageData(decoded.data, mimeType: decoded.mimeType)
+            DispatchQueue.main.async {
+                self.imageLoadingIndicator.stopAnimating()
+                self.previewImageView.image = image
+                if let fileName {
+                    self.pendingImageFileName = fileName
+                    self.lastImageEnglish = english
+                    self.lastImageJapanese = japanese
+                } else {
+                    self.showAlert(title: "保存エラー", message: "画像の保存に失敗しました。")
+                }
+            }
+        }
+        imageTask?.resume()
+    }
+
+    private func imageFileURL(fileName: String) -> URL {
+        let documents = FileManager.default.urls(for: .documentDirectory,
+                                                 in: .userDomainMask).first!
+        return documents.appendingPathComponent(fileName)
+    }
+
+    private func loadGeminiImageModel() -> String {
+        let raw = Bundle.main.object(forInfoDictionaryKey: "GeminiImageModel") as? String
+        let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let trimmed, !trimmed.isEmpty {
+            return trimmed
+        }
+        return "gemini-2.0-flash-exp"
+    }
+
+    private func saveGeneratedImageData(_ data: Data, mimeType: String?) -> String? {
+        let fileExtension: String
+        switch mimeType {
+        case "image/jpeg":
+            fileExtension = "jpg"
+        case "image/webp":
+            fileExtension = "webp"
+        default:
+            fileExtension = "png"
+        }
+        let fileName = "word_image_\(UUID().uuidString).\(fileExtension)"
+        let url = imageFileURL(fileName: fileName)
+        do {
+            try data.write(to: url, options: .atomic)
+            return fileName
+        } catch {
+            return nil
+        }
+    }
+
     private static func decodeScenario(from data: Data) -> String? {
         let decoded = try? JSONDecoder().decode(GeminiTextResponse.self, from: data)
         let text = decoded?.candidates?.first?.content?.parts?.first?.text
         return text?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func generateComicImageIfNeeded(for word: SavedWord) {
-        let url = comicFileURL(for: word)
-        guard !FileManager.default.fileExists(atPath: url.path) else { return }
-        generateComicImage(for: word) { [weak self] result in
-            guard let self else { return }
-            switch result {
-            case .success(let data):
-                self.saveComicImage(data, for: word)
-            case .failure(let error):
-                print("Comic API error: \(error.localizedDescription)")
-            }
+    private static func decodeImageData(from data: Data) -> (data: Data, mimeType: String?)? {
+        let decoded = try? JSONDecoder().decode(GeminiImageResponse.self, from: data)
+        guard let part = decoded?.candidates?.first?.content?.parts?.first(where: { $0.inlineData?.data != nil }) else {
+            return nil
         }
-    }
-
-    private func generateComicImage(for word: SavedWord,
-                                    completion: @escaping (Result<Data, ComicError>) -> Void) {
-        guard let apiKey = loadComicAPIKey(), !apiKey.isEmpty else {
-            completion(.failure(.missingAPIKey))
-            return
+        guard let inlineData = part.inlineData, let encoded = inlineData.data else {
+            return nil
         }
-
-        guard let callbackURL = loadCallbackURL(), !callbackURL.isEmpty else {
-            completion(.failure(.missingCallbackURL))
-            return
+        guard let imageData = Data(base64Encoded: encoded) else {
+            return nil
         }
-
-        guard let resultToken = loadResultToken(), !resultToken.isEmpty else {
-            completion(.failure(.missingResultToken))
-            return
-        }
-
-        let prompt = """
-        Draw a two-panel black-and-white manga (2 panels side by side). The word is "\(word.english)" meaning "\(word.japanese)". Panel 1: setup scene. Panel 2: clear payoff that explains the meaning. No text, no speech bubbles, no letters. Simple line art, clean white background, thick outlines, easy to understand. Scenario hint: \(word.illustrationScenario ?? "none").
-        """
-
-        let requestBody = NanoBananaGenerateRequest(type: "TEXTTOIMAGE",
-                                                    prompt: prompt,
-                                                    numImages: 1,
-                                                    imageSize: "4:3",
-                                                    callBackUrl: callbackURL)
-
-        guard let url = URL(string: "https://api.nanobananaapi.ai/api/v1/nanobanana/generate") else {
-            completion(.failure(.invalidURL))
-            return
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try? JSONEncoder().encode(requestBody)
-
-        imageTask = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error {
-                completion(.failure(.requestFailed(error.localizedDescription)))
-                return
-            }
-            guard let httpResponse = response as? HTTPURLResponse else {
-                completion(.failure(.invalidResponse))
-                return
-            }
-            guard let data else {
-                completion(.failure(.emptyResponse))
-                return
-            }
-            if httpResponse.statusCode != 200 {
-                let message = Self.decodeNanoBananaErrorMessage(data)
-                completion(.failure(.httpError(status: httpResponse.statusCode, message: message)))
-                return
-            }
-            guard let taskId = Self.decodeNanoBananaTaskId(data) else {
-                completion(.failure(.noImageData))
-                return
-            }
-            self.pollNanoBananaResult(taskId: taskId, token: resultToken, completion: completion)
-        }
-        imageTask?.resume()
+        return (imageData, inlineData.mimeType)
     }
 
-    private func loadComicAPIKey() -> String? {
-        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaAPIKey") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+    private static func decodeGeminiErrorMessage(from data: Data) -> String? {
+        let decoded = try? JSONDecoder().decode(GeminiErrorResponse.self, from: data)
+        return decoded?.error?.message?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func loadCallbackURL() -> String? {
-        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaCallbackURL") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func loadResultToken() -> String? {
-        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaResultToken") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func pollNanoBananaResult(taskId: String,
-                                      token: String,
-                                      completion: @escaping (Result<Data, ComicError>) -> Void) {
-        let maxAttempts = 12
-        let delaySeconds: TimeInterval = 2.0
-
-        func attempt(_ count: Int) {
-            guard count < maxAttempts else {
-                completion(.failure(.noImageData))
-                return
-            }
-            guard var components = URLComponents(string: "https://nanobanana-webhook.inkit98713.workers.dev/result") else {
-                completion(.failure(.invalidURL))
-                return
-            }
-            components.queryItems = [
-                URLQueryItem(name: "taskId", value: taskId),
-                URLQueryItem(name: "token", value: token),
-            ]
-            guard let url = components.url else {
-                completion(.failure(.invalidURL))
-                return
-            }
-            URLSession.shared.dataTask(with: url) { data, response, error in
-                if let error {
-                    completion(.failure(.requestFailed(error.localizedDescription)))
-                    return
-                }
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    completion(.failure(.invalidResponse))
-                    return
-                }
-                guard let data else {
-                    completion(.failure(.emptyResponse))
-                    return
-                }
-                if httpResponse.statusCode != 200 {
-                    completion(.failure(.httpError(status: httpResponse.statusCode, message: nil)))
-                    return
-                }
-                guard let decoded = try? JSONDecoder().decode(NanoBananaResultResponse.self, from: data) else {
-                    completion(.failure(.noImageData))
-                    return
-                }
-                switch decoded.status {
-                case "PENDING", "RUNNING":
-                    DispatchQueue.global().asyncAfter(deadline: .now() + delaySeconds) {
-                        attempt(count + 1)
-                    }
-                case "SUCCEEDED":
-                    guard let imageUrl = decoded.results?.first?.imageUrl,
-                          let downloadURL = URL(string: imageUrl) else {
-                        completion(.failure(.noImageData))
-                        return
-                    }
-                    URLSession.shared.dataTask(with: downloadURL) { imageData, _, imageError in
-                        if let imageError {
-                            completion(.failure(.requestFailed(imageError.localizedDescription)))
-                            return
-                        }
-                        guard let imageData else {
-                            completion(.failure(.emptyResponse))
-                            return
-                        }
-                        completion(.success(imageData))
-                    }.resume()
-                default:
-                    completion(.failure(.noImageData))
-                }
-            }.resume()
-        }
-
-        attempt(0)
-    }
-
-    private func comicFileURL(for word: SavedWord) -> URL {
-        let documents = FileManager.default.urls(for: .documentDirectory,
-                                                 in: .userDomainMask).first!
-        let safeName = sanitizeFileName(word.english)
-        return documents.appendingPathComponent("comic_\(safeName).png")
-    }
-
-    private func saveComicImage(_ data: Data, for word: SavedWord) {
-        let url = comicFileURL(for: word)
-        try? data.write(to: url, options: .atomic)
-    }
-
-    private func sanitizeFileName(_ text: String) -> String {
-        let pattern = "[^A-Za-z0-9_-]"
-        return text.replacingOccurrences(of: pattern, with: "_", options: .regularExpression)
-    }
-
-    private static func decodeNanoBananaTaskId(_ data: Data) -> String? {
-        let decoded = try? JSONDecoder().decode(NanoBananaTaskResponse.self, from: data)
-        return decoded?.data?.taskId
-    }
-
-    private static func decodeNanoBananaErrorMessage(_ data: Data) -> String? {
-        let decoded = try? JSONDecoder().decode(NanoBananaErrorResponse.self, from: data)
-        return decoded?.message ?? decoded?.msg
-    }
 }
 
 private struct GeminiTextRequest: Encodable {
@@ -398,83 +430,6 @@ private struct GeminiTextRequest: Encodable {
     let contents: [Content]
 }
 
-private struct NanoBananaGenerateRequest: Encodable {
-    let type: String
-    let prompt: String
-    let numImages: Int
-    let imageSize: String
-    let callBackUrl: String
-
-    private enum CodingKeys: String, CodingKey {
-        case type
-        case prompt
-        case numImages
-        case imageSize = "image_size"
-        case callBackUrl
-    }
-}
-
-private struct NanoBananaTaskResponse: Decodable {
-    struct DataInfo: Decodable {
-        let taskId: String?
-    }
-    let code: Int?
-    let msg: String?
-    let data: DataInfo?
-}
-
-private struct NanoBananaResultResponse: Decodable {
-    struct Result: Decodable {
-        let imageUrl: String?
-    }
-    let taskId: String?
-    let status: String?
-    let results: [Result]?
-    let error: String?
-}
-
-private struct NanoBananaErrorResponse: Decodable {
-    let message: String?
-    let msg: String?
-}
-
-private enum ComicError: LocalizedError {
-    case missingAPIKey
-    case missingCallbackURL
-    case missingResultToken
-    case invalidURL
-    case requestFailed(String)
-    case invalidResponse
-    case emptyResponse
-    case httpError(status: Int, message: String?)
-    case noImageData
-
-    var errorDescription: String? {
-        switch self {
-        case .missingAPIKey:
-            return "APIキーが未設定です"
-        case .missingCallbackURL:
-            return "Callback URLが未設定です"
-        case .missingResultToken:
-            return "結果取得トークンが未設定です"
-        case .invalidURL:
-            return "API URLが不正です"
-        case .requestFailed(let message):
-            return "通信に失敗しました: \(message)"
-        case .invalidResponse:
-            return "不正なレスポンスです"
-        case .emptyResponse:
-            return "レスポンスが空でした"
-        case .httpError(let status, let message):
-            if let message, !message.isEmpty {
-                return "APIエラー(\(status)): \(message)"
-            }
-            return "APIエラー(\(status))"
-        case .noImageData:
-            return "画像データが見つかりません"
-        }
-    }
-}
 
 private struct GeminiTextResponse: Decodable {
     struct Candidate: Decodable {
@@ -487,4 +442,73 @@ private struct GeminiTextResponse: Decodable {
         let content: Content?
     }
     let candidates: [Candidate]?
+}
+
+private struct GeminiImageRequest: Encodable {
+    struct Content: Encodable {
+        struct Part: Encodable {
+            let text: String
+        }
+        let role: String? = nil
+        let parts: [Part]
+    }
+    struct GenerationConfig: Encodable {
+        let responseModalities: [String]
+    }
+    let contents: [Content]
+    let generationConfig: GenerationConfig
+}
+
+private struct GeminiImageResponse: Decodable {
+    struct Candidate: Decodable {
+        struct Content: Decodable {
+            struct Part: Decodable {
+                struct InlineData: Decodable {
+                    let mimeType: String?
+                    let data: String?
+
+                    private enum CodingKeys: String, CodingKey {
+                        case mimeType
+                        case mime_type
+                        case data
+                    }
+
+                    init(from decoder: Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        let decodedMimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
+                            ?? container.decodeIfPresent(String.self, forKey: .mime_type)
+                        let decodedData = try container.decodeIfPresent(String.self, forKey: .data)
+                        mimeType = decodedMimeType
+                        data = decodedData
+                    }
+                }
+                let inlineData: InlineData?
+                let text: String?
+
+                private enum CodingKeys: String, CodingKey {
+                    case inlineData
+                    case inline_data
+                    case text
+                }
+
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    let decodedInlineData = try container.decodeIfPresent(InlineData.self, forKey: .inlineData)
+                        ?? container.decodeIfPresent(InlineData.self, forKey: .inline_data)
+                    inlineData = decodedInlineData
+                    text = try container.decodeIfPresent(String.self, forKey: .text)
+                }
+            }
+            let parts: [Part]?
+        }
+        let content: Content?
+    }
+    let candidates: [Candidate]?
+}
+
+private struct GeminiErrorResponse: Decodable {
+    struct ErrorDetail: Decodable {
+        let message: String?
+    }
+    let error: ErrorDetail?
 }

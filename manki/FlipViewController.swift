@@ -5,6 +5,7 @@
 //  Created by 井上　希稟 on 2026/01/17.
 //
 
+//
 import UIKit
 
 class FlipViewController: UIViewController {
@@ -22,17 +23,15 @@ class FlipViewController: UIViewController {
     private let backStack = UIStackView()
     private let backImageView = UIImageView()
     private let fallbackPlaceholderView = UIView()
-    private let retryButton = UIButton(type: .system)
+    private let emojiLabel = UILabel()
     private let loadingIndicator = UIActivityIndicatorView(style: .medium)
     private let errorLabel = UILabel()
     private let buttonStack = UIStackView()
     private let prevButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
-    private var currentRequestID: UUID?
-    private var imageTask: URLSessionDataTask?
-    private let useLocalComic = false
-    private let taskMapFileName = "nanobanana_tasks.json"
-    private var taskMap: [String: String] = [:]
+    private let emojiMapFileName = "emoji_map.json"
+    private var emojiMap: [String: String] = [:]
+    private var emojiTask: URLSessionDataTask?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,7 +41,7 @@ class FlipViewController: UIViewController {
 
         configureUI()
         words = loadSavedWords()
-        taskMap = loadTaskMap()
+        emojiMap = loadEmojiMap()
         if words.isEmpty {
             showAlert(title: "単語がありません", message: "先に単語を登録してください。")
         }
@@ -94,18 +93,9 @@ class FlipViewController: UIViewController {
         fallbackPlaceholderView.layer.cornerRadius = 12
         fallbackPlaceholderView.clipsToBounds = true
         fallbackPlaceholderView.isHidden = true
-        let retryImage = UIImage(systemName: "arrow.trianglehead.2.clockwise")
-            ?? UIImage(systemName: "arrow.clockwise")
-        retryButton.translatesAutoresizingMaskIntoConstraints = false
-        retryButton.setImage(retryImage, for: .normal)
-        retryButton.tintColor = .label
-        retryButton.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold),
-            forImageIn: .normal
-        )
-        retryButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
-        retryButton.accessibilityLabel = "画像を再生成"
-        retryButton.addTarget(self, action: #selector(retryComicImage), for: .touchUpInside)
+        emojiLabel.translatesAutoresizingMaskIntoConstraints = false
+        emojiLabel.font = .systemFont(ofSize: 64)
+        emojiLabel.textAlignment = .center
 
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
         errorLabel.font = .systemFont(ofSize: 14)
@@ -121,7 +111,7 @@ class FlipViewController: UIViewController {
         backStack.addArrangedSubview(backImageView)
         backStack.addArrangedSubview(backLabel)
         backStack.addArrangedSubview(errorLabel)
-        view.addSubview(retryButton)
+        fallbackPlaceholderView.addSubview(emojiLabel)
 
         NSLayoutConstraint.activate([
             frontLabel.leadingAnchor.constraint(equalTo: frontView.leadingAnchor, constant: 16),
@@ -135,11 +125,8 @@ class FlipViewController: UIViewController {
             backImageView.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
         ])
         NSLayoutConstraint.activate([
-            retryButton.leadingAnchor.constraint(equalTo: cardContainer.trailingAnchor, constant: 8),
-            retryButton.topAnchor.constraint(equalTo: cardContainer.topAnchor),
-            retryButton.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -8),
-            retryButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 32),
-            retryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 32),
+            emojiLabel.centerXAnchor.constraint(equalTo: fallbackPlaceholderView.centerXAnchor),
+            emojiLabel.centerYAnchor.constraint(equalTo: fallbackPlaceholderView.centerYAnchor),
         ])
 
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -198,7 +185,6 @@ class FlipViewController: UIViewController {
             backImageView.image = nil
             backImageView.isHidden = true
             fallbackPlaceholderView.isHidden = true
-            retryButton.isHidden = true
             errorLabel.text = ""
             loadingIndicator.stopAnimating()
             prevButton.isEnabled = false
@@ -257,127 +243,12 @@ class FlipViewController: UIViewController {
 
     private func loadComicImage(for word: SavedWord) {
         errorLabel.text = ""
-
-        if let cached = loadCachedComicImage(for: word) {
-            showComicImage(cached)
-            loadingIndicator.stopAnimating()
-            return
-        }
-
-        showComicPlaceholder()
+        backImageView.image = nil
+        backImageView.isHidden = true
+        fallbackPlaceholderView.isHidden = false
+        emojiLabel.text = "..."
+        loadEmoji(for: word)
         loadingIndicator.stopAnimating()
-        errorLabel.text = "画像が未生成です"
-        retryButton.isHidden = false
-    }
-
-    private func generateComicImage(for word: SavedWord,
-                                    completion: @escaping (Result<Data, ComicError>) -> Void) {
-        guard let apiKey = loadComicAPIKey(), !apiKey.isEmpty else {
-            completion(.failure(.missingAPIKey))
-            return
-        }
-
-        guard let callbackURL = loadCallbackURL(), !callbackURL.isEmpty else {
-            completion(.failure(.missingCallbackURL))
-            return
-        }
-
-        guard let resultToken = loadResultToken(), !resultToken.isEmpty else {
-            completion(.failure(.missingResultToken))
-            return
-        }
-
-        let prompt = """
-        Draw a two-panel black-and-white manga (2 panels side by side). The word is "\(word.english)" meaning "\(word.japanese)". Panel 1: setup scene. Panel 2: clear payoff that explains the meaning. No text, no speech bubbles, no letters. Simple line art, clean white background, thick outlines, easy to understand. Scenario hint: \(word.illustrationScenario ?? "none").
-        """
-
-        if let taskId = taskMap[word.english] {
-            pollNanoBananaResult(taskId: taskId, token: resultToken, completion: completion)
-            return
-        }
-
-        let requestBody = NanoBananaGenerateRequest(type: "TEXTTOIMAGE",
-                                                    prompt: prompt,
-                                                    numImages: 1,
-                                                    imageSize: "4:3",
-                                                    callBackUrl: callbackURL)
-
-        guard let url = URL(string: "https://api.nanobananaapi.ai/api/v1/nanobanana/generate") else {
-            completion(.failure(.invalidURL))
-            return
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try? JSONEncoder().encode(requestBody)
-
-        imageTask = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error {
-                print("Comic API error: \(error.localizedDescription)")
-                completion(.failure(.requestFailed(error.localizedDescription)))
-                return
-            }
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("Comic API error: invalid response")
-                completion(.failure(.invalidResponse))
-                return
-            }
-            guard let data else {
-                print("Comic API error: empty response")
-                completion(.failure(.emptyResponse))
-                return
-            }
-            let bodyPreview = String(data: data.prefix(1200), encoding: .utf8) ?? "<non-utf8>"
-            print("Comic API status: \(httpResponse.statusCode), bytes: \(data.count)")
-            print("Comic API body preview: \(bodyPreview)")
-            if httpResponse.statusCode != 200 {
-                let message = Self.decodeNanoBananaErrorMessage(data)
-                completion(.failure(.httpError(status: httpResponse.statusCode, message: message)))
-                return
-            }
-            guard let taskId = Self.decodeNanoBananaTaskId(data) else {
-                completion(.failure(.noImageData))
-                return
-            }
-            self.taskMap[word.english] = taskId
-            self.saveTaskMap()
-            self.pollNanoBananaResult(taskId: taskId, token: resultToken, completion: completion)
-        }
-        imageTask?.resume()
-    }
-
-    private func loadComicAPIKey() -> String? {
-        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaAPIKey") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func loadCallbackURL() -> String? {
-        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaCallbackURL") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func loadResultToken() -> String? {
-        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaResultToken") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func loadTaskMap() -> [String: String] {
-        let url = taskMapFileURL()
-        guard let data = try? Data(contentsOf: url) else { return [:] }
-        return (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
-    }
-
-    private func saveTaskMap() {
-        let url = taskMapFileURL()
-        guard let data = try? JSONEncoder().encode(taskMap) else { return }
-        try? data.write(to: url, options: .atomic)
-    }
-
-    private func taskMapFileURL() -> URL {
-        let documents = FileManager.default.urls(for: .documentDirectory,
-                                                 in: .userDomainMask).first!
-        return documents.appendingPathComponent(taskMapFileName)
     }
 
     private func loadCachedComicImage(for word: SavedWord) -> UIImage? {
@@ -403,137 +274,114 @@ class FlipViewController: UIViewController {
         return text.replacingOccurrences(of: pattern, with: "_", options: .regularExpression)
     }
 
-    private func showComicImage(_ image: UIImage) {
-        fallbackPlaceholderView.isHidden = true
-        backImageView.isHidden = false
-        backImageView.image = image
-        retryButton.isHidden = false
-        retryButton.isEnabled = true
-        errorLabel.text = ""
-    }
-
-    private func showComicPlaceholder() {
-        backImageView.image = nil
-        backImageView.isHidden = true
-        fallbackPlaceholderView.isHidden = false
-    }
-
-    @objc private func retryComicImage() {
-        guard !words.isEmpty else { return }
-        let word = words[currentIndex]
-        currentRequestID = UUID()
-        let requestID = currentRequestID
-        imageTask?.cancel()
-        errorLabel.text = ""
-        retryButton.isEnabled = false
-        loadingIndicator.startAnimating()
-        generateComicImage(for: word) { [weak self] result in
-            guard let self else { return }
-            guard self.currentRequestID == requestID else { return }
-            DispatchQueue.main.async {
-                self.loadingIndicator.stopAnimating()
-                self.retryButton.isEnabled = true
-                switch result {
-                case .success(let data):
-                    if let image = UIImage(data: data) {
-                        self.showComicImage(image)
-                        self.saveComicImage(data, for: word)
-                    } else {
-                        self.showComicPlaceholder()
-                        self.errorLabel.text = "画像データの変換に失敗しました"
-                    }
-                case .failure(let error):
-                    self.showComicPlaceholder()
-                    self.errorLabel.text = error.localizedDescription
-                }
-            }
+    private func loadEmoji(for word: SavedWord) {
+        let key = emojiKey(for: word)
+        if let cached = emojiMap[key] {
+            emojiLabel.text = cached
+            return
         }
-    }
+        emojiTask?.cancel()
+        guard let apiKey = loadGeminiAPIKey(), !apiKey.isEmpty else {
+            emojiLabel.text = "✨"
+            errorLabel.text = "絵文字の取得に失敗しました"
+            return
+        }
 
-    private static func decodeNanoBananaTaskId(_ data: Data) -> String? {
-        let decoded = try? JSONDecoder().decode(NanoBananaTaskResponse.self, from: data)
-        return decoded?.data?.taskId
-    }
+        let prompt = """
+        Return exactly one emoji that best represents the meaning of the word.
+        Word: "\(word.english)"
+        Meaning: "\(word.japanese)"
+        Scenario: "\(word.illustrationScenario ?? "none")"
+        Output only the emoji, no text.
+        """
 
-    private static func decodeNanoBananaErrorMessage(_ data: Data) -> String? {
-        let decoded = try? JSONDecoder().decode(NanoBananaErrorResponse.self, from: data)
-        return decoded?.message ?? decoded?.msg
-    }
-
-    private func pollNanoBananaResult(taskId: String,
-                                      token: String,
-                                      completion: @escaping (Result<Data, ComicError>) -> Void) {
-        let maxAttempts = 12
-        let delaySeconds: TimeInterval = 2.0
-
-        func attempt(_ count: Int) {
-            guard count < maxAttempts else {
-                completion(.failure(.noImageData))
-                return
-            }
-            guard var components = URLComponents(string: "https://nanobanana-webhook.inkit98713.workers.dev/result") else {
-                completion(.failure(.invalidURL))
-                return
-            }
-            components.queryItems = [
-                URLQueryItem(name: "taskId", value: taskId),
-                URLQueryItem(name: "token", value: token),
+        let requestBody = GeminiTextRequest(
+            contents: [
+                .init(parts: [.init(text: prompt)])
             ]
-            guard let url = components.url else {
-                completion(.failure(.invalidURL))
+        )
+
+        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=\(apiKey)") else {
+            emojiLabel.text = "✨"
+            errorLabel.text = "絵文字の取得に失敗しました"
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONEncoder().encode(requestBody)
+
+        emojiTask = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
+            if error != nil {
+                DispatchQueue.main.async {
+                    self.emojiLabel.text = "✨"
+                    self.errorLabel.text = "絵文字の取得に失敗しました"
+                }
                 return
             }
-            URLSession.shared.dataTask(with: url) { data, response, error in
-                if let error {
-                    completion(.failure(.requestFailed(error.localizedDescription)))
-                    return
-                }
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    completion(.failure(.invalidResponse))
-                    return
-                }
-                guard let data else {
-                    completion(.failure(.emptyResponse))
-                    return
-                }
-                if httpResponse.statusCode != 200 {
-                    completion(.failure(.httpError(status: httpResponse.statusCode, message: nil)))
-                    return
-                }
-                guard let decoded = try? JSONDecoder().decode(NanoBananaResultResponse.self, from: data) else {
-                    completion(.failure(.noImageData))
-                    return
-                }
-                switch decoded.status {
-                case "PENDING", "RUNNING":
-                    DispatchQueue.global().asyncAfter(deadline: .now() + delaySeconds) {
-                        attempt(count + 1)
-                    }
-                case "SUCCEEDED":
-                    guard let imageUrl = decoded.results?.first?.imageUrl,
-                          let downloadURL = URL(string: imageUrl) else {
-                        completion(.failure(.noImageData))
-                        return
-                    }
-                    URLSession.shared.dataTask(with: downloadURL) { imageData, _, imageError in
-                        if let imageError {
-                            completion(.failure(.requestFailed(imageError.localizedDescription)))
-                            return
-                        }
-                        guard let imageData else {
-                            completion(.failure(.emptyResponse))
-                            return
-                        }
-                        completion(.success(imageData))
-                    }.resume()
-                default:
-                    completion(.failure(.noImageData))
-                }
-            }.resume()
-        }
+            let statusCode = (response as? HTTPURLResponse)?.statusCode
+            let preview = data.flatMap { String(data: $0.prefix(800), encoding: .utf8) } ?? "<empty>"
+            print("Gemini status: \(statusCode ?? -1)")
+            print("Gemini body preview: \(preview)")
 
-        attempt(0)
+            guard let data,
+                  let emoji = Self.decodeEmoji(from: data) else {
+                DispatchQueue.main.async {
+                    self.emojiLabel.text = "✨"
+                    self.errorLabel.text = "絵文字の取得に失敗しました"
+                }
+                return
+            }
+            DispatchQueue.main.async {
+                self.emojiLabel.text = emoji
+                self.errorLabel.text = ""
+                self.emojiMap[key] = emoji
+                self.saveEmojiMap()
+            }
+        }
+        emojiTask?.resume()
     }
+
+    private func emojiKey(for word: SavedWord) -> String {
+        return "\(word.english.lowercased())|\(word.japanese)"
+    }
+
+    private func loadEmojiMap() -> [String: String] {
+        let url = emojiMapFileURL()
+        guard let data = try? Data(contentsOf: url) else { return [:] }
+        return (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
+    }
+
+    private func saveEmojiMap() {
+        let url = emojiMapFileURL()
+        guard let data = try? JSONEncoder().encode(emojiMap) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    private func emojiMapFileURL() -> URL {
+        let documents = FileManager.default.urls(for: .documentDirectory,
+                                                 in: .userDomainMask).first!
+        return documents.appendingPathComponent(emojiMapFileName)
+    }
+
+    private func loadGeminiAPIKey() -> String? {
+        return (Bundle.main.object(forInfoDictionaryKey: "GeminiAPIKey") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func decodeEmoji(from data: Data) -> String? {
+        let decoded = try? JSONDecoder().decode(GeminiTextResponse.self, from: data)
+        let text = decoded?.candidates?.first?.content?.parts?.first?.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        for ch in text {
+            if ch.unicodeScalars.contains(where: { $0.properties.isEmoji }) {
+                return String(ch)
+            }
+        }
+        return nil
+    }
+
 
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -1052,80 +900,27 @@ class FlipViewController: UIViewController {
     }
 }
 
-private struct NanoBananaGenerateRequest: Encodable {
-    let type: String
-    let prompt: String
-    let numImages: Int
-    let imageSize: String
-    let callBackUrl: String
 
-    private enum CodingKeys: String, CodingKey {
-        case type
-        case prompt
-        case numImages
-        case imageSize = "image_size"
-        case callBackUrl
-    }
-}
-
-private struct NanoBananaTaskResponse: Decodable {
-    struct DataInfo: Decodable {
-        let taskId: String?
-    }
-    let code: Int?
-    let msg: String?
-    let data: DataInfo?
-}
-
-private struct NanoBananaResultResponse: Decodable {
-    struct Result: Decodable {
-        let imageUrl: String?
-    }
-    let taskId: String?
-    let status: String?
-    let results: [Result]?
-    let error: String?
-}
-
-private struct NanoBananaErrorResponse: Decodable {
-    let message: String?
-    let msg: String?
-}
-
-private enum ComicError: LocalizedError {
-    case missingAPIKey
-    case missingCallbackURL
-    case missingResultToken
-    case invalidURL
-    case requestFailed(String)
-    case invalidResponse
-    case emptyResponse
-    case httpError(status: Int, message: String?)
-    case noImageData
-
-    var errorDescription: String? {
-        switch self {
-        case .missingAPIKey:
-            return "APIキーが未設定です"
-        case .missingCallbackURL:
-            return "Callback URLが未設定です"
-        case .missingResultToken:
-            return "結果取得トークンが未設定です"
-        case .invalidURL:
-            return "API URLが不正です"
-        case .requestFailed(let message):
-            return "通信に失敗しました: \(message)"
-        case .invalidResponse:
-            return "不正なレスポンスです"
-        case .emptyResponse:
-            return "レスポンスが空でした"
-        case .httpError(let status, let message):
-            if let message, !message.isEmpty {
-                return "APIエラー(\(status)): \(message)"
-            }
-            return "APIエラー(\(status))"
-        case .noImageData:
-            return "画像データが見つかりません"
+private struct GeminiTextRequest: Encodable {
+    struct Content: Encodable {
+        struct Part: Encodable {
+            let text: String
         }
+        let role: String? = nil
+        let parts: [Part]
     }
+    let contents: [Content]
+}
+
+private struct GeminiTextResponse: Decodable {
+    struct Candidate: Decodable {
+        struct Content: Decodable {
+            struct Part: Decodable {
+                let text: String?
+            }
+            let parts: [Part]?
+        }
+        let content: Content?
+    }
+    let candidates: [Candidate]?
 }

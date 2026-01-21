@@ -56,7 +56,8 @@ class ListTableViewController: UITableViewController {
         if !legacy.isEmpty {
             let migrated = legacy.map { SavedWord(english: $0["english"] ?? "",
                                                   japanese: $0["japanese"] ?? "",
-                                                  illustrationScenario: nil) }
+                                                  illustrationScenario: nil,
+                                                  illustrationImageFileName: nil)}
             wordArray = migrated
             saveSavedWords()
             return migrated
