@@ -21,6 +21,8 @@ class FlipViewController: UIViewController {
     private let backLabel = UILabel()
     private let backStack = UIStackView()
     private let backImageView = UIImageView()
+    private let fallbackPlaceholderView = UIView()
+    private let retryButton = UIButton(type: .system)
     private let loadingIndicator = UIActivityIndicatorView(style: .medium)
     private let errorLabel = UILabel()
     private let buttonStack = UIStackView()
@@ -87,6 +89,23 @@ class FlipViewController: UIViewController {
         backImageView.translatesAutoresizingMaskIntoConstraints = false
         backImageView.contentMode = .scaleAspectFit
         backImageView.clipsToBounds = true
+        fallbackPlaceholderView.translatesAutoresizingMaskIntoConstraints = false
+        fallbackPlaceholderView.backgroundColor = .systemGray5
+        fallbackPlaceholderView.layer.cornerRadius = 12
+        fallbackPlaceholderView.clipsToBounds = true
+        fallbackPlaceholderView.isHidden = true
+        let retryImage = UIImage(systemName: "arrow.trianglehead.2.clockwise")
+            ?? UIImage(systemName: "arrow.clockwise")
+        retryButton.translatesAutoresizingMaskIntoConstraints = false
+        retryButton.setImage(retryImage, for: .normal)
+        retryButton.tintColor = .label
+        retryButton.setPreferredSymbolConfiguration(
+            UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold),
+            forImageIn: .normal
+        )
+        retryButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+        retryButton.accessibilityLabel = "画像を再生成"
+        retryButton.addTarget(self, action: #selector(retryComicImage), for: .touchUpInside)
 
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
         errorLabel.font = .systemFont(ofSize: 14)
@@ -98,9 +117,11 @@ class FlipViewController: UIViewController {
         backStack.spacing = 12
         backStack.translatesAutoresizingMaskIntoConstraints = false
         backView.addSubview(backStack)
+        backStack.addArrangedSubview(fallbackPlaceholderView)
         backStack.addArrangedSubview(backImageView)
         backStack.addArrangedSubview(backLabel)
         backStack.addArrangedSubview(errorLabel)
+        view.addSubview(retryButton)
 
         NSLayoutConstraint.activate([
             frontLabel.leadingAnchor.constraint(equalTo: frontView.leadingAnchor, constant: 16),
@@ -110,7 +131,15 @@ class FlipViewController: UIViewController {
             backStack.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -16),
             backStack.topAnchor.constraint(equalTo: backView.topAnchor, constant: 16),
             backStack.bottomAnchor.constraint(equalTo: backView.bottomAnchor, constant: -16),
+            fallbackPlaceholderView.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
             backImageView.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
+        ])
+        NSLayoutConstraint.activate([
+            retryButton.leadingAnchor.constraint(equalTo: cardContainer.trailingAnchor, constant: 8),
+            retryButton.topAnchor.constraint(equalTo: cardContainer.topAnchor),
+            retryButton.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -8),
+            retryButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 32),
+            retryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 32),
         ])
 
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -167,6 +196,9 @@ class FlipViewController: UIViewController {
             frontLabel.text = "単語がありません"
             backLabel.text = ""
             backImageView.image = nil
+            backImageView.isHidden = true
+            fallbackPlaceholderView.isHidden = true
+            retryButton.isHidden = true
             errorLabel.text = ""
             loadingIndicator.stopAnimating()
             prevButton.isEnabled = false
@@ -224,57 +256,18 @@ class FlipViewController: UIViewController {
     }
 
     private func loadComicImage(for word: SavedWord) {
-        currentRequestID = UUID()
-        let requestID = currentRequestID
-        imageTask?.cancel()
         errorLabel.text = ""
 
-        if useLocalComic {
-            if let cached = loadCachedComicImage(for: word) {
-                backImageView.image = cached
-                loadingIndicator.stopAnimating()
-                return
-            }
-            loadingIndicator.startAnimating()
-            if let image = generateLocalComicImage(for: word),
-               let data = image.pngData() {
-                backImageView.image = image
-                saveComicImage(data, for: word)
-            } else {
-                backImageView.image = nil
-                errorLabel.text = "ローカル生成に失敗しました"
-            }
-            loadingIndicator.stopAnimating()
-            return
-        }
-
         if let cached = loadCachedComicImage(for: word) {
-            backImageView.image = cached
+            showComicImage(cached)
             loadingIndicator.stopAnimating()
             return
         }
 
-        backImageView.image = nil
-        loadingIndicator.startAnimating()
-        generateComicImage(for: word) { [weak self] result in
-            guard let self else { return }
-            guard self.currentRequestID == requestID else { return }
-            DispatchQueue.main.async {
-                self.loadingIndicator.stopAnimating()
-                switch result {
-                case .success(let data):
-                    if let image = UIImage(data: data) {
-                        self.backImageView.image = image
-                        self.saveComicImage(data, for: word)
-                    } else {
-                        self.errorLabel.text = "画像データの変換に失敗しました"
-                    }
-                case .failure(let error):
-                    self.backImageView.image = nil
-                    self.errorLabel.text = error.localizedDescription
-                }
-            }
-        }
+        showComicPlaceholder()
+        loadingIndicator.stopAnimating()
+        errorLabel.text = "画像が未生成です"
+        retryButton.isHidden = false
     }
 
     private func generateComicImage(for word: SavedWord,
@@ -303,7 +296,7 @@ class FlipViewController: UIViewController {
             return
         }
 
-        let requestBody = NanoBananaGenerateRequest(type: "TEXTTOIAMGE",
+        let requestBody = NanoBananaGenerateRequest(type: "TEXTTOIMAGE",
                                                     prompt: prompt,
                                                     numImages: 1,
                                                     imageSize: "4:3",
@@ -355,15 +348,18 @@ class FlipViewController: UIViewController {
     }
 
     private func loadComicAPIKey() -> String? {
-        return Bundle.main.object(forInfoDictionaryKey: "NanoBananaAPIKey") as? String
+        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaAPIKey") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func loadCallbackURL() -> String? {
-        return Bundle.main.object(forInfoDictionaryKey: "NanoBananaCallbackURL") as? String
+        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaCallbackURL") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func loadResultToken() -> String? {
-        return Bundle.main.object(forInfoDictionaryKey: "NanoBananaResultToken") as? String
+        return (Bundle.main.object(forInfoDictionaryKey: "NanoBananaResultToken") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func loadTaskMap() -> [String: String] {
@@ -405,6 +401,53 @@ class FlipViewController: UIViewController {
     private func sanitizeFileName(_ text: String) -> String {
         let pattern = "[^A-Za-z0-9_-]"
         return text.replacingOccurrences(of: pattern, with: "_", options: .regularExpression)
+    }
+
+    private func showComicImage(_ image: UIImage) {
+        fallbackPlaceholderView.isHidden = true
+        backImageView.isHidden = false
+        backImageView.image = image
+        retryButton.isHidden = false
+        retryButton.isEnabled = true
+        errorLabel.text = ""
+    }
+
+    private func showComicPlaceholder() {
+        backImageView.image = nil
+        backImageView.isHidden = true
+        fallbackPlaceholderView.isHidden = false
+    }
+
+    @objc private func retryComicImage() {
+        guard !words.isEmpty else { return }
+        let word = words[currentIndex]
+        currentRequestID = UUID()
+        let requestID = currentRequestID
+        imageTask?.cancel()
+        errorLabel.text = ""
+        retryButton.isEnabled = false
+        loadingIndicator.startAnimating()
+        generateComicImage(for: word) { [weak self] result in
+            guard let self else { return }
+            guard self.currentRequestID == requestID else { return }
+            DispatchQueue.main.async {
+                self.loadingIndicator.stopAnimating()
+                self.retryButton.isEnabled = true
+                switch result {
+                case .success(let data):
+                    if let image = UIImage(data: data) {
+                        self.showComicImage(image)
+                        self.saveComicImage(data, for: word)
+                    } else {
+                        self.showComicPlaceholder()
+                        self.errorLabel.text = "画像データの変換に失敗しました"
+                    }
+                case .failure(let error):
+                    self.showComicPlaceholder()
+                    self.errorLabel.text = error.localizedDescription
+                }
+            }
+        }
     }
 
     private static func decodeNanoBananaTaskId(_ data: Data) -> String? {
