@@ -11,10 +11,13 @@ import UIKit
 class FlipViewController: UIViewController {
 
     private let savedWordsFileName = "saved_words.json"
+    private let resultsFileName = "results.json"
     var presetWords: [SavedWord]?
     private var words: [SavedWord] = []
     private var currentIndex = 0
     private var isFlipped = false
+    private var sessionStartTime: Date?
+    private var hasRecordedSession = false
 
     private let cardContainer = UIView()
     private let frontView = UIView()
@@ -47,6 +50,19 @@ class FlipViewController: UIViewController {
             showAlert(title: "単語がありません", message: "先に単語を登録してください。")
         }
         showWord()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if sessionStartTime == nil {
+            sessionStartTime = Date()
+            hasRecordedSession = false
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        recordFlipSessionIfNeeded()
     }
 
     private func configureUI() {
@@ -170,6 +186,12 @@ class FlipViewController: UIViewController {
         return documents.appendingPathComponent(savedWordsFileName)
     }
 
+    private func resultsFileURL() -> URL {
+        let documents = FileManager.default.urls(for: .documentDirectory,
+                                                 in: .userDomainMask).first!
+        return documents.appendingPathComponent(resultsFileName)
+    }
+
     private func loadSavedWords() -> [SavedWord] {
         let fileURL = savedWordsFileURL()
         if let data = try? Data(contentsOf: fileURL),
@@ -177,6 +199,54 @@ class FlipViewController: UIViewController {
             return decoded
         }
         return []
+    }
+
+    private func recordFlipSessionIfNeeded() {
+        guard let sessionStartTime, !hasRecordedSession else { return }
+        let elapsed = Date().timeIntervalSince(sessionStartTime)
+        if elapsed < 1 {
+            return
+        }
+        let session = SessionResult(
+            timestamp: isoTimestamp(),
+            reason: "flip",
+            modeLabel: "フリップ",
+            directionLabel: nil,
+            totalQuestionsGenerated: words.count,
+            answered: 0,
+            score: 0,
+            accuracy: 0,
+            totalElapsedSec: elapsed,
+            questions: []
+        )
+        var db = loadResults()
+        db.sessions.append(session)
+        saveResults(db)
+        hasRecordedSession = true
+        self.sessionStartTime = nil
+    }
+
+    private func loadResults() -> ResultsDatabase {
+        let url = resultsFileURL()
+        guard let data = try? Data(contentsOf: url) else {
+            return ResultsDatabase(sessions: [])
+        }
+        if let decoded = try? JSONDecoder().decode(ResultsDatabase.self, from: data) {
+            return decoded
+        }
+        return ResultsDatabase(sessions: [])
+    }
+
+    private func saveResults(_ db: ResultsDatabase) {
+        let url = resultsFileURL()
+        guard let data = try? JSONEncoder().encode(db) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    private func isoTimestamp() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: Date())
     }
 
     private func showWord() {
@@ -899,6 +969,34 @@ class FlipViewController: UIViewController {
                        clockwise: false)
         context.strokePath()
     }
+}
+
+private struct SessionQuestion: Codable {
+    let index: Int
+    let type: String
+    let direction: String
+    let prompt: String
+    let correctAnswer: String
+    let userAnswer: String
+    let correct: Bool
+    let answerTimeSec: Double
+}
+
+private struct SessionResult: Codable {
+    let timestamp: String
+    let reason: String
+    let modeLabel: String?
+    let directionLabel: String?
+    let totalQuestionsGenerated: Int
+    let answered: Int
+    let score: Int
+    let accuracy: Double
+    let totalElapsedSec: Double
+    let questions: [SessionQuestion]
+}
+
+private struct ResultsDatabase: Codable {
+    var sessions: [SessionResult]
 }
 
 

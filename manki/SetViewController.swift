@@ -34,6 +34,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchText: String = ""
+    private let headerContainer = UIView()
+    private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
 
     init(folderID: String?, showsAll: Bool = false) {
@@ -378,6 +380,11 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     private var words: [SavedWord] = []
     private var filteredWords: [SavedWord] = []
     private var sortOption: WordSortOption = .setOrder
+    private var hiddenMode: WordHiddenMode = .none
+    private var hideButton: UIBarButtonItem?
+    private var revealedWordIDs: Set<String> = []
+    private let headerContainer = UIView()
+    private let hideToggleButton = UIButton(type: .system)
     private let buttonStack = UIStackView()
     private let flipButton = UIButton(type: .system)
     private let testButton = UIButton(type: .system)
@@ -403,6 +410,11 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         configureEmptyLabel()
         configureSearch()
         configureNavigationItems()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateHeaderLayout()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -474,8 +486,28 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "単語で検索"
-        tableView.tableHeaderView = searchController.searchBar
+        searchController.searchBar.sizeToFit()
+        headerContainer.addSubview(searchController.searchBar)
+
+        hideToggleButton.setTitle("隠す", for: .normal)
+        hideToggleButton.contentHorizontalAlignment = .left
+        hideToggleButton.addTarget(self, action: #selector(toggleHiddenMode), for: .touchUpInside)
+        headerContainer.addSubview(hideToggleButton)
+
+        tableView.tableHeaderView = headerContainer
         definesPresentationContext = true
+    }
+
+    private func updateHeaderLayout() {
+        guard let header = tableView.tableHeaderView else { return }
+        let width = tableView.bounds.width
+        let searchHeight = searchController.searchBar.bounds.height
+        let buttonHeight: CGFloat = 36
+        let headerHeight = searchHeight + buttonHeight
+        header.frame = CGRect(x: 0, y: 0, width: width, height: headerHeight)
+        searchController.searchBar.frame = CGRect(x: 0, y: 0, width: width, height: searchHeight)
+        hideToggleButton.frame = CGRect(x: 16, y: searchHeight, width: width - 32, height: buttonHeight)
+        tableView.tableHeaderView = header
     }
 
     private func configureEmptyLabel() {
@@ -508,16 +540,24 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return words.count
+        return displayedWords().count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
             as! ListTableViewCell
         let word = displayedWords()[indexPath.row]
-        cell.englishLabel.text = word.english
-        cell.japaneseLabel.text = word.japanese
-        cell.applyHiddenMode(.none)
+        let isRevealed = revealedWordIDs.contains(word.id)
+        cell.configure(word: word, hiddenMode: hiddenMode, isRevealed: isRevealed)
+        cell.onFavoriteChanged = { [weak self] isFavorite in
+            self?.updateWord(id: word.id, isFavorite: isFavorite)
+        }
+        cell.onSelectImportanceTapped = { [weak self] in
+            self?.presentImportancePicker(for: word)
+        }
+        cell.onToggleReveal = { [weak self] in
+            self?.toggleReveal(for: word.id)
+        }
         return cell
     }
 
@@ -620,6 +660,38 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         })
         alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
         alert.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first(where: { $0.title == "並び替え" })
+        present(alert, animated: true)
+    }
+
+    private func updateHiddenButtonTitle() {
+        let title = hiddenMode == .none ? "隠す" : "表示"
+        hideToggleButton.setTitle(title, for: .normal)
+    }
+
+    @objc private func toggleHiddenMode() {
+        if hiddenMode != .none {
+            hiddenMode = .none
+            revealedWordIDs.removeAll()
+            updateHiddenButtonTitle()
+            tableView.reloadData()
+            return
+        }
+
+        let alert = UIAlertController(title: "隠す項目", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "英語を隠す", style: .default) { [weak self] _ in
+            self?.hiddenMode = .english
+            self?.revealedWordIDs.removeAll()
+            self?.updateHiddenButtonTitle()
+            self?.tableView.reloadData()
+        })
+        alert.addAction(UIAlertAction(title: "日本語を隠す", style: .default) { [weak self] _ in
+            self?.hiddenMode = .japanese
+            self?.revealedWordIDs.removeAll()
+            self?.updateHiddenButtonTitle()
+            self?.tableView.reloadData()
+        })
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        alert.popoverPresentationController?.barButtonItem = hideButton
         present(alert, animated: true)
     }
 
@@ -741,6 +813,62 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         guard let data = try? JSONEncoder().encode(words) else { return }
         try? data.write(to: fileURL, options: .atomic)
     }
+
+    private func updateWord(id: String, isFavorite: Bool? = nil, importanceLevel: Int? = nil) {
+        var allWords = loadSavedWords()
+        guard let index = allWords.firstIndex(where: { $0.id == id }) else { return }
+        var word = allWords[index]
+        if let isFavorite {
+            word.isFavorite = isFavorite
+        }
+        if let importanceLevel {
+            word.importanceLevel = importanceLevel
+        }
+        allWords[index] = word
+        saveSavedWords(allWords)
+        if let localIndex = words.firstIndex(where: { $0.id == id }) {
+            words[localIndex] = word
+        }
+    }
+
+    private func presentImportancePicker(for word: SavedWord) {
+        let alert = UIAlertController(title: "重要度", message: nil, preferredStyle: .actionSheet)
+        for level in 1...5 {
+            alert.addAction(UIAlertAction(title: "Lv\(level)", style: .default) { [weak self] _ in
+                self?.updateWord(id: word.id, importanceLevel: level)
+                if let indexPath = self?.indexPathForWord(id: word.id),
+                   let cell = self?.tableView.cellForRow(at: indexPath) as? ListTableViewCell {
+                    cell.updateImportance(level: level)
+                }
+            })
+        }
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = alert.popoverPresentationController,
+           let indexPath = indexPathForWord(id: word.id),
+           let cell = tableView.cellForRow(at: indexPath) {
+            popover.sourceView = cell
+            popover.sourceRect = cell.bounds
+        }
+        present(alert, animated: true)
+    }
+
+    private func toggleReveal(for id: String) {
+        guard hiddenMode != .none else { return }
+        if revealedWordIDs.contains(id) {
+            revealedWordIDs.remove(id)
+        } else {
+            revealedWordIDs.insert(id)
+        }
+        if let indexPath = indexPathForWord(id: id) {
+            tableView.reloadRows(at: [indexPath], with: .none)
+        }
+    }
+
+    private func indexPathForWord(id: String) -> IndexPath? {
+        let current = displayedWords()
+        guard let row = current.firstIndex(where: { $0.id == id }) else { return nil }
+        return IndexPath(row: row, section: 0)
+    }
 }
 
 extension SetDetailViewController: UISearchResultsUpdating {
@@ -853,7 +981,7 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
         let word = words[indexPath.row]
         cell.englishLabel.text = word.english
         cell.japaneseLabel.text = word.japanese
-        cell.applyHiddenMode(.none)
+        cell.applyHiddenMode(.none, isRevealed: false)
         cell.accessoryType = selectedWordIDs.contains(word.id) ? .checkmark : .none
         return cell
     }
@@ -1038,7 +1166,7 @@ final class SetEditWordsViewController: UIViewController, UITableViewDataSource,
         let word = displayedWords()[indexPath.row]
         cell.englishLabel.text = word.english
         cell.japaneseLabel.text = word.japanese
-        cell.applyHiddenMode(.none)
+        cell.applyHiddenMode(.none, isRevealed: false)
         cell.accessoryType = selectedWordIDs.contains(word.id) ? .checkmark : .none
         return cell
     }

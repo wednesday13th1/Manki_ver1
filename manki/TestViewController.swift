@@ -42,6 +42,8 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private var questionStartTime: Date?
     private var sessionStartTime: Date?
     private var sessionQuestions: [SessionQuestion] = []
+    private var sessionModeLabel: String = ""
+    private var sessionDirectionLabel: String = ""
 
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
@@ -258,6 +260,8 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         }
         let selectedMode = typeSegmented.selectedSegmentIndex
         let selectedDirection = directionSegmented.selectedSegmentIndex
+        sessionModeLabel = modeLabel(for: selectedMode)
+        sessionDirectionLabel = directionLabel(for: selectedDirection)
 
         quiz = generateQuiz(words: words,
                             modeIndex: selectedMode,
@@ -560,9 +564,13 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
     private func saveSession(reason: String) {
         guard let sessionStartTime else { return }
+        let modeLabel = sessionModeLabel.isEmpty ? "不明" : sessionModeLabel
+        let directionLabel = sessionDirectionLabel.isEmpty ? "不明" : sessionDirectionLabel
         let session = SessionResult(
             timestamp: isoTimestamp(),
             reason: reason,
+            modeLabel: modeLabel,
+            directionLabel: directionLabel,
             totalQuestionsGenerated: quiz.count,
             answered: sessionQuestions.count,
             score: score,
@@ -597,6 +605,28 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter.string(from: Date())
+    }
+
+    private func modeLabel(for index: Int) -> String {
+        switch index {
+        case 0:
+            return "記述"
+        case 1:
+            return "選択"
+        default:
+            return "混合"
+        }
+    }
+
+    private func directionLabel(for index: Int) -> String {
+        switch index {
+        case 0:
+            return "英→日"
+        case 1:
+            return "日→英"
+        default:
+            return "混合"
+        }
     }
 }
 
@@ -675,6 +705,8 @@ private struct SessionQuestion: Codable {
 private struct SessionResult: Codable {
     let timestamp: String
     let reason: String
+    let modeLabel: String?
+    let directionLabel: String?
     let totalQuestionsGenerated: Int
     let answered: Int
     let score: Int

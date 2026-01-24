@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="8Yb-hr-wwb">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="oep-F0-kRQ">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
@@ -43,6 +43,21 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="wy7-qH-EPp" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="3475.5725190839694" y="702.81690140845069"/>
+        </scene>
+        <!--Mode View Controller-->
+        <scene sceneID="jnQ-LG-5hz">
+            <objects>
+                <viewController id="oep-F0-kRQ" customClass="ModeViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="RBR-zv-EVm">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="fds-5p-mPS"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="cGB-j1-Rpu" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2400" y="1442"/>
         </scene>
         <!--Flip View Controller-->
         <scene sceneID="Khg-CQ-uu5">
@@ -89,6 +104,56 @@
             </objects>
             <point key="canvasLocation" x="4780" y="1467"/>
         </scene>
+        <!--Item 2-->
+        <scene sceneID="Z4L-LQ-PLU">
+            <objects>
+                <viewController id="RxA-3O-cjo" customClass="ScheduleViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8PZ-Vf-mQi">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="Cb2-Aw-6Rm"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <tabBarItem key="tabBarItem" title="Item 2" id="XgV-6d-2a2"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="FJ3-6q-x9f" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5867" y="767"/>
+        </scene>
+        <!--Item 1-->
+        <scene sceneID="0DA-ZG-CAv">
+            <objects>
+                <viewController id="2K9-kJ-9Ls" customClass="TimeViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Zfg-Bx-H5l">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="m26-ZC-vTJ"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <tabBarItem key="tabBarItem" title="Item 1" id="uGB-wN-QSl"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="93Q-Yu-leK" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5867" y="160"/>
+        </scene>
+        <!--Tab Bar Controller-->
+        <scene sceneID="7va-cZ-ycC">
+            <objects>
+                <tabBarController storyboardIdentifier="MainTabBarController" id="6mO-zM-GTY" customClass="MainTabBarController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="cof-GU-tv5">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="49"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </tabBar>
+                    <connections>
+                        <segue destination="2K9-kJ-9Ls" kind="relationship" relationship="viewControllers" id="vzH-sk-kcI"/>
+                        <segue destination="RxA-3O-cjo" kind="relationship" relationship="viewControllers" id="ciT-6e-FWL"/>
+                    </connections>
+                </tabBarController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="i2y-TH-eem" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4961" y="463"/>
+        </scene>
         <!--Word View Controller-->
         <scene sceneID="vM5-lM-MiN">
             <objects>
@@ -122,7 +187,7 @@
         <!--Folder View Controller-->
         <scene sceneID="tjU-7d-GIb">
             <objects>
-                <viewController id="dmp-Qt-fG5" customClass="FolderViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="FolderViewController" id="dmp-Qt-fG5" customClass="FolderViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="DWx-d0-bCm">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -200,7 +265,7 @@
         <!--Navigation Controller-->
         <scene sceneID="GbI-ca-HQp">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="8Yb-hr-wwb" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="FolderNavigationController" automaticallyAdjustsScrollViewInsets="NO" id="8Yb-hr-wwb" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="ebf-9K-L30">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>

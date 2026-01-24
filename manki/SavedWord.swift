@@ -13,6 +13,8 @@ struct SavedWord: Codable {
     let japanese: String
     let illustrationScenario: String?
     let illustrationImageFileName: String?
+    var isFavorite: Bool
+    var importanceLevel: Int
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -20,18 +22,24 @@ struct SavedWord: Codable {
         case japanese
         case illustrationScenario
         case illustrationImageFileName
+        case isFavorite
+        case importanceLevel
     }
 
     init(english: String,
          japanese: String,
          illustrationScenario: String?,
          illustrationImageFileName: String?,
+         isFavorite: Bool = false,
+         importanceLevel: Int = 1,
          id: String = UUID().uuidString) {
         self.id = id
         self.english = english
         self.japanese = japanese
         self.illustrationScenario = illustrationScenario
         self.illustrationImageFileName = illustrationImageFileName
+        self.isFavorite = isFavorite
+        self.importanceLevel = importanceLevel
     }
 
     init(from decoder: Decoder) throws {
@@ -41,6 +49,8 @@ struct SavedWord: Codable {
         illustrationScenario = try container.decodeIfPresent(String.self, forKey: .illustrationScenario)
         illustrationImageFileName = try container.decodeIfPresent(String.self, forKey: .illustrationImageFileName)
         id = (try? container.decode(String.self, forKey: .id)) ?? UUID().uuidString
+        isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
+        importanceLevel = try container.decodeIfPresent(Int.self, forKey: .importanceLevel) ?? 1
     }
 
     func encode(to encoder: Encoder) throws {
@@ -50,6 +60,8 @@ struct SavedWord: Codable {
         try container.encode(japanese, forKey: .japanese)
         try container.encodeIfPresent(illustrationScenario, forKey: .illustrationScenario)
         try container.encodeIfPresent(illustrationImageFileName, forKey: .illustrationImageFileName)
+        try container.encode(isFavorite, forKey: .isFavorite)
+        try container.encode(importanceLevel, forKey: .importanceLevel)
     }
 }
 

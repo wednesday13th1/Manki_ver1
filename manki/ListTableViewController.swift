@@ -12,6 +12,7 @@ class ListTableViewController: UITableViewController {
     private let savedWordsFileName = "saved_words.json"
     private var hiddenMode: WordHiddenMode = .none
     private var hideButton: UIBarButtonItem?
+    private var revealedWordIDs: Set<String> = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -92,10 +93,18 @@ class ListTableViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         as! ListTableViewCell
 
-        let nowIndexPathDictionary = wordArray[indexPath.row]
-        cell.englishLabel.text = nowIndexPathDictionary.english
-        cell.japaneseLabel.text = nowIndexPathDictionary.japanese
-        cell.applyHiddenMode(hiddenMode)
+        let word = wordArray[indexPath.row]
+        let isRevealed = revealedWordIDs.contains(word.id)
+        cell.configure(word: word, hiddenMode: hiddenMode, isRevealed: isRevealed)
+        cell.onFavoriteChanged = { [weak self] isFavorite in
+            self?.updateWord(id: word.id, isFavorite: isFavorite)
+        }
+        cell.onSelectImportanceTapped = { [weak self] in
+            self?.presentImportancePicker(for: word)
+        }
+        cell.onToggleReveal = { [weak self] in
+            self?.toggleReveal(for: word.id)
+        }
 
         return cell
     }
@@ -133,6 +142,7 @@ class ListTableViewController: UITableViewController {
     @objc private func toggleHiddenMode() {
         if hiddenMode != .none {
             hiddenMode = .none
+            revealedWordIDs.removeAll()
             updateHiddenButtonTitle()
             tableView.reloadData()
             return
@@ -141,11 +151,13 @@ class ListTableViewController: UITableViewController {
         let alert = UIAlertController(title: "隠す項目", message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "英語を隠す", style: .default) { [weak self] _ in
             self?.hiddenMode = .english
+            self?.revealedWordIDs.removeAll()
             self?.updateHiddenButtonTitle()
             self?.tableView.reloadData()
         })
         alert.addAction(UIAlertAction(title: "日本語を隠す", style: .default) { [weak self] _ in
             self?.hiddenMode = .japanese
+            self?.revealedWordIDs.removeAll()
             self?.updateHiddenButtonTitle()
             self?.tableView.reloadData()
         })
@@ -175,6 +187,61 @@ class ListTableViewController: UITableViewController {
         }
         if updated {
             SetStore.saveSets(sets)
+        }
+    }
+
+    private func updateWord(id: String, isFavorite: Bool? = nil, importanceLevel: Int? = nil) {
+        guard let index = wordArray.firstIndex(where: { $0.id == id }) else { return }
+        var word = wordArray[index]
+        if let isFavorite {
+            word.isFavorite = isFavorite
+        }
+        if let importanceLevel {
+            word.importanceLevel = importanceLevel
+        }
+        wordArray[index] = word
+        saveSavedWords()
+    }
+
+    private func presentImportancePicker(for word: SavedWord) {
+        let alert = UIAlertController(title: "重要度", message: nil, preferredStyle: .actionSheet)
+        for level in 1...5 {
+            alert.addAction(UIAlertAction(title: "Lv\(level)", style: .default) { [weak self] _ in
+                self?.updateWord(id: word.id, importanceLevel: level)
+                if let index = self?.wordArray.firstIndex(where: { $0.id == word.id }) {
+                    self?.wordArray[index].importanceLevel = level
+                }
+                if let indexPath = self?.indexPathForWord(id: word.id),
+                   let cell = self?.tableView.cellForRow(at: indexPath) as? ListTableViewCell {
+                    cell.updateImportance(level: level)
+                }
+            })
+        }
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = alert.popoverPresentationController,
+           let indexPath = indexPathForWord(id: word.id),
+           let cell = tableView.cellForRow(at: indexPath) {
+            popover.sourceView = cell
+            popover.sourceRect = cell.bounds
+        }
+        present(alert, animated: true)
+    }
+
+    private func indexPathForWord(id: String) -> IndexPath? {
+        guard let row = wordArray.firstIndex(where: { $0.id == id }) else { return nil }
+        return IndexPath(row: row, section: 0)
+    }
+
+    private func toggleReveal(for id: String) {
+        guard hiddenMode != .none else { return }
+        if revealedWordIDs.contains(id) {
+            revealedWordIDs.remove(id)
+        } else {
+            revealedWordIDs.insert(id)
+        }
+        if let index = wordArray.firstIndex(where: { $0.id == id }) {
+            let indexPath = IndexPath(row: index, section: 0)
+            tableView.reloadRows(at: [indexPath], with: .none)
         }
     }
 }

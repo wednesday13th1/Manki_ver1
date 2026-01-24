@@ -67,6 +67,9 @@ final class ResultViewController: UIViewController {
             lines.append("=== Session \(index + 1) ===")
             lines.append("timestamp: \(session.timestamp)")
             lines.append("reason: \(session.reason)")
+            let modeLabel = session.modeLabel ?? "不明"
+            let directionLabel = session.directionLabel ?? "不明"
+            lines.append("mode: \(modeLabel) / \(directionLabel)")
             lines.append("score: \(session.score)/\(session.answered)")
             lines.append(String(format: "accuracy: %.1f%%", session.accuracy * 100))
             lines.append(String(format: "total time: %.2fs", session.totalElapsedSec))
@@ -99,6 +102,8 @@ private struct SessionQuestion: Codable {
 private struct SessionResult: Codable {
     let timestamp: String
     let reason: String
+    let modeLabel: String?
+    let directionLabel: String?
     let totalQuestionsGenerated: Int
     let answered: Int
     let score: Int

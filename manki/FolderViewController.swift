@@ -29,10 +29,15 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
                                                             style: .plain,
                                                             target: self,
                                                             action: #selector(addFolder))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "単語",
-                                                           style: .plain,
-                                                           target: self,
-                                                           action: #selector(openWordList))
+        let closeButton = UIBarButtonItem(title: "戻る",
+                                          style: .plain,
+                                          target: self,
+                                          action: #selector(closeSelf))
+        let wordButton = UIBarButtonItem(title: "単語",
+                                         style: .plain,
+                                         target: self,
+                                         action: #selector(openWordList))
+        navigationItem.leftBarButtonItems = [closeButton, wordButton]
         let sortButton = UIBarButtonItem(title: "並び替え",
                                          style: .plain,
                                          target: self,
@@ -175,6 +180,10 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             return
         }
         navigationController?.pushViewController(listVC, animated: true)
+    }
+
+    @objc private func closeSelf() {
+        dismiss(animated: true)
     }
 
     private func renameFolder(at indexPath: IndexPath) {
