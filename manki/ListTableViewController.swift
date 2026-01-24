@@ -111,8 +111,10 @@ class ListTableViewController: UITableViewController {
                             commit editingStyle: UITableViewCell.EditingStyle,
                             forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
+            let removedWord = wordArray[indexPath.row]
             wordArray.remove(at: indexPath.row)
             saveSavedWords()
+            removeWordFromSets(wordID: removedWord.id)
             tableView.deleteRows(at: [indexPath], with: .automatic)
         }
     }
@@ -159,5 +161,20 @@ class ListTableViewController: UITableViewController {
 
     @objc private func openWordMenu() {
         navigationController?.popToRootViewController(animated: true)
+    }
+
+    private func removeWordFromSets(wordID: String) {
+        var sets = SetStore.loadSets()
+        var updated = false
+        for index in sets.indices {
+            let beforeCount = sets[index].wordIDs.count
+            sets[index].wordIDs.removeAll { $0 == wordID }
+            if sets[index].wordIDs.count != beforeCount {
+                updated = true
+            }
+        }
+        if updated {
+            SetStore.saveSets(sets)
+        }
     }
 }

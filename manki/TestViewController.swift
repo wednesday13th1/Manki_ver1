@@ -31,6 +31,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private let defaultChoiceCount = 4
     private let resultsFileName = "results.json"
 
+    var presetWords: [SavedWord]?
     private var words: [SavedWord] = []
     private var quiz: [QuizQuestion] = []
     private var currentIndex = 0
@@ -242,7 +243,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     }
 
     @objc private func startQuiz() {
-        words = loadSavedWords()
+        words = presetWords ?? loadSavedWords()
         guard !words.isEmpty else {
             showAlert(title: "単語がありません", message: "先に単語を登録してください。")
             return

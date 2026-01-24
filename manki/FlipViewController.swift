@@ -11,6 +11,7 @@ import UIKit
 class FlipViewController: UIViewController {
 
     private let savedWordsFileName = "saved_words.json"
+    var presetWords: [SavedWord]?
     private var words: [SavedWord] = []
     private var currentIndex = 0
     private var isFlipped = false
@@ -40,7 +41,7 @@ class FlipViewController: UIViewController {
         view.backgroundColor = .systemBackground
 
         configureUI()
-        words = loadSavedWords()
+        words = presetWords ?? loadSavedWords()
         emojiMap = loadEmojiMap()
         if words.isEmpty {
             showAlert(title: "単語がありません", message: "先に単語を登録してください。")
