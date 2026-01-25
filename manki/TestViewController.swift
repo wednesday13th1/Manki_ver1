@@ -22,6 +22,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private struct QuizQuestion {
         let type: QuestionType
         let direction: Direction
+        let wordId: String
         let prompt: String
         let correctAnswer: String
         let choices: [String]
@@ -58,6 +59,8 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private let questionLabel = UILabel() //何問目
     private let answerTextField = UITextField()
     private let choicesStack = UIStackView()
+    private let favoriteFilterButton = UIButton(type: .system)
+    private let levelsStack = UIStackView()
     private let submitButton = UIButton(type: .system)
     private let timePicker = UIPickerView() //picker ~
     private let numQuestionsPicker = UIPickerView()
@@ -67,6 +70,9 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private let numQuestionsOptions = Array(stride(from: 0, through: 100, by: 5))
     private let numChoicesOptions = Array(2...8)
     private var selectedTimeSeconds = 0
+    private var favoriteOnly = false
+    private var selectedLevels: Set<Int> = [1, 2, 3, 4, 5]
+    private var levelButtons: [UIButton] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -114,6 +120,8 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         directionSegmented.selectedSegmentIndex = 2
         settingsStack.addArrangedSubview(directionSegmented)
+
+        configureFilterSection()
 
         let timeStack = UIStackView()
         timeStack.axis = .vertical
@@ -172,6 +180,47 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         submitButton.setTitle("回答する", for: .normal)
         submitButton.addTarget(self, action: #selector(submitAnswer), for: .touchUpInside)
         contentStack.addArrangedSubview(submitButton)
+    }
+
+    private func configureFilterSection() {
+        let filterTitle = UILabel()
+        filterTitle.text = "出題範囲"
+        filterTitle.font = .boldSystemFont(ofSize: 17)
+        settingsStack.addArrangedSubview(filterTitle)
+
+        let favoriteRow = UIStackView()
+        favoriteRow.axis = .horizontal
+        favoriteRow.alignment = .center
+        favoriteRow.spacing = 8
+
+        favoriteFilterButton.addTarget(self, action: #selector(toggleFavoriteFilter), for: .touchUpInside)
+        favoriteFilterButton.tintColor = .systemYellow
+        favoriteFilterButton.setTitle(" お気に入りのみ", for: .normal)
+        favoriteFilterButton.contentHorizontalAlignment = .left
+        updateFavoriteFilterButton()
+
+        favoriteRow.addArrangedSubview(favoriteFilterButton)
+        settingsStack.addArrangedSubview(favoriteRow)
+
+        let levelTitle = UILabel()
+        levelTitle.text = "レベル (チェックで限定)"
+        settingsStack.addArrangedSubview(levelTitle)
+
+        levelsStack.axis = .horizontal
+        levelsStack.spacing = 8
+        levelsStack.distribution = .fillEqually
+        settingsStack.addArrangedSubview(levelsStack)
+
+        levelButtons = (1...5).map { level in
+            let button = UIButton(type: .system)
+            button.tag = level
+            button.layer.cornerRadius = 8
+            button.layer.borderWidth = 1
+            button.addTarget(self, action: #selector(toggleLevel(_:)), for: .touchUpInside)
+            levelsStack.addArrangedSubview(button)
+            return button
+        }
+        updateLevelButtons()
     }
 
     private func configurePickers() {
@@ -246,8 +295,13 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
     @objc private func startQuiz() {
         words = presetWords ?? loadSavedWords()
+        let filteredWords = applyFilters(words: words)
         guard !words.isEmpty else {
             showAlert(title: "単語がありません", message: "先に単語を登録してください。")
+            return
+        }
+        guard !filteredWords.isEmpty else {
+            showAlert(title: "条件に合う単語がありません", message: "星・レベルの条件を見直してください。")
             return
         }
 
@@ -263,7 +317,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         sessionModeLabel = modeLabel(for: selectedMode)
         sessionDirectionLabel = directionLabel(for: selectedDirection)
 
-        quiz = generateQuiz(words: words,
+        quiz = generateQuiz(words: filteredWords,
                             modeIndex: selectedMode,
                             directionIndex: selectedDirection,
                             numQuestions: numQuestionsInput,
@@ -348,6 +402,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
                                        numChoices: numChoices)
             return QuizQuestion(type: .choice,
                                 direction: direction,
+                                wordId: word.id,
                                 prompt: prompt,
                                 correctAnswer: correct,
                                 choices: choices)
@@ -355,6 +410,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         return QuizQuestion(type: .written,
                             direction: direction,
+                            wordId: word.id,
                             prompt: prompt,
                             correctAnswer: correct,
                             choices: [])
@@ -474,6 +530,49 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         return text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
+    private func applyFilters(words: [SavedWord]) -> [SavedWord] {
+        guard !selectedLevels.isEmpty else { return [] }
+        var filtered = words
+        if favoriteOnly {
+            filtered = filtered.filter { $0.isFavorite }
+        }
+        filtered = filtered.filter { selectedLevels.contains(max(1, min(5, $0.importanceLevel))) }
+        return filtered
+    }
+
+    @objc private func toggleFavoriteFilter() {
+        favoriteOnly.toggle()
+        updateFavoriteFilterButton()
+    }
+
+    private func updateFavoriteFilterButton() {
+        let imageName = favoriteOnly ? "star.fill" : "star"
+        favoriteFilterButton.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+
+    @objc private func toggleLevel(_ sender: UIButton) {
+        let level = sender.tag
+        if selectedLevels.contains(level) {
+            selectedLevels.remove(level)
+        } else {
+            selectedLevels.insert(level)
+        }
+        updateLevelButtons()
+    }
+
+    private func updateLevelButtons() {
+        for button in levelButtons {
+            let isSelected = selectedLevels.contains(button.tag)
+            let imageName = isSelected ? "checkmark.square.fill" : "square"
+            button.setImage(UIImage(systemName: imageName), for: .normal)
+            button.tintColor = isSelected ? .systemBlue : .systemGray
+            button.setTitle(" Lv\(button.tag)", for: .normal)
+            button.setTitleColor(isSelected ? .systemBlue : .systemGray, for: .normal)
+            button.layer.borderColor = (isSelected ? UIColor.systemBlue : UIColor.systemGray4).cgColor
+            button.backgroundColor = isSelected ? UIColor.systemBlue.withAlphaComponent(0.08) : .clear
+        }
+    }
+
     private func startTimerIfNeeded(limitSeconds: Int) {
         timer?.invalidate()
         timeLabel.text = ""
@@ -553,6 +652,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             index: currentIndex + 1,
             type: question.type == .choice ? "choice" : "written",
             direction: question.direction == .enToJa ? "en_to_ja" : "ja_to_en",
+            wordId: question.wordId,
             prompt: question.prompt,
             correctAnswer: question.correctAnswer,
             userAnswer: userAnswer,
@@ -695,6 +795,7 @@ private struct SessionQuestion: Codable {
     let index: Int
     let type: String
     let direction: String
+    let wordId: String?
     let prompt: String
     let correctAnswer: String
     let userAnswer: String

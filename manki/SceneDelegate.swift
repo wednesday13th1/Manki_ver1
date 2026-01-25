@@ -29,6 +29,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Called when the scene has moved from an inactive state to an active state.
         // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+        presentDailyGoalPromptIfNeeded()
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
@@ -47,6 +48,36 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // to restore the scene back to its current state.
     }
 
+    private func presentDailyGoalPromptIfNeeded() {
+        let now = Date()
+        if !DailyGoalStore.shouldPromptToday(now: now) {
+            return
+        }
+        DailyGoalStore.markPromptedToday(now: now)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            guard let self else { return }
+            guard let top = self.topViewController(from: self.window?.rootViewController),
+                  top.presentedViewController == nil else {
+                return
+            }
+            let controller = DailyGoalViewController()
+            controller.modalPresentationStyle = .fullScreen
+            top.present(controller, animated: true)
+        }
+    }
+
+    private func topViewController(from root: UIViewController?) -> UIViewController? {
+        if let presented = root?.presentedViewController {
+            return topViewController(from: presented)
+        }
+        if let nav = root as? UINavigationController {
+            return topViewController(from: nav.visibleViewController)
+        }
+        if let tab = root as? UITabBarController {
+            return topViewController(from: tab.selectedViewController)
+        }
+        return root
+    }
 
 }
-

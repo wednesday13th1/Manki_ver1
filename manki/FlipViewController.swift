@@ -18,6 +18,8 @@ class FlipViewController: UIViewController {
     private var isFlipped = false
     private var sessionStartTime: Date?
     private var hasRecordedSession = false
+    private var viewedWordIDs: [String] = []
+    private var viewedWordIDSet: Set<String> = []
 
     private let cardContainer = UIView()
     private let frontView = UIView()
@@ -57,6 +59,9 @@ class FlipViewController: UIViewController {
         if sessionStartTime == nil {
             sessionStartTime = Date()
             hasRecordedSession = false
+            viewedWordIDs.removeAll()
+            viewedWordIDSet.removeAll()
+            recordViewedWordIfNeeded()
         }
     }
 
@@ -207,6 +212,21 @@ class FlipViewController: UIViewController {
         if elapsed < 1 {
             return
         }
+        let wordMap = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+        let questions = viewedWordIDs.enumerated().compactMap { index, id -> SessionQuestion? in
+            guard let word = wordMap[id] else { return nil }
+            return SessionQuestion(
+                index: index + 1,
+                type: "flip",
+                direction: "none",
+                wordId: word.id,
+                prompt: word.english,
+                correctAnswer: word.japanese,
+                userAnswer: "",
+                correct: false,
+                answerTimeSec: 0
+            )
+        }
         let session = SessionResult(
             timestamp: isoTimestamp(),
             reason: "flip",
@@ -217,7 +237,7 @@ class FlipViewController: UIViewController {
             score: 0,
             accuracy: 0,
             totalElapsedSec: elapsed,
-            questions: []
+            questions: questions
         )
         var db = loadResults()
         db.sessions.append(session)
@@ -263,10 +283,20 @@ class FlipViewController: UIViewController {
             return
         }
         let word = words[currentIndex]
+        recordViewedWordIfNeeded()
         frontLabel.text = word.english
         backLabel.text = word.japanese
         loadComicImage(for: word)
         setCardSide(isFront: true, animated: false)
+    }
+
+    private func recordViewedWordIfNeeded() {
+        guard currentIndex >= 0, currentIndex < words.count else { return }
+        let id = words[currentIndex].id
+        if !viewedWordIDSet.contains(id) {
+            viewedWordIDSet.insert(id)
+            viewedWordIDs.append(id)
+        }
     }
 
     private func setCardSide(isFront: Bool, animated: Bool) {
@@ -975,6 +1005,7 @@ private struct SessionQuestion: Codable {
     let index: Int
     let type: String
     let direction: String
+    let wordId: String?
     let prompt: String
     let correctAnswer: String
     let userAnswer: String
