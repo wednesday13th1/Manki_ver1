@@ -17,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <prototypes>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" id="GpO-wl-c32">
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="cell" id="GpO-wl-c32">
                                 <rect key="frame" x="0.0" y="50" width="393" height="43.666667938232422"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="GpO-wl-c32" id="gl5-C2-MjO" customClass="ListTableViewCell" customModule="manki" customModuleProvider="target">
@@ -77,7 +77,7 @@
         <!--Quiz View Controller-->
         <scene sceneID="K0y-gm-qIe">
             <objects>
-                <viewController id="Lew-fA-Yev" customClass="QuizViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="QuizViewController" id="Lew-fA-Yev" customClass="QuizViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Sf7-59-pB1">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -92,7 +92,7 @@
         <!--Result View Controller-->
         <scene sceneID="sCR-RP-4mN">
             <objects>
-                <viewController id="Cym-36-lCs" customClass="ResultViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ResultViewController" id="Cym-36-lCs" customClass="ResultViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="LIA-nY-11M">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -157,7 +157,7 @@
         <!--Word View Controller-->
         <scene sceneID="vM5-lM-MiN">
             <objects>
-                <viewController id="gPP-RU-YnY" customClass="WordViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="WordViewController" id="gPP-RU-YnY" customClass="WordViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="10A-4B-6f3">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -202,7 +202,7 @@
         <!--Setting View Controller-->
         <scene sceneID="Cmy-up-vbe">
             <objects>
-                <viewController id="igc-JO-DH6" customClass="SettingViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SettingViewController" id="igc-JO-DH6" customClass="SettingViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="kj7-V1-Uau">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -222,33 +222,33 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="842"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="日本語" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="veM-j6-02y">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="日本語" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="veM-j6-02y">
                                 <rect key="frame" x="28" y="139" width="97" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="hfv-qZ-MTq">
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="hfv-qZ-MTq">
                                 <rect key="frame" x="161" y="132" width="204" height="34"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="英語" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="n3L-kF-g4z">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="英語" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="n3L-kF-g4z">
                                 <rect key="frame" x="28" y="208" width="97" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="p2t-Pp-mPe">
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="p2t-Pp-mPe">
                                 <rect key="frame" x="161" y="195" width="204" height="34"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1UE-Vh-0M4">
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1UE-Vh-0M4">
                                 <rect key="frame" x="28" y="270" width="337" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -258,6 +258,24 @@
                                 </connections>
                             </button>
                         </subviews>
+                        <constraints>
+                            <constraint firstItem="veM-j6-02y" firstAttribute="top" secondItem="isx-i7-bai" secondAttribute="top" constant="139" id="5nK-oY-u1m"/>
+                            <constraint firstItem="veM-j6-02y" firstAttribute="leading" secondItem="isx-i7-bai" secondAttribute="leading" constant="28" id="y0t-xf-4lB"/>
+                            <constraint firstItem="hfv-qZ-MTq" firstAttribute="leading" secondItem="veM-j6-02y" secondAttribute="trailing" constant="36" id="u6W-5j-5pN"/>
+                            <constraint firstItem="hfv-qZ-MTq" firstAttribute="trailing" secondItem="isx-i7-bai" secondAttribute="trailing" constant="-28" id="a1f-nB-FnY"/>
+                            <constraint firstItem="hfv-qZ-MTq" firstAttribute="centerY" secondItem="veM-j6-02y" secondAttribute="centerY" id="g9H-7v-w7X"/>
+                            <constraint firstItem="hfv-qZ-MTq" firstAttribute="height" constant="34" id="QkY-cZ-7cZ"/>
+                            <constraint firstItem="n3L-kF-g4z" firstAttribute="top" secondItem="veM-j6-02y" secondAttribute="bottom" constant="48" id="LwU-n2-tQF"/>
+                            <constraint firstItem="n3L-kF-g4z" firstAttribute="leading" secondItem="isx-i7-bai" secondAttribute="leading" constant="28" id="pOF-1a-3a5"/>
+                            <constraint firstItem="p2t-Pp-mPe" firstAttribute="leading" secondItem="n3L-kF-g4z" secondAttribute="trailing" constant="36" id="4o2-9F-42r"/>
+                            <constraint firstItem="p2t-Pp-mPe" firstAttribute="trailing" secondItem="isx-i7-bai" secondAttribute="trailing" constant="-28" id="mtu-xM-2M1"/>
+                            <constraint firstItem="p2t-Pp-mPe" firstAttribute="centerY" secondItem="n3L-kF-g4z" secondAttribute="centerY" id="J8u-BB-uQ1"/>
+                            <constraint firstItem="p2t-Pp-mPe" firstAttribute="height" constant="34" id="E80-5Z-3kD"/>
+                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="top" secondItem="p2t-Pp-mPe" secondAttribute="bottom" constant="41" id="8kR-kE-5x3"/>
+                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="leading" secondItem="isx-i7-bai" secondAttribute="leading" constant="28" id="HLf-Ag-0iL"/>
+                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="trailing" secondItem="isx-i7-bai" secondAttribute="trailing" constant="-28" id="gh0-Yz-9pg"/>
+                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="height" constant="44" id="G7h-0T-Bte"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="isx-i7-bai"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
