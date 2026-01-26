@@ -32,6 +32,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var displayedSetCache: [SavedSet] = []
     private var sortOption: SetSortOption = .created
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
+    private let tapGesture = UITapGestureRecognizer()
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchText: String = ""
@@ -44,6 +45,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let headerContainer = UIView()
     private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
+    private var isHandlingSelection = false
 
     init(folderID: String?, showsAll: Bool = false) {
         self.folderID = folderID
@@ -134,6 +136,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         gesture.delegate = self
         tableView.addGestureRecognizer(gesture)
         renameGesture = gesture
+        tapGesture.addTarget(self, action: #selector(handleTableTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delaysTouchesBegan = false
+        tapGesture.delegate = self
+        tapGesture.require(toFail: tableView.panGestureRecognizer)
+        tableView.addGestureRecognizer(tapGesture)
 
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -146,6 +154,31 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
+    }
+
+    @objc private func handleTableTap(_ gesture: UITapGestureRecognizer) {
+        guard gesture.state == .ended else { return }
+        let location = gesture.location(in: tableView)
+        guard let indexPath = tableView.indexPathForRow(at: location) else { return }
+        handleSelection(at: indexPath)
+    }
+
+    private func handleSelection(at indexPath: IndexPath) {
+        guard !isHandlingSelection else { return }
+        guard indexPath.row < displayedSetCache.count else { return }
+        isHandlingSelection = true
+        let set = displayedSetCache[indexPath.row]
+        let controller = SetDetailViewController(setID: set.id)
+        if let nav = navigationController {
+            nav.pushViewController(controller, animated: true)
+        } else {
+            let nav = UINavigationController(rootViewController: controller)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.isHandlingSelection = false
+        }
     }
 
     private func configureEmptyLabel() {
@@ -234,6 +267,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseID)
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: reuseID)
         let set = displayedSets()[indexPath.row]
+        cell.accessibilityIdentifier = set.id
         let count = wordCount(for: set)
         cell.textLabel?.text = set.name
         cell.detailTextLabel?.text = "単語 \(count) 個"
@@ -249,30 +283,32 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let set = displayedSets()[indexPath.row]
-        let controller = SetDetailViewController(setID: set.id)
-        if let nav = navigationController {
-            nav.pushViewController(controller, animated: true)
-        } else {
-            let nav = UINavigationController(rootViewController: controller)
-            nav.modalPresentationStyle = .fullScreen
-            present(nav, animated: true)
-        }
+        handleSelection(at: indexPath)
     }
 
     func tableView(_ tableView: UITableView,
                    trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
     -> UISwipeActionsConfiguration? {
+        guard indexPath.row < displayedSetCache.count else { return nil }
+        let setID = displayedSetCache[indexPath.row].id
         let move = UIContextualAction(style: .normal, title: "フォルダー") { [weak self] _, _, completion in
             self?.showMoveSetSheet(for: indexPath)
             completion(true)
         }
         move.backgroundColor = .systemBlue
         let delete = UIContextualAction(style: .destructive, title: "削除") { [weak self] _, _, completion in
-            self?.deleteSet(at: indexPath)
+            self?.deleteSet(id: setID)
             completion(true)
         }
         return UISwipeActionsConfiguration(actions: [delete, move])
+    }
+
+    func tableView(_ tableView: UITableView, willBeginEditingRowAt indexPath: IndexPath) {
+        tapGesture.isEnabled = false
+    }
+
+    func tableView(_ tableView: UITableView, didEndEditingRowAt indexPath: IndexPath?) {
+        tapGesture.isEnabled = true
     }
 
     @objc private func openAddSet() {
@@ -435,10 +471,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.reloadData()
     }
 
-    private func deleteSet(at indexPath: IndexPath) {
-        let set = displayedSets()[indexPath.row]
+    private func deleteSet(id: String) {
         var allSets = SetStore.loadSets()
-        if let index = allSets.firstIndex(where: { $0.id == set.id }) {
+        if let index = allSets.firstIndex(where: { $0.id == id }) {
             allSets.remove(at: index)
             SetStore.saveSets(allSets)
         }
