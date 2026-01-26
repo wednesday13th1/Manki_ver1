@@ -16,14 +16,22 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchText: String = ""
+    private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "フォルダー"
-        view.backgroundColor = .systemBackground
         configureTableView()
         configureEmptyLabel()
         configureSearch()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "追加",
                                                             style: .plain,
@@ -47,6 +55,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        applyTheme()
         reloadData()
     }
 
@@ -125,6 +134,12 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             cell.detailTextLabel?.text = "セット \(count) 個"
         }
         cell.accessoryType = .disclosureIndicator
+        cell.textLabel?.font = AppFont.jp(size: 18, weight: .bold)
+        cell.detailTextLabel?.font = AppFont.jp(size: 14)
+        let palette = ThemeManager.palette()
+        cell.backgroundColor = palette.surface
+        cell.textLabel?.textColor = palette.text
+        cell.detailTextLabel?.textColor = palette.mutedText
         return cell
     }
 
@@ -184,6 +199,23 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     @objc private func closeSelf() {
         dismiss(animated: true)
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        ThemeManager.applySearchBar(searchController.searchBar)
+        tableView.backgroundColor = .clear
+        tableView.separatorColor = palette.border
+        emptyLabel.font = AppFont.jp(size: 16)
+        emptyLabel.textColor = palette.mutedText
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     private func renameFolder(at indexPath: IndexPath) {

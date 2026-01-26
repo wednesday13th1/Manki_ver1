@@ -14,20 +14,28 @@ final class DailyGoalViewController: UIViewController {
     private let minutesField = UITextField()
     private let saveButton = UIButton(type: .system)
     private let skipButton = UIButton(type: .system)
+    private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
         configureUI()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
     }
 
     private func configureUI() {
         titleLabel.text = "今日の勉強時間目標"
-        titleLabel.font = .boldSystemFont(ofSize: 22)
+        titleLabel.font = AppFont.jp(size: 20, weight: .bold)
         titleLabel.textAlignment = .center
 
         subtitleLabel.text = "分数を入力してください"
-        subtitleLabel.font = .systemFont(ofSize: 15)
+        subtitleLabel.font = AppFont.jp(size: 14)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.textAlignment = .center
 
@@ -37,7 +45,7 @@ final class DailyGoalViewController: UIViewController {
         minutesField.textAlignment = .center
 
         saveButton.setTitle("設定する", for: .normal)
-        saveButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        saveButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         saveButton.addTarget(self, action: #selector(saveGoal), for: .touchUpInside)
 
         skipButton.setTitle("スキップ", for: .normal)
@@ -61,6 +69,26 @@ final class DailyGoalViewController: UIViewController {
         minutesField.heightAnchor.constraint(equalToConstant: 44).isActive = true
         saveButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
         skipButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        titleLabel.textColor = palette.text
+        subtitleLabel.textColor = palette.mutedText
+        minutesField.backgroundColor = palette.surface
+        minutesField.textColor = palette.text
+        minutesField.layer.cornerRadius = 10
+        minutesField.layer.borderWidth = 1
+        minutesField.layer.borderColor = palette.border.cgColor
+        ThemeManager.stylePrimaryButton(saveButton)
+        ThemeManager.styleSecondaryButton(skipButton)
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     @objc private func saveGoal() {

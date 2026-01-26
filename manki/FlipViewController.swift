@@ -24,6 +24,8 @@ class FlipViewController: UIViewController {
     private let cardContainer = UIView()
     private let frontView = UIView()
     private let backView = UIView()
+    private let frontScreen = UIView()
+    private let backScreen = UIView()
     private let frontLabel = UILabel()
     private let backLabel = UILabel()
     private let backStack = UIStackView()
@@ -32,18 +34,25 @@ class FlipViewController: UIViewController {
     private let emojiLabel = UILabel()
     private let loadingIndicator = UIActivityIndicatorView(style: .medium)
     private let errorLabel = UILabel()
+    private let frontStickerContainer = UIView()
+    private let frontStickerLabel = UILabel()
+    private let frontStickerIcon = UIImageView()
+    private let backStickerContainer = UIView()
+    private let backStickerLabel = UILabel()
+    private let backStickerIcon = UIImageView()
+    private let buttonPanel = UIView()
     private let buttonStack = UIStackView()
     private let prevButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
     private let emojiMapFileName = "emoji_map.json"
     private var emojiMap: [String: String] = [:]
     private var emojiTask: URLSessionDataTask?
+    private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "フリップ"
-        view.backgroundColor = .systemBackground
 
         configureUI()
         words = presetWords ?? loadSavedWords()
@@ -52,6 +61,14 @@ class FlipViewController: UIViewController {
             showAlert(title: "単語がありません", message: "先に単語を登録してください。")
         }
         showWord()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -78,8 +95,8 @@ class FlipViewController: UIViewController {
         NSLayoutConstraint.activate([
             cardContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             cardContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            cardContainer.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.75),
-            cardContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.3),
+            cardContainer.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.78),
+            cardContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.34),
         ])
 
         [frontView, backView].forEach { cardSide in
@@ -98,13 +115,18 @@ class FlipViewController: UIViewController {
         }
 
         frontLabel.translatesAutoresizingMaskIntoConstraints = false
-        frontLabel.font = .systemFont(ofSize: 28, weight: .bold)
+        frontLabel.font = AppFont.jp(size: 28, weight: .bold)
         frontLabel.numberOfLines = 0
         frontLabel.textAlignment = .center
-        frontView.addSubview(frontLabel)
+        frontScreen.translatesAutoresizingMaskIntoConstraints = false
+        frontScreen.layer.cornerRadius = 14
+        frontScreen.layer.borderWidth = 2
+        frontScreen.clipsToBounds = true
+        frontView.addSubview(frontScreen)
+        frontScreen.addSubview(frontLabel)
 
         backLabel.translatesAutoresizingMaskIntoConstraints = false
-        backLabel.font = .systemFont(ofSize: 24, weight: .semibold)
+        backLabel.font = AppFont.jp(size: 22, weight: .bold)
         backLabel.numberOfLines = 0
         backLabel.textAlignment = .center
         backImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -120,15 +142,20 @@ class FlipViewController: UIViewController {
         emojiLabel.textAlignment = .center
 
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
-        errorLabel.font = .systemFont(ofSize: 14)
+        errorLabel.font = AppFont.jp(size: 12)
         errorLabel.textColor = .secondaryLabel
         errorLabel.numberOfLines = 0
         errorLabel.textAlignment = .center
 
         backStack.axis = .vertical
-        backStack.spacing = 12
+        backStack.spacing = 10
         backStack.translatesAutoresizingMaskIntoConstraints = false
-        backView.addSubview(backStack)
+        backScreen.translatesAutoresizingMaskIntoConstraints = false
+        backScreen.layer.cornerRadius = 14
+        backScreen.layer.borderWidth = 2
+        backScreen.clipsToBounds = true
+        backView.addSubview(backScreen)
+        backScreen.addSubview(backStack)
         backStack.addArrangedSubview(fallbackPlaceholderView)
         backStack.addArrangedSubview(backImageView)
         backStack.addArrangedSubview(backLabel)
@@ -136,15 +163,23 @@ class FlipViewController: UIViewController {
         fallbackPlaceholderView.addSubview(emojiLabel)
 
         NSLayoutConstraint.activate([
-            frontLabel.leadingAnchor.constraint(equalTo: frontView.leadingAnchor, constant: 16),
-            frontLabel.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -16),
-            frontLabel.centerYAnchor.constraint(equalTo: frontView.centerYAnchor),
-            backStack.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 16),
-            backStack.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -16),
-            backStack.topAnchor.constraint(equalTo: backView.topAnchor, constant: 16),
-            backStack.bottomAnchor.constraint(equalTo: backView.bottomAnchor, constant: -16),
-            fallbackPlaceholderView.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
-            backImageView.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
+            frontScreen.leadingAnchor.constraint(equalTo: frontView.leadingAnchor, constant: 14),
+            frontScreen.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -14),
+            frontScreen.topAnchor.constraint(equalTo: frontView.topAnchor, constant: 14),
+            frontScreen.heightAnchor.constraint(equalTo: frontView.heightAnchor, multiplier: 0.48),
+            frontLabel.leadingAnchor.constraint(equalTo: frontScreen.leadingAnchor, constant: 12),
+            frontLabel.trailingAnchor.constraint(equalTo: frontScreen.trailingAnchor, constant: -12),
+            frontLabel.centerYAnchor.constraint(equalTo: frontScreen.centerYAnchor),
+            backScreen.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 14),
+            backScreen.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -14),
+            backScreen.topAnchor.constraint(equalTo: backView.topAnchor, constant: 14),
+            backScreen.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.48),
+            backStack.leadingAnchor.constraint(equalTo: backScreen.leadingAnchor, constant: 12),
+            backStack.trailingAnchor.constraint(equalTo: backScreen.trailingAnchor, constant: -12),
+            backStack.topAnchor.constraint(equalTo: backScreen.topAnchor, constant: 12),
+            backStack.bottomAnchor.constraint(equalTo: backScreen.bottomAnchor, constant: -12),
+            fallbackPlaceholderView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.55),
+            backImageView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.55),
         ])
         NSLayoutConstraint.activate([
             emojiLabel.centerXAnchor.constraint(equalTo: fallbackPlaceholderView.centerXAnchor),
@@ -159,16 +194,32 @@ class FlipViewController: UIViewController {
             loadingIndicator.centerYAnchor.constraint(equalTo: backView.centerYAnchor),
         ])
 
+        configureSticker(frontStickerContainer, label: frontStickerLabel, icon: frontStickerIcon)
+        configureSticker(backStickerContainer, label: backStickerLabel, icon: backStickerIcon)
+        frontView.addSubview(frontStickerContainer)
+        backView.addSubview(backStickerContainer)
+        NSLayoutConstraint.activate([
+            frontStickerContainer.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -16),
+            frontStickerContainer.bottomAnchor.constraint(equalTo: frontView.bottomAnchor, constant: -16),
+            backStickerContainer.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -16),
+            backStickerContainer.bottomAnchor.constraint(equalTo: backView.bottomAnchor, constant: -16),
+        ])
+        frontStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
+        backStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
+
         backView.isHidden = true
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(flipCard))
         cardContainer.addGestureRecognizer(tapGesture)
 
+        buttonPanel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(buttonPanel)
+
         buttonStack.axis = .horizontal
         buttonStack.spacing = 16
         buttonStack.distribution = .fillEqually
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonStack)
+        buttonPanel.addSubview(buttonStack)
 
         prevButton.setTitle("前の単語", for: .normal)
         prevButton.addTarget(self, action: #selector(showPrevWord), for: .touchUpInside)
@@ -179,10 +230,109 @@ class FlipViewController: UIViewController {
         buttonStack.addArrangedSubview(nextButton)
 
         NSLayoutConstraint.activate([
-            buttonStack.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 24),
-            buttonStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            buttonStack.widthAnchor.constraint(equalTo: cardContainer.widthAnchor),
+            buttonPanel.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 20),
+            buttonPanel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            buttonPanel.widthAnchor.constraint(equalTo: cardContainer.widthAnchor),
+            buttonPanel.heightAnchor.constraint(equalTo: cardContainer.heightAnchor, multiplier: 0.22),
+            buttonStack.leadingAnchor.constraint(equalTo: buttonPanel.leadingAnchor, constant: 16),
+            buttonStack.trailingAnchor.constraint(equalTo: buttonPanel.trailingAnchor, constant: -16),
+            buttonStack.topAnchor.constraint(equalTo: buttonPanel.topAnchor, constant: 10),
+            buttonStack.bottomAnchor.constraint(equalTo: buttonPanel.bottomAnchor, constant: -10),
         ])
+    }
+
+    private func configureSticker(_ container: UIView, label: UILabel, icon: UIImageView) {
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.layer.cornerRadius = 14
+        container.layer.borderWidth = 2
+        container.layer.shadowOpacity = 0.25
+        container.layer.shadowOffset = CGSize(width: 0, height: 3)
+        container.layer.shadowRadius = 4
+
+        let stack = UIStackView(arrangedSubviews: [label, icon])
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 6
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(stack)
+
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.title(size: 12)
+        label.text = "COOL!"
+        label.textAlignment = .center
+
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        icon.contentMode = .scaleAspectFit
+        icon.image = UIImage(systemName: "sparkle")
+
+        NSLayoutConstraint.activate([
+            container.widthAnchor.constraint(equalToConstant: 110),
+            container.heightAnchor.constraint(equalToConstant: 36),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -6),
+            icon.widthAnchor.constraint(equalToConstant: 16),
+            icon.heightAnchor.constraint(equalToConstant: 16),
+        ])
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+
+        [frontView, backView].forEach { cardSide in
+            cardSide.backgroundColor = palette.surfaceAlt
+            cardSide.layer.borderColor = palette.border.cgColor
+            cardSide.layer.borderWidth = 2
+            cardSide.layer.shadowColor = palette.border.cgColor
+            cardSide.layer.shadowOpacity = 0.15
+            cardSide.layer.shadowOffset = CGSize(width: 0, height: 4)
+            cardSide.layer.shadowRadius = 8
+        }
+        [frontScreen, backScreen].forEach { screen in
+            screen.backgroundColor = UIColor.black.withAlphaComponent(0.85)
+            screen.layer.borderColor = palette.border.cgColor
+            screen.layer.shadowColor = palette.accent.cgColor
+            screen.layer.shadowOpacity = 0.35
+            screen.layer.shadowOffset = CGSize(width: 0, height: 4)
+            screen.layer.shadowRadius = 10
+        }
+        frontLabel.textColor = .white
+        backLabel.textColor = .white
+        errorLabel.textColor = palette.mutedText
+        fallbackPlaceholderView.backgroundColor = palette.surfaceAlt
+        loadingIndicator.color = palette.accentStrong
+        [frontStickerContainer, backStickerContainer].forEach { sticker in
+            sticker.backgroundColor = palette.accent
+            sticker.layer.borderColor = palette.border.cgColor
+            sticker.layer.shadowColor = palette.border.cgColor
+        }
+        frontStickerLabel.textColor = palette.text
+        backStickerLabel.textColor = palette.text
+        frontStickerIcon.tintColor = palette.text
+        backStickerIcon.tintColor = palette.text
+
+        prevButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
+        nextButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
+        ThemeManager.styleSecondaryButton(prevButton)
+        ThemeManager.stylePrimaryButton(nextButton)
+
+        buttonPanel.backgroundColor = palette.surface
+        buttonPanel.layer.cornerRadius = 16
+        buttonPanel.layer.borderWidth = 2
+        buttonPanel.layer.borderColor = palette.border.cgColor
+        buttonPanel.layer.shadowColor = palette.border.cgColor
+        buttonPanel.layer.shadowOpacity = 0.2
+        buttonPanel.layer.shadowOffset = CGSize(width: 0, height: 3)
+        buttonPanel.layer.shadowRadius = 6
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     private func savedWordsFileURL() -> URL {
@@ -273,6 +423,7 @@ class FlipViewController: UIViewController {
         guard !words.isEmpty else {
             frontLabel.text = "単語がありません"
             backLabel.text = ""
+            updateCardFonts(frontText: frontLabel.text ?? "", backText: backLabel.text ?? "")
             backImageView.image = nil
             backImageView.isHidden = true
             fallbackPlaceholderView.isHidden = true
@@ -286,8 +437,21 @@ class FlipViewController: UIViewController {
         recordViewedWordIfNeeded()
         frontLabel.text = word.english
         backLabel.text = word.japanese
+        updateCardFonts(frontText: word.english, backText: word.japanese)
         loadComicImage(for: word)
         setCardSide(isFront: true, animated: false)
+    }
+
+    private func updateCardFonts(frontText: String, backText: String) {
+        frontLabel.font = fontForText(frontText, jpSize: 26, enSize: 34)
+        backLabel.font = fontForText(backText, jpSize: 22, enSize: 28)
+    }
+
+    private func fontForText(_ text: String, jpSize: CGFloat, enSize: CGFloat) -> UIFont {
+        if text.range(of: "[\\p{Hiragana}\\p{Katakana}\\p{Han}]", options: .regularExpression) != nil {
+            return AppFont.jp(size: jpSize, weight: .bold)
+        }
+        return AppFont.en(size: enSize, weight: .regular)
     }
 
     private func recordViewedWordIfNeeded() {

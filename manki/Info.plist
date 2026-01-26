@@ -14,6 +14,13 @@
 </string>
 	<key>GeminiAPIKey</key>
 	<string>AIzaSyAtv_nsoWZsoPhYuXq33Q-KsLAYqZ4ffDg</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf</string>
+		<string>manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf</string>
+		<string>manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf</string>
+		<string>manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

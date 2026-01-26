@@ -107,6 +107,7 @@ struct SavedSet: Codable {
 
 struct SetStore {
     static let setsFileName = "saved_sets.json"
+    private static let setsBackupKey = "manki.saved_sets.backup"
 
     static func setsFileURL() -> URL {
         let documents = FileManager.default.urls(for: .documentDirectory,
@@ -120,6 +121,13 @@ struct SetStore {
            let decoded = try? JSONDecoder().decode([SavedSet].self, from: data) {
             return decoded
         }
+        if let data = UserDefaults.standard.data(forKey: setsBackupKey),
+           let decoded = try? JSONDecoder().decode([SavedSet].self, from: data) {
+            if let encoded = try? JSONEncoder().encode(decoded) {
+                try? encoded.write(to: fileURL, options: .atomic)
+            }
+            return decoded
+        }
         return []
     }
 
@@ -127,6 +135,7 @@ struct SetStore {
         let fileURL = setsFileURL()
         guard let data = try? JSONEncoder().encode(sets) else { return }
         try? data.write(to: fileURL, options: .atomic)
+        UserDefaults.standard.set(data, forKey: setsBackupKey)
     }
 }
 

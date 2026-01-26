@@ -14,7 +14,7 @@ private func needsWordIDMigration(from data: Data) -> Bool {
     return json.contains { $0["id"] == nil }
 }
 
-final class SetViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+final class SetViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
 
     private let savedWordsFileName = "saved_words.json"
     private enum SetSortOption {
@@ -29,11 +29,18 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var sets: [SavedSet] = []
     private var wordsByID: [String: SavedWord] = [:]
     private var filteredSets: [SavedSet] = []
+    private var displayedSetCache: [SavedSet] = []
     private var sortOption: SetSortOption = .created
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchText: String = ""
+    private let themeHeader = UIView()
+    private let themeTitleLabel = UILabel()
+    private let themeStack = UIStackView()
+    private var themeButtons: [UIButton] = []
+    private var themeObserver: NSObjectProtocol?
+    private let themeHeaderHeight: CGFloat = 120
     private let headerContainer = UIView()
     private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
@@ -57,6 +64,15 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         configureTableView()
         configureEmptyLabel()
         configureSearch()
+        configureThemeHeader()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
 
         let addButton = UIBarButtonItem(title: "追加",
                                         style: .plain,
@@ -80,7 +96,29 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        applyTheme()
         reloadData()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.allowsSelection = true
+        tableView.allowsSelectionDuringEditing = true
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if let header = tableView.tableHeaderView {
+            let targetHeight = themeHeaderHeight
+            let targetWidth = tableView.bounds.width
+            if header.frame.height != targetHeight || header.frame.width != targetWidth {
+                header.frame.size.width = targetWidth
+                header.frame.size.height = targetHeight
+                tableView.tableHeaderView = header
+            }
+        }
     }
 
     private func configureTableView() {
@@ -88,8 +126,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.dataSource = self
         tableView.delegate = self
         tableView.rowHeight = 60
+        tableView.delaysContentTouches = false
         view.addSubview(tableView)
         let gesture = UILongPressGestureRecognizer(target: self, action: #selector(handleSetRenameLongPress(_:)))
+        gesture.cancelsTouchesInView = false
+        gesture.delaysTouchesBegan = false
+        gesture.delegate = self
         tableView.addGestureRecognizer(gesture)
         renameGesture = gesture
 
@@ -99,6 +141,11 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 
     private func configureEmptyLabel() {
@@ -123,6 +170,47 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         navigationItem.searchController = searchController // 検索
         navigationItem.hidesSearchBarWhenScrolling = true
         definesPresentationContext = true
+    }
+
+    private func configureThemeHeader() {
+        themeHeader.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: themeHeaderHeight)
+        themeHeader.translatesAutoresizingMaskIntoConstraints = false
+
+        themeTitleLabel.text = "テーマ"
+        themeTitleLabel.textAlignment = .left
+
+        themeStack.axis = .horizontal
+        themeStack.spacing = 12
+        themeStack.alignment = .center
+        themeStack.distribution = .fillEqually
+        themeStack.translatesAutoresizingMaskIntoConstraints = false
+
+        themeButtons = AppTheme.allCases.enumerated().map { index, theme in
+            let button = UIButton(type: .system)
+            button.tag = index
+            button.layer.cornerRadius = 16
+            button.layer.borderWidth = 2
+            button.addTarget(self, action: #selector(selectTheme(_:)), for: .touchUpInside)
+            return button
+        }
+        themeButtons.forEach { themeStack.addArrangedSubview($0) }
+
+        themeHeader.addSubview(themeTitleLabel)
+        themeHeader.addSubview(themeStack)
+        themeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            themeTitleLabel.topAnchor.constraint(equalTo: themeHeader.topAnchor, constant: 12),
+            themeTitleLabel.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: 20),
+            themeTitleLabel.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -20),
+
+            themeStack.topAnchor.constraint(equalTo: themeTitleLabel.bottomAnchor, constant: 12),
+            themeStack.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: 20),
+            themeStack.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -20),
+            themeStack.heightAnchor.constraint(equalToConstant: 36),
+        ])
+
+        tableView.tableHeaderView = themeHeader
     }
 
     private func reloadData() {
@@ -150,6 +238,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         cell.textLabel?.text = set.name
         cell.detailTextLabel?.text = "単語 \(count) 個"
         cell.accessoryType = .disclosureIndicator
+        cell.textLabel?.font = AppFont.jp(size: 18, weight: .bold)
+        cell.detailTextLabel?.font = AppFont.jp(size: 14)
+        let palette = ThemeManager.palette()
+        cell.backgroundColor = palette.surface
+        cell.textLabel?.textColor = palette.text
+        cell.detailTextLabel?.textColor = palette.mutedText
         return cell
     }
 
@@ -157,7 +251,13 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.deselectRow(at: indexPath, animated: true)
         let set = displayedSets()[indexPath.row]
         let controller = SetDetailViewController(setID: set.id)
-        navigationController?.pushViewController(controller, animated: true)
+        if let nav = navigationController {
+            nav.pushViewController(controller, animated: true)
+        } else {
+            let nav = UINavigationController(rootViewController: controller)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+        }
     }
 
     func tableView(_ tableView: UITableView,
@@ -191,6 +291,56 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         navigationController?.popViewController(animated: true)
     }
 
+    @objc private func selectTheme(_ sender: UIButton) {
+        let themes = AppTheme.allCases
+        guard sender.tag >= 0, sender.tag < themes.count else { return }
+        ThemeManager.setTheme(themes[sender.tag])
+        updateThemeSelection()
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        ThemeManager.applySearchBar(searchController.searchBar)
+
+        tableView.backgroundColor = .clear
+        tableView.separatorColor = palette.border
+        emptyLabel.font = AppFont.jp(size: 16)
+        emptyLabel.textColor = palette.mutedText
+
+        themeHeader.backgroundColor = palette.surface
+        themeHeader.layer.cornerRadius = 12
+        themeHeader.layer.borderWidth = 1
+        themeHeader.layer.borderColor = palette.border.cgColor
+        themeHeader.clipsToBounds = true
+        themeTitleLabel.font = AppFont.jp(size: 16, weight: .bold)
+        themeTitleLabel.textColor = palette.text
+
+        for (index, button) in themeButtons.enumerated() {
+            let theme = AppTheme.allCases[index]
+            button.backgroundColor = ThemeManager.palette(for: theme).accent
+        }
+        updateThemeSelection()
+    }
+
+    private func updateThemeSelection() {
+        let current = ThemeManager.current
+        for (index, button) in themeButtons.enumerated() {
+            let theme = AppTheme.allCases[index]
+            if theme == current {
+                button.layer.borderColor = ThemeManager.palette().border.cgColor
+                button.layer.shadowColor = ThemeManager.palette().border.cgColor
+                button.layer.shadowOpacity = 0.25
+                button.layer.shadowOffset = CGSize(width: 0, height: 2)
+                button.layer.shadowRadius = 4
+            } else {
+                button.layer.borderColor = UIColor.clear.cgColor
+                button.layer.shadowOpacity = 0
+            }
+        }
+    }
+
     @objc private func openSortMenu() {
         let alert = UIAlertController(title: "並び替え", message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "作成順", style: .default) { [weak self] _ in
@@ -218,14 +368,14 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         present(alert, animated: true)
     }
 
-    private func displayedSets() -> [SavedSet] {
-        let base: [SavedSet]
-        if searchText.isEmpty {
-            base = sets
-        } else {
-            base = filteredSets
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
-        return sortedSets(base)
+    }
+
+    private func displayedSets() -> [SavedSet] {
+        return displayedSetCache
     }
 
     private func sortedSets(_ input: [SavedSet]) -> [SavedSet] {
@@ -272,12 +422,16 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     private func applyFilterAndReload() {
+        let base: [SavedSet]
         if searchText.isEmpty {
             filteredSets = []
+            base = sets
         } else {
             filteredSets = sets.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+            base = filteredSets
         }
-        emptyLabel.isHidden = !displayedSets().isEmpty
+        displayedSetCache = sortedSets(base)
+        emptyLabel.isHidden = !displayedSetCache.isEmpty
         tableView.reloadData()
     }
 

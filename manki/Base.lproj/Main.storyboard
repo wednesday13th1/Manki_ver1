@@ -136,7 +136,7 @@
             </objects>
             <point key="canvasLocation" x="5867" y="160"/>
         </scene>
-        <!--Tab Bar Controller-->
+        <!--Main Tab Bar Controller-->
         <scene sceneID="7va-cZ-ycC">
             <objects>
                 <tabBarController storyboardIdentifier="MainTabBarController" id="6mO-zM-GTY" customClass="MainTabBarController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
@@ -198,6 +198,21 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4C6-5f-ceN" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="7066" y="1506"/>
+        </scene>
+        <!--Setting View Controller-->
+        <scene sceneID="Cmy-up-vbe">
+            <objects>
+                <viewController id="igc-JO-DH6" customClass="SettingViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="kj7-V1-Uau">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="hJq-0T-vwa"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="tqv-0r-zPw" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="7806" y="1503"/>
         </scene>
         <!--list-->
         <scene sceneID="Ehg-dS-wED">

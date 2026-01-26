@@ -30,25 +30,40 @@ final class ScheduleViewController: UIViewController {
     private var currentMonthDate = Date()
     private let colorOptions: [UIColor] = [.systemRed, .systemBlue, .systemGreen, .systemOrange, .systemPurple]
     private var selectedColorIndex: Int = 0
+    private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "スケジュール"
-        view.backgroundColor = .systemBackground
         currentMonthDate = startOfMonth(for: Date())
 
         configureUI()
         updateCountdown()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        applyTheme()
         reloadItems()
     }
 
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
     private func configureUI() {
-        countdownLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        countdownLabel.font = AppFont.jp(size: 18, weight: .bold)
         countdownLabel.numberOfLines = 0
         countdownLabel.textAlignment = .center
         countdownLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -62,7 +77,7 @@ final class ScheduleViewController: UIViewController {
         nextMonthButton.addTarget(self, action: #selector(showNextMonth), for: .touchUpInside)
         nextMonthButton.translatesAutoresizingMaskIntoConstraints = false
 
-        monthLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        monthLabel.font = AppFont.jp(size: 18, weight: .bold)
         monthLabel.textAlignment = .center
         monthLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -79,7 +94,7 @@ final class ScheduleViewController: UIViewController {
         ["日", "月", "火", "水", "木", "金", "土"].forEach { title in
             let label = UILabel()
             label.text = title
-            label.font = .systemFont(ofSize: 12, weight: .medium)
+            label.font = AppFont.jp(size: 12, weight: .bold)
             label.textAlignment = .center
             label.textColor = .secondaryLabel
             weekStack.addArrangedSubview(label)
@@ -95,7 +110,7 @@ final class ScheduleViewController: UIViewController {
         view.addSubview(calendarCollectionView)
 
         addButton.setTitle("予定を追加", for: .normal)
-        addButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        addButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         addButton.addTarget(self, action: #selector(addSchedule), for: .touchUpInside)
         addButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(addButton)
@@ -346,6 +361,12 @@ extension ScheduleViewController: UITableViewDataSource, UITableViewDelegate {
         let dateText = formatDate(item.dateValue)
         cell.detailTextLabel?.text = item.isQuiz ? "\(dateText)  小テスト" : dateText
         cell.selectionStyle = .none
+        cell.textLabel?.font = AppFont.jp(size: 18, weight: .bold)
+        cell.detailTextLabel?.font = AppFont.jp(size: 14)
+        let palette = ThemeManager.palette()
+        cell.backgroundColor = palette.surface
+        cell.textLabel?.textColor = palette.text
+        cell.detailTextLabel?.textColor = palette.mutedText
         return cell
     }
 
@@ -398,6 +419,7 @@ extension ScheduleViewController: UICollectionViewDataSource, UICollectionViewDe
         let hasEvent = !dayItems.isEmpty
         let isQuiz = dayItems.contains { $0.isQuiz }
         let dotColor: UIColor? = dayItems.last.flatMap { colorForIndex($0.colorIndex) }
+        cell.applyTheme(ThemeManager.palette())
         cell.configure(dayText: "\(dayIndex)",
                        isToday: isToday,
                        hasEvent: hasEvent,
@@ -411,6 +433,38 @@ extension ScheduleViewController: UICollectionViewDataSource, UICollectionViewDe
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = collectionView.bounds.width / 7
         return CGSize(width: width, height: width * 0.85)
+    }
+}
+
+private extension ScheduleViewController {
+    func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+
+        countdownLabel.textColor = palette.text
+        monthLabel.textColor = palette.text
+        weekStack.arrangedSubviews.compactMap { $0 as? UILabel }.forEach { label in
+            label.textColor = palette.mutedText
+        }
+
+        prevMonthButton.setTitleColor(palette.text, for: .normal)
+        nextMonthButton.setTitleColor(palette.text, for: .normal)
+        prevMonthButton.titleLabel?.font = AppFont.en(size: 20, weight: .bold)
+        nextMonthButton.titleLabel?.font = AppFont.en(size: 20, weight: .bold)
+
+        ThemeManager.stylePrimaryButton(addButton)
+        addButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
+
+        calendarCollectionView.layer.cornerRadius = 12
+        calendarCollectionView.layer.borderWidth = 1
+        calendarCollectionView.layer.borderColor = palette.border.cgColor
+        calendarCollectionView.backgroundColor = palette.surface
+
+        tableView.backgroundColor = .clear
+        tableView.separatorColor = palette.border
+        emptyLabel.font = AppFont.jp(size: 16)
+        emptyLabel.textColor = palette.mutedText
     }
 }
 
@@ -539,6 +593,7 @@ final class CalendarDayCell: UICollectionViewCell {
 
     private let dayLabel = UILabel()
     private let dotView = UIView()
+    private var palette: ThemePalette?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -546,7 +601,7 @@ final class CalendarDayCell: UICollectionViewCell {
         contentView.addSubview(dotView)
         dayLabel.translatesAutoresizingMaskIntoConstraints = false
         dotView.translatesAutoresizingMaskIntoConstraints = false
-        dayLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        dayLabel.font = AppFont.jp(size: 14, weight: .bold)
         dayLabel.textAlignment = .center
         dotView.layer.cornerRadius = 3
 
@@ -567,14 +622,23 @@ final class CalendarDayCell: UICollectionViewCell {
     func configure(dayText: String?, isToday: Bool, hasEvent: Bool, isQuiz: Bool, dotColor: UIColor?) {
         dayLabel.text = dayText
         if let _ = dayText {
-            dayLabel.textColor = .label
+            dayLabel.textColor = palette?.text ?? .label
         } else {
             dayLabel.textColor = .clear
         }
         dotView.isHidden = !hasEvent
         dotView.backgroundColor = dotColor ?? (isQuiz ? .systemRed : .systemBlue)
-        contentView.backgroundColor = isToday ? UIColor.systemYellow.withAlphaComponent(0.2) : .clear
+        if isToday {
+            contentView.backgroundColor = (palette?.surfaceAlt ?? UIColor.systemYellow).withAlphaComponent(0.5)
+        } else {
+            contentView.backgroundColor = .clear
+        }
         contentView.layer.cornerRadius = 8
+    }
+
+    func applyTheme(_ palette: ThemePalette) {
+        self.palette = palette
+        dayLabel.textColor = palette.text
     }
 }
 
