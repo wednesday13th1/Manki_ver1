@@ -569,7 +569,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroShellView.backgroundColor = UIColor.black
         retroShellView.layer.cornerRadius = 36
         retroShellView.layer.borderWidth = 0.5
-        retroShellView.layer.borderColor = UIColor.black.cgColor
+        retroShellView.layer.borderColor = UIColor(white: 0.2, alpha: 1.0).cgColor
         retroShellView.layer.shadowColor = palette.border.cgColor
         retroShellView.layer.shadowOpacity = 0.18
         retroShellView.layer.shadowOffset = CGSize(width: 0, height: 6)
