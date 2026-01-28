@@ -70,6 +70,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
     private var isHandlingSelection = false
+    private var wordMenuOverlay: UIControl?
+    private var wordMenuContainer: UIView?
+    private var wordMenuTitleLabel: UILabel?
+    private var wordMenuButtons: [UIButton] = []
 
     init(folderID: String?, showsAll: Bool = false) {
         self.folderID = folderID
@@ -577,22 +581,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     @objc private func openWordMenuFromClickWheel() {
-        let sheet = UIAlertController(title: "赤シート", message: nil, preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "単語一覧", style: .default) { [weak self] _ in
-            self?.openWordListForEditing(false, hideActions: true)
-        })
-        sheet.addAction(UIAlertAction(title: "単語追加", style: .default) { [weak self] _ in
-            self?.openAddWord()
-        })
-        sheet.addAction(UIAlertAction(title: "編集", style: .default) { [weak self] _ in
-            self?.openWordListForEditing(true, hideActions: true)
-        })
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = retroClickWheelWordButton
-            popover.sourceRect = retroClickWheelWordButton.bounds
-        }
-        present(sheet, animated: true)
+        showWordMenuModal()
     }
 
     private func openAddWord() {
@@ -728,7 +717,142 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             button.backgroundColor = ThemeManager.palette(for: theme).accent
         }
         updateThemeSelection()
+        updateWordMenuModalTheme()
         tableView.reloadData()
+    }
+
+    private func showWordMenuModal() {
+        guard wordMenuOverlay == nil else { return }
+        let overlay = UIControl()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addTarget(self, action: #selector(dismissWordMenuModal), for: .touchUpInside)
+        overlay.accessibilityViewIsModal = true
+
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "単語"
+        titleLabel.textAlignment = .center
+
+        let stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .vertical
+        stack.spacing = 8
+
+        let listButton = makeWordMenuButton(title: "単語一覧", action: #selector(handleWordMenuList))
+        let addButton = makeWordMenuButton(title: "単語追加", action: #selector(handleWordMenuAdd))
+        let editButton = makeWordMenuButton(title: "編集", action: #selector(handleWordMenuEdit))
+        let cancelButton = makeWordMenuButton(title: "キャンセル", action: #selector(dismissWordMenuModal))
+
+        [listButton, addButton, editButton, cancelButton].forEach { button in
+            stack.addArrangedSubview(button)
+            button.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        }
+
+        container.addSubview(titleLabel)
+        container.addSubview(stack)
+        overlay.addSubview(container)
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            container.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
+            container.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor, constant: -110),
+            container.widthAnchor.constraint(equalToConstant: 240),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+        ])
+
+        wordMenuOverlay = overlay
+        wordMenuContainer = container
+        wordMenuTitleLabel = titleLabel
+        wordMenuButtons = [listButton, addButton, editButton, cancelButton]
+        updateWordMenuModalTheme()
+
+        overlay.alpha = 0
+        container.alpha = 0
+        container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+            overlay.alpha = 1
+            container.alpha = 1
+            container.transform = .identity
+        }
+    }
+
+    @objc private func dismissWordMenuModal() {
+        guard let overlay = wordMenuOverlay, let container = wordMenuContainer else { return }
+        UIView.animate(withDuration: 0.15, delay: 0, options: [.curveEaseIn]) {
+            overlay.alpha = 0
+            container.alpha = 0
+            container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        } completion: { [weak self] _ in
+            overlay.removeFromSuperview()
+            self?.wordMenuOverlay = nil
+            self?.wordMenuContainer = nil
+            self?.wordMenuTitleLabel = nil
+            self?.wordMenuButtons = []
+        }
+    }
+
+    @objc private func handleWordMenuList() {
+        dismissWordMenuModal()
+        openWordListForEditing(false, hideActions: true)
+    }
+
+    @objc private func handleWordMenuAdd() {
+        dismissWordMenuModal()
+        openAddWord()
+    }
+
+    @objc private func handleWordMenuEdit() {
+        dismissWordMenuModal()
+        openWordListForEditing(true, hideActions: true)
+    }
+
+    private func makeWordMenuButton(title: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle(title, for: .normal)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+        button.layer.borderWidth = 2
+        button.layer.cornerRadius = 0
+        button.layer.masksToBounds = true
+        return button
+    }
+
+    private func updateWordMenuModalTheme() {
+        guard let overlay = wordMenuOverlay,
+              let container = wordMenuContainer,
+              let titleLabel = wordMenuTitleLabel else { return }
+        let palette = ThemeManager.palette()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        container.backgroundColor = palette.surface
+        container.layer.borderWidth = 2
+        container.layer.borderColor = palette.border.cgColor
+        titleLabel.font = AppFont.jp(size: 16, weight: .bold)
+        titleLabel.textColor = palette.text
+        wordMenuButtons.forEach { button in
+            button.backgroundColor = palette.surfaceAlt
+            button.layer.borderColor = palette.border.cgColor
+            button.setTitleColor(palette.text, for: .normal)
+        }
     }
 
     private func updateHeaderLayout() {

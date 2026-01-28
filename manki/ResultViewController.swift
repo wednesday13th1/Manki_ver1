@@ -71,8 +71,8 @@ final class ResultViewController: UIViewController {
             let directionLabel = session.directionLabel ?? "不明"
             lines.append("mode: \(modeLabel) / \(directionLabel)")
             lines.append("score: \(session.score)/\(session.answered)")
-            lines.append(String(format: "accuracy: %.1f%%", session.accuracy * 100))
-            lines.append(String(format: "total time: %.2fs", session.totalElapsedSec))
+            lines.append(String(format: "正答率: %.1f%%", session.accuracy * 100))
+            lines.append(String(format: "合計時間: %.2fs", session.totalElapsedSec))
             lines.append("questions:")
             for question in session.questions {
                 let result = question.correct ? "correct" : "wrong"

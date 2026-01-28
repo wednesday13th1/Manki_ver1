@@ -12,6 +12,10 @@ class WhichViewController: UIViewController {
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private var themeObserver: NSObjectProtocol?
+    private var testMenuOverlay: UIControl?
+    private var testMenuContainer: UIView?
+    private var testMenuTitleLabel: UILabel?
+    private var testMenuButtons: [UIButton] = []
 
     private lazy var testButton: UIButton = makeButton(
         title: "テスト",
@@ -66,8 +70,7 @@ class WhichViewController: UIViewController {
     }
 
     @objc private func openTest() {
-        let controller = TestViewController()
-        navigationController?.pushViewController(controller, animated: true)
+        showTestMenuModal()
     }
 
     @objc private func openFlip() {
@@ -84,11 +87,142 @@ class WhichViewController: UIViewController {
         subtitleLabel.textColor = palette.mutedText
         ThemeManager.stylePrimaryButton(testButton)
         ThemeManager.styleSecondaryButton(flipButton)
+        updateTestMenuTheme()
     }
 
     deinit {
         if let observer = themeObserver {
             NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    private func showTestMenuModal() {
+        guard testMenuOverlay == nil else { return }
+        let overlay = UIControl()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addTarget(self, action: #selector(dismissTestMenuModal), for: .touchUpInside)
+        overlay.accessibilityViewIsModal = true
+
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "テスト"
+        titleLabel.textAlignment = .center
+
+        let stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .vertical
+        stack.spacing = 8
+
+        let startButton = makeMenuButton(title: "テスト開始", action: #selector(handleTestStart))
+        let resultButton = makeMenuButton(title: "結果を見る", action: #selector(handleTestResults))
+        let cancelButton = makeMenuButton(title: "キャンセル", action: #selector(dismissTestMenuModal))
+
+        [startButton, resultButton, cancelButton].forEach { button in
+            stack.addArrangedSubview(button)
+            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        }
+
+        container.addSubview(titleLabel)
+        container.addSubview(stack)
+        overlay.addSubview(container)
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            container.widthAnchor.constraint(equalToConstant: 260),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+        ])
+
+        testMenuOverlay = overlay
+        testMenuContainer = container
+        testMenuTitleLabel = titleLabel
+        testMenuButtons = [startButton, resultButton, cancelButton]
+        updateTestMenuTheme()
+
+        overlay.alpha = 0
+        container.alpha = 0
+        container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+            overlay.alpha = 1
+            container.alpha = 1
+            container.transform = .identity
+        }
+    }
+
+    @objc private func dismissTestMenuModal() {
+        guard let overlay = testMenuOverlay, let container = testMenuContainer else { return }
+        UIView.animate(withDuration: 0.15, delay: 0, options: [.curveEaseIn]) {
+            overlay.alpha = 0
+            container.alpha = 0
+            container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        } completion: { [weak self] _ in
+            overlay.removeFromSuperview()
+            self?.testMenuOverlay = nil
+            self?.testMenuContainer = nil
+            self?.testMenuTitleLabel = nil
+            self?.testMenuButtons = []
+        }
+    }
+
+    @objc private func handleTestStart() {
+        dismissTestMenuModal()
+        let controller = TestViewController()
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
+    @objc private func handleTestResults() {
+        dismissTestMenuModal()
+        let controller = ResultViewController()
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
+    private func makeMenuButton(title: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle(title, for: .normal)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
+        button.layer.borderWidth = 2
+        button.layer.cornerRadius = 0
+        button.layer.masksToBounds = true
+        return button
+    }
+
+    private func updateTestMenuTheme() {
+        guard let overlay = testMenuOverlay,
+              let container = testMenuContainer,
+              let titleLabel = testMenuTitleLabel else { return }
+        let palette = ThemeManager.palette()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        container.backgroundColor = palette.surface
+        container.layer.borderWidth = 2
+        container.layer.borderColor = palette.border.cgColor
+        titleLabel.font = AppFont.jp(size: 18, weight: .bold)
+        titleLabel.textColor = palette.text
+        testMenuButtons.forEach { button in
+            button.backgroundColor = palette.surfaceAlt
+            button.layer.borderColor = palette.border.cgColor
+            button.setTitleColor(palette.text, for: .normal)
         }
     }
 }
