@@ -112,13 +112,17 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         let settingTitle = UILabel()
         settingTitle.text = "テスト設定"
-        settingTitle.font = .boldSystemFont(ofSize: 20)
+        settingTitle.font = AppFont.jp(size: 18, weight: .regular)
         settingsStack.addArrangedSubview(settingTitle)
 
         typeSegmented.selectedSegmentIndex = 2
+        typeSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .normal)
+        typeSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .selected)
         settingsStack.addArrangedSubview(typeSegmented)
 
         directionSegmented.selectedSegmentIndex = 2
+        directionSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .normal)
+        directionSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .selected)
         settingsStack.addArrangedSubview(directionSegmented)
 
         configureFilterSection()
@@ -128,7 +132,9 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         timeStack.spacing = 6
         let timeLabelTitle = UILabel()
         timeLabelTitle.text = "時間 0=時間制限無し"
+        timeLabelTitle.font = AppFont.jp(size: 16, weight: .regular)
         timeTextField.borderStyle = .roundedRect
+        timeTextField.font = AppFont.jp(size: 14)
         timeTextField.text = "0"
         timeStack.addArrangedSubview(timeLabelTitle)
         timeStack.addArrangedSubview(timeTextField)
@@ -139,7 +145,9 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         countStack.spacing = 6
         let numQuestionsTitle = UILabel()
         numQuestionsTitle.text = "問題数 (空 or 0で全問)"
+        numQuestionsTitle.font = AppFont.jp(size: 16, weight: .regular)
         numQuestionsTextField.borderStyle = .roundedRect
+        numQuestionsTextField.font = AppFont.jp(size: 14)
         numQuestionsTextField.text = "0"
         countStack.addArrangedSubview(numQuestionsTitle)
         countStack.addArrangedSubview(numQuestionsTextField)
@@ -150,26 +158,30 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         choicesStackSetting.spacing = 6
         let numChoicesTitle = UILabel()
         numChoicesTitle.text = "選択肢数 (2以上)"
+        numChoicesTitle.font = AppFont.jp(size: 16, weight: .regular)
         numChoicesTextField.borderStyle = .roundedRect
+        numChoicesTextField.font = AppFont.jp(size: 14)
         numChoicesTextField.text = "\(defaultChoiceCount)"
         choicesStackSetting.addArrangedSubview(numChoicesTitle)
         choicesStackSetting.addArrangedSubview(numChoicesTextField)
         settingsStack.addArrangedSubview(choicesStackSetting)
 
         startButton.setTitle("テスト開始", for: .normal)
+        startButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         startButton.addTarget(self, action: #selector(startQuiz), for: .touchUpInside)
         settingsStack.addArrangedSubview(startButton)
 
-        timeLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        timeLabel.font = AppFont.jp(size: 14, weight: .bold)
         timeLabel.textColor = .secondaryLabel
         contentStack.addArrangedSubview(timeLabel)
 
         questionLabel.numberOfLines = 0
-        questionLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        questionLabel.font = AppFont.jp(size: 18, weight: .bold)
         contentStack.addArrangedSubview(questionLabel)
 
         answerTextField.borderStyle = .roundedRect
         answerTextField.placeholder = "回答を入力"
+        answerTextField.font = AppFont.jp(size: 16)
         answerTextField.delegate = self
         contentStack.addArrangedSubview(answerTextField)
 
@@ -178,6 +190,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         contentStack.addArrangedSubview(choicesStack)
 
         submitButton.setTitle("回答する", for: .normal)
+        submitButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         submitButton.addTarget(self, action: #selector(submitAnswer), for: .touchUpInside)
         contentStack.addArrangedSubview(submitButton)
     }
@@ -185,7 +198,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private func configureFilterSection() {
         let filterTitle = UILabel()
         filterTitle.text = "出題範囲"
-        filterTitle.font = .boldSystemFont(ofSize: 17)
+        filterTitle.font = AppFont.jp(size: 16, weight: .bold)
         settingsStack.addArrangedSubview(filterTitle)
 
         let favoriteRow = UIStackView()
@@ -196,6 +209,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         favoriteFilterButton.addTarget(self, action: #selector(toggleFavoriteFilter), for: .touchUpInside)
         favoriteFilterButton.tintColor = .systemYellow
         favoriteFilterButton.setTitle(" お気に入りのみ", for: .normal)
+        favoriteFilterButton.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
         favoriteFilterButton.contentHorizontalAlignment = .left
         updateFavoriteFilterButton()
 
@@ -204,6 +218,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         let levelTitle = UILabel()
         levelTitle.text = "レベル (チェックで限定)"
+        levelTitle.font = AppFont.jp(size: 14, weight: .bold)
         settingsStack.addArrangedSubview(levelTitle)
 
         levelsStack.axis = .horizontal
@@ -216,6 +231,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             button.tag = level
             button.layer.cornerRadius = 8
             button.layer.borderWidth = 1
+            button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
             button.addTarget(self, action: #selector(toggleLevel(_:)), for: .touchUpInside)
             levelsStack.addArrangedSubview(button)
             return button

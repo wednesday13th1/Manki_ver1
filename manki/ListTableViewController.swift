@@ -13,6 +13,8 @@ class ListTableViewController: UITableViewController {
     private var hiddenMode: WordHiddenMode = .none
     private var hideButton: UIBarButtonItem?
     private var revealedWordIDs: Set<String> = []
+    var startEditing = false
+    var hideTestAndAdd = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,7 +22,7 @@ class ListTableViewController: UITableViewController {
                            forCellReuseIdentifier: "cell")
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 80
-        let backItem = UIBarButtonItem(title: "単語",
+        let backItem = UIBarButtonItem(title: "戻る",
                                        style: .plain,
                                        target: self,
                                        action: #selector(openWordMenu))
@@ -30,7 +32,9 @@ class ListTableViewController: UITableViewController {
                                        action: #selector(toggleHiddenMode))
         navigationItem.leftBarButtonItems = [backItem, hideItem]
         hideButton = hideItem
-        if let addItem = navigationItem.rightBarButtonItem {
+        if hideTestAndAdd {
+            navigationItem.rightBarButtonItems = nil
+        } else if let addItem = navigationItem.rightBarButtonItem {
             let testItem = UIBarButtonItem(title: "テスト",
                                            style: .plain,
                                            target: self,
@@ -78,6 +82,16 @@ class ListTableViewController: UITableViewController {
         super.viewWillAppear(animated)
         wordArray = loadSavedWords()
         tableView.reloadData()
+        if hideTestAndAdd {
+            navigationItem.rightBarButtonItems = nil
+        }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if startEditing {
+            tableView.setEditing(true, animated: true)
+        }
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -172,7 +186,12 @@ class ListTableViewController: UITableViewController {
     }
 
     @objc private func openWordMenu() {
-        navigationController?.popToRootViewController(animated: true)
+        if let nav = navigationController,
+           let target = nav.viewControllers.last(where: { $0 is SetViewController }) {
+            nav.popToViewController(target, animated: true)
+            return
+        }
+        navigationController?.popViewController(animated: true)
     }
 
     private func removeWordFromSets(wordID: String) {

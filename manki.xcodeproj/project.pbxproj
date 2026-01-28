@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2748CCD42C95438BBA3FE050 /* PixelMplus12-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 021BC866FC8643EEA4E35EFF /* PixelMplus12-Bold.ttf */; };
-		0DEFC4A6F9524C4ABC981EDD /* PixelMplus10-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6402183AF1E4D6885365071 /* PixelMplus10-Regular.ttf */; };
-		4F294EF788FC4614A3FF0B54 /* PixelMplus10-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AD7F5A8DCF5C42528B5ECCE9 /* PixelMplus10-Bold.ttf */; };
-		5AD7B3EBBB0A403F9703542D /* PixelMplus12-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 531751D051E44BB3A8462C34 /* PixelMplus12-Regular.ttf */; };
-		CAEC4E1E2762440486C4D85A /* PressStart2P-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 019FE173B6724701915D1048 /* PressStart2P-Regular.ttf */; };
-		AC983B51321044F685C9F357 /* VT323-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FB2611C5BADB4EC5AA047765 /* VT323-Regular.ttf */; };
+		0DEFC4A6F9524C4ABC981EDD /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6402183AF1E4D6885365071 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf */; };
+		2748CCD42C95438BBA3FE050 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 021BC866FC8643EEA4E35EFF /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf */; };
+		4F294EF788FC4614A3FF0B54 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AD7F5A8DCF5C42528B5ECCE9 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf */; };
+		5AD7B3EBBB0A403F9703542D /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 531751D051E44BB3A8462C34 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf */; };
+		AC983B51321044F685C9F357 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FB2611C5BADB4EC5AA047765 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf */; };
+		CAEC4E1E2762440486C4D85A /* manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 019FE173B6724701915D1048 /* manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,15 +33,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		021BC866FC8643EEA4E35EFF /* PixelMplus12-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf"; sourceTree = "<group>"; };
-		C6402183AF1E4D6885365071 /* PixelMplus10-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf"; sourceTree = "<group>"; };
-		AD7F5A8DCF5C42528B5ECCE9 /* PixelMplus10-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf"; sourceTree = "<group>"; };
-		531751D051E44BB3A8462C34 /* PixelMplus12-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf"; sourceTree = "<group>"; };
-		019FE173B6724701915D1048 /* PressStart2P-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf"; sourceTree = "<group>"; };
-		FB2611C5BADB4EC5AA047765 /* VT323-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf"; sourceTree = "<group>"; };
+		019FE173B6724701915D1048 /* manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf"; sourceTree = "<group>"; };
+		021BC866FC8643EEA4E35EFF /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf"; sourceTree = "<group>"; };
 		2CF7FA852EFE80B500BCC44B /* manki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = manki.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CF7FA9B2EFE80B600BCC44B /* mankiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mankiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CF7FAA52EFE80B600BCC44B /* mankiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mankiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		531751D051E44BB3A8462C34 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf"; sourceTree = "<group>"; };
+		AD7F5A8DCF5C42528B5ECCE9 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf"; sourceTree = "<group>"; };
+		C6402183AF1E4D6885365071 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf"; sourceTree = "<group>"; };
+		FB2611C5BADB4EC5AA047765 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -100,6 +100,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2C3A88D42F2A108400F57CD7 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				021BC866FC8643EEA4E35EFF /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf */,
+				C6402183AF1E4D6885365071 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf */,
+				AD7F5A8DCF5C42528B5ECCE9 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf */,
+				531751D051E44BB3A8462C34 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf */,
+				019FE173B6724701915D1048 /* manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf */,
+				FB2611C5BADB4EC5AA047765 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		2CF7FA7C2EFE80B500BCC44B = {
 			isa = PBXGroup;
 			children = (
@@ -107,6 +120,7 @@
 				2CF7FA9E2EFE80B600BCC44B /* mankiTests */,
 				2CF7FAA82EFE80B600BCC44B /* mankiUITests */,
 				2CF7FA862EFE80B500BCC44B /* Products */,
+				2C3A88D42F2A108400F57CD7 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -240,12 +254,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2748CCD42C95438BBA3FE050 /* PixelMplus12-Bold.ttf in Resources */,
-				0DEFC4A6F9524C4ABC981EDD /* PixelMplus10-Regular.ttf in Resources */,
-				4F294EF788FC4614A3FF0B54 /* PixelMplus10-Bold.ttf in Resources */,
-				5AD7B3EBBB0A403F9703542D /* PixelMplus12-Regular.ttf in Resources */,
-				CAEC4E1E2762440486C4D85A /* PressStart2P-Regular.ttf in Resources */,
-				AC983B51321044F685C9F357 /* VT323-Regular.ttf in Resources */,
+				2748CCD42C95438BBA3FE050 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf in Resources */,
+				0DEFC4A6F9524C4ABC981EDD /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf in Resources */,
+				4F294EF788FC4614A3FF0B54 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf in Resources */,
+				5AD7B3EBBB0A403F9703542D /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf in Resources */,
+				CAEC4E1E2762440486C4D85A /* manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf in Resources */,
+				AC983B51321044F685C9F357 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

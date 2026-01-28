@@ -60,6 +60,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let retroClickWheelCenterView = UIView()
     private let retroClickWheelVerticalDivider = UIView()
     private let retroClickWheelHorizontalDivider = UIView()
+    private let retroClickWheelFolderButton = UIButton(type: .system)
+    private let retroClickWheelWordButton = UIButton(type: .system)
     private let retroBadgeLabel = UILabel()
     private let retroStickerView = UIView()
     private let retroStickerIcon = UIImageView()
@@ -265,6 +267,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelCenterView.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelVerticalDivider.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelHorizontalDivider.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelFolderButton.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelWordButton.translatesAutoresizingMaskIntoConstraints = false
         retroStickerView.translatesAutoresizingMaskIntoConstraints = false
         retroStickerIcon.translatesAutoresizingMaskIntoConstraints = false
         retroStickerStripe.translatesAutoresizingMaskIntoConstraints = false
@@ -284,9 +288,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroKeyButtons = [retroFolderButton, retroWordButton, retroSortButton, retroAddButton]
         let configButtons: [(UIButton, String)] = [
             (retroFolderButton, "フォルダー"),
-            (retroWordButton, "単語"),
+            (retroWordButton, "赤シート"),
             (retroSortButton, "並び替え"),
-            (retroAddButton, "追加")
+            (retroAddButton, "学習")
         ]
         configButtons.forEach { button, title in
             button.translatesAutoresizingMaskIntoConstraints = false
@@ -309,6 +313,15 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroBadgeLabel.text = "Y2K"
         retroBadgeLabel.textAlignment = .center
 
+        [retroClickWheelFolderButton, retroClickWheelWordButton].forEach { button in
+            button.layer.cornerRadius = 10
+            button.layer.borderWidth = 1
+            button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
+            button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+        }
+        retroClickWheelFolderButton.setTitle("戻る", for: .normal)
+        retroClickWheelWordButton.setTitle("単語", for: .normal)
+
         retroKeypadView.addSubview(retroKeypadGrid)
 
         retroShellView.addSubview(retroSpeakerView)
@@ -322,6 +335,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelView.addSubview(retroClickWheelVerticalDivider)
         retroClickWheelView.addSubview(retroClickWheelHorizontalDivider)
         retroClickWheelView.addSubview(retroClickWheelCenterView)
+        retroClickWheelView.addSubview(retroClickWheelFolderButton)
+        retroClickWheelView.addSubview(retroClickWheelWordButton)
 
         view.addSubview(retroShellView)
 
@@ -385,6 +400,16 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             retroClickWheelHorizontalDivider.trailingAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -18),
             retroClickWheelHorizontalDivider.heightAnchor.constraint(equalToConstant: 2),
 
+            retroClickWheelFolderButton.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
+            retroClickWheelFolderButton.centerXAnchor.constraint(equalTo: retroClickWheelView.leadingAnchor, constant: 35),
+            retroClickWheelFolderButton.widthAnchor.constraint(equalToConstant: 50),
+            retroClickWheelFolderButton.heightAnchor.constraint(equalToConstant: 32),
+
+            retroClickWheelWordButton.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
+            retroClickWheelWordButton.centerXAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -35),
+            retroClickWheelWordButton.widthAnchor.constraint(equalToConstant: 50),
+            retroClickWheelWordButton.heightAnchor.constraint(equalToConstant: 32),
+
             retroKeypadGrid.topAnchor.constraint(equalTo: retroKeypadView.topAnchor, constant: 6),
             retroKeypadGrid.leadingAnchor.constraint(equalTo: retroKeypadView.leadingAnchor, constant: 12),
             retroKeypadGrid.trailingAnchor.constraint(equalTo: retroKeypadView.trailingAnchor, constant: -12),
@@ -417,7 +442,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroFolderButton.addTarget(self, action: #selector(backToFolders), for: .touchUpInside)
         retroWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
         retroSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
-        retroAddButton.addTarget(self, action: #selector(openAddSet), for: .touchUpInside)
+        retroAddButton.addTarget(self, action: #selector(openWhichView), for: .touchUpInside)
+        retroClickWheelFolderButton.addTarget(self, action: #selector(backToFolders), for: .touchUpInside)
+        retroClickWheelWordButton.addTarget(self, action: #selector(openWordMenuFromClickWheel), for: .touchUpInside)
     }
 
     private func configureThemeHeader() {
@@ -535,10 +562,49 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     @objc private func openWordList() {
-        guard let listVC = storyboard?.instantiateViewController(withIdentifier: "ListTableViewController") else {
+        openWordListForEditing(false, hideActions: true)
+    }
+
+    private func openWordListForEditing(_ editing: Bool, hideActions: Bool) {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let listVC = storyboard.instantiateViewController(withIdentifier: "ListTableViewController")
+                as? ListTableViewController else {
             return
         }
+        listVC.startEditing = editing
+        listVC.hideTestAndAdd = hideActions
         navigationController?.pushViewController(listVC, animated: true)
+    }
+
+    @objc private func openWordMenuFromClickWheel() {
+        let sheet = UIAlertController(title: "赤シート", message: nil, preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "単語一覧", style: .default) { [weak self] _ in
+            self?.openWordListForEditing(false, hideActions: true)
+        })
+        sheet.addAction(UIAlertAction(title: "単語追加", style: .default) { [weak self] _ in
+            self?.openAddWord()
+        })
+        sheet.addAction(UIAlertAction(title: "編集", style: .default) { [weak self] _ in
+            self?.openWordListForEditing(true, hideActions: true)
+        })
+        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = retroClickWheelWordButton
+            popover.sourceRect = retroClickWheelWordButton.bounds
+        }
+        present(sheet, animated: true)
+    }
+
+    private func openAddWord() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let addVC = storyboard.instantiateViewController(withIdentifier: "AddViewController")
+        navigationController?.pushViewController(addVC, animated: true)
+    }
+
+    @objc private func openWhichView() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let whichVC = storyboard.instantiateViewController(withIdentifier: "WhichViewController")
+        navigationController?.pushViewController(whichVC, animated: true)
     }
 
     @objc private func backToFolders() {
@@ -596,6 +662,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelCenterView.backgroundColor = UIColor.systemGray4
         retroClickWheelVerticalDivider.backgroundColor = UIColor.systemGray2
         retroClickWheelHorizontalDivider.backgroundColor = UIColor.systemGray2
+        retroClickWheelFolderButton.backgroundColor = UIColor.systemGray6
+        retroClickWheelFolderButton.layer.borderColor = UIColor.systemGray3.cgColor
+        retroClickWheelFolderButton.setTitleColor(palette.text, for: .normal)
+        retroClickWheelWordButton.backgroundColor = UIColor.systemGray6
+        retroClickWheelWordButton.layer.borderColor = UIColor.systemGray3.cgColor
+        retroClickWheelWordButton.setTitleColor(palette.text, for: .normal)
 
         retroKeypadView.backgroundColor = palette.surface
         retroKeypadView.layer.cornerRadius = 22
