@@ -31,11 +31,16 @@ final class ScheduleViewController: UIViewController {
     private let colorOptions: [UIColor] = [.systemRed, .systemBlue, .systemGreen, .systemOrange, .systemPurple]
     private var selectedColorIndex: Int = 0
     private var themeObserver: NSObjectProtocol?
+    private let tabTitle = "スケジュール"
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = "スケジュール"
+        navigationItem.title = tabTitle
+        tabBarController?.title = tabTitle
+        tabBarController?.navigationItem.title = tabTitle
+        navigationController?.navigationBar.topItem?.title = tabTitle
+        tabBarItem.title = tabTitle
         currentMonthDate = startOfMonth(for: Date())
 
         configureUI()
@@ -52,8 +57,14 @@ final class ScheduleViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
         applyTheme()
         reloadItems()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
     }
 
     deinit {
@@ -129,11 +140,7 @@ final class ScheduleViewController: UIViewController {
         view.addSubview(emptyLabel)
 
         NSLayoutConstraint.activate([
-            countdownLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            countdownLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            countdownLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-
-            monthHeader.topAnchor.constraint(equalTo: countdownLabel.bottomAnchor, constant: 8),
+            monthHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             monthHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             monthHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
@@ -149,7 +156,11 @@ final class ScheduleViewController: UIViewController {
             addButton.topAnchor.constraint(equalTo: calendarCollectionView.bottomAnchor, constant: 8),
             addButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            tableView.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 12),
+            countdownLabel.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 10),
+            countdownLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            countdownLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+
+            tableView.topAnchor.constraint(equalTo: countdownLabel.bottomAnchor, constant: 12),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -181,20 +192,40 @@ final class ScheduleViewController: UIViewController {
             let days = calendar.dateComponents([.day], from: startOfToday, to: nextQuiz).day ?? 0
             let dateText = formatDate(nextQuiz)
             if days == 0 {
-                countdownLabel.text = "小テストは今日です！ (\(dateText))"
+                let text = "次の小テストは今日です！ (\(dateText))"
+                countdownLabel.text = text
+                navigationItem.title = text
+                tabBarController?.title = text
+                tabBarController?.navigationItem.title = text
+                navigationController?.navigationBar.topItem?.title = text
             } else {
-                countdownLabel.text = "小テストまであと \(days)日 (\(dateText))"
+                let text = "次の小テストまであと \(days)日 (\(dateText))"
+                countdownLabel.text = text
+                navigationItem.title = text
+                tabBarController?.title = text
+                tabBarController?.navigationItem.title = text
+                navigationController?.navigationBar.topItem?.title = text
             }
             return
         }
 
         if let latestQuiz = quizDates.max() {
             let dateText = formatDate(latestQuiz)
-            countdownLabel.text = "次の小テストは未設定です。直近: \(dateText)"
+            let text = "次の小テストは未設定です。直近: \(dateText)"
+            countdownLabel.text = text
+            navigationItem.title = text
+            tabBarController?.title = text
+            tabBarController?.navigationItem.title = text
+            navigationController?.navigationBar.topItem?.title = text
             return
         }
 
-        countdownLabel.text = "小テストの日を追加してください。"
+        let text = "次の小テストの日を追加してください。"
+        countdownLabel.text = text
+        navigationItem.title = text
+        tabBarController?.title = text
+        tabBarController?.navigationItem.title = text
+        navigationController?.navigationBar.topItem?.title = text
     }
 
     private func startOfMonth(for date: Date) -> Date {
