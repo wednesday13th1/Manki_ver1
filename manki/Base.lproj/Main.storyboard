@@ -114,7 +114,7 @@
                         <viewLayoutGuide key="safeArea" id="Cb2-Aw-6Rm"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Item 2" id="XgV-6d-2a2"/>
+                    <tabBarItem key="tabBarItem" title="スケジュール" id="XgV-6d-2a2"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FJ3-6q-x9f" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>

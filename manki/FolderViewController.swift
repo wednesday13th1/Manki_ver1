@@ -206,6 +206,18 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         ThemeManager.applyBackground(to: view)
         ThemeManager.applyNavigationAppearance(to: navigationController)
         ThemeManager.applySearchBar(searchController.searchBar)
+        let barAttributes: [NSAttributedString.Key: Any] = [
+            .font: AppFont.jp(size: 14, weight: .bold),
+            .foregroundColor: palette.text
+        ]
+        (navigationItem.leftBarButtonItems ?? []).forEach { item in
+            item.setTitleTextAttributes(barAttributes, for: .normal)
+            item.setTitleTextAttributes(barAttributes, for: .highlighted)
+        }
+        (navigationItem.rightBarButtonItems ?? []).forEach { item in
+            item.setTitleTextAttributes(barAttributes, for: .normal)
+            item.setTitleTextAttributes(barAttributes, for: .highlighted)
+        }
         tableView.backgroundColor = .clear
         tableView.separatorColor = palette.border
         emptyLabel.font = AppFont.jp(size: 16)

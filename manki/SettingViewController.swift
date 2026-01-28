@@ -21,6 +21,12 @@ class SettingViewController: UIViewController {
         super.viewDidLoad()
         title = "Setting"
         configureUI()
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "閉じる",
+            style: .plain,
+            target: self,
+            action: #selector(closeSelf)
+        )
         applyTheme()
         themeObserver = NotificationCenter.default.addObserver(
             forName: ThemeManager.didChange,
@@ -29,12 +35,6 @@ class SettingViewController: UIViewController {
         ) { [weak self] _ in
             self?.applyTheme()
         }
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "閉じる",
-            style: .plain,
-            target: self,
-            action: #selector(closeSelf)
-        )
     }
  
     private func configureUI() {
@@ -104,6 +104,27 @@ class SettingViewController: UIViewController {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
         ThemeManager.applyNavigationAppearance(to: navigationController)
+        if let navigationBar = navigationController?.navigationBar {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = palette.surface
+            appearance.titleTextAttributes = [
+                .foregroundColor: palette.text,
+                .font: AppFont.jp(size: 18, weight: .bold)
+            ]
+            appearance.shadowColor = palette.border
+            let barAttributes: [NSAttributedString.Key: Any] = [
+                .font: AppFont.jp(size: 14, weight: .bold),
+                .foregroundColor: palette.text
+            ]
+            appearance.buttonAppearance.normal.titleTextAttributes = barAttributes
+            appearance.buttonAppearance.highlighted.titleTextAttributes = barAttributes
+            appearance.doneButtonAppearance.normal.titleTextAttributes = barAttributes
+            appearance.doneButtonAppearance.highlighted.titleTextAttributes = barAttributes
+            navigationBar.standardAppearance = appearance
+            navigationBar.scrollEdgeAppearance = appearance
+            navigationBar.tintColor = palette.text
+        }
 
         titleLabel.font = AppFont.title(size: 18)
         titleLabel.textColor = palette.text
