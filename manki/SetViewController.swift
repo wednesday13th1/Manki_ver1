@@ -42,6 +42,28 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var themeButtons: [UIButton] = []
     private var themeObserver: NSObjectProtocol?
     private let themeHeaderHeight: CGFloat = 120
+    private let retroShellView = UIView()
+    private let retroScreenView = UIView()
+    private let retroKeypadView = UIView()
+    private let retroKeypadGrid = UIStackView()
+    private let retroKeypadRowTop = UIStackView()
+    private let retroKeypadRowBottom = UIStackView()
+    private var retroKeyButtons: [UIButton] = []
+    private let retroFolderButton = UIButton(type: .system)
+    private let retroWordButton = UIButton(type: .system)
+    private let retroSortButton = UIButton(type: .system)
+    private let retroAddButton = UIButton(type: .system)
+    private let retroAntennaView = UIView()
+    private let retroAntennaTipView = UIView()
+    private let retroSpeakerView = UIView()
+    private let retroClickWheelView = UIView()
+    private let retroClickWheelCenterView = UIView()
+    private let retroClickWheelVerticalDivider = UIView()
+    private let retroClickWheelHorizontalDivider = UIView()
+    private let retroBadgeLabel = UILabel()
+    private let retroStickerView = UIView()
+    private let retroStickerIcon = UIImageView()
+    private let retroStickerStripe = UIView()
     private let headerContainer = UIView()
     private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
@@ -63,6 +85,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         super.viewDidLoad()
         title = showsAll ? "セット" : (folderID == nil ? "未分類" : "セット")
         view.backgroundColor = .systemBackground
+        configureRetroShell()
         configureTableView()
         configureEmptyLabel()
         configureSearch()
@@ -98,8 +121,14 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
         applyTheme()
         reloadData()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -112,14 +141,30 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        if let header = tableView.tableHeaderView {
-            let targetHeight = themeHeaderHeight
-            let targetWidth = tableView.bounds.width
-            if header.frame.height != targetHeight || header.frame.width != targetWidth {
-                header.frame.size.width = targetWidth
-                header.frame.size.height = targetHeight
-                tableView.tableHeaderView = header
-            }
+        updateHeaderLayout()
+        updateAntennaShape()
+        updateClickWheelShape()
+    }
+
+    private func updateAntennaShape() {
+        let bounds = retroAntennaView.bounds
+        guard bounds.width > 0, bounds.height > 0 else { return }
+        let radius = bounds.width / 2
+        let path = UIBezierPath(roundedRect: bounds, cornerRadius: radius)
+
+        let mask = CAShapeLayer()
+        mask.path = path.cgPath
+        retroAntennaView.layer.mask = mask
+    }
+
+    private func updateClickWheelShape() {
+        let wheelBounds = retroClickWheelView.bounds
+        if wheelBounds.width > 0 {
+            retroClickWheelView.layer.cornerRadius = wheelBounds.width / 2
+        }
+        let centerBounds = retroClickWheelCenterView.bounds
+        if centerBounds.width > 0 {
+            retroClickWheelCenterView.layer.cornerRadius = centerBounds.width / 2
         }
     }
 
@@ -127,9 +172,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.rowHeight = 60
+        tableView.rowHeight = 72
         tableView.delaysContentTouches = false
-        view.addSubview(tableView)
+        retroScreenView.addSubview(tableView)
         let gesture = UILongPressGestureRecognizer(target: self, action: #selector(handleSetRenameLongPress(_:)))
         gesture.cancelsTouchesInView = false
         gesture.delaysTouchesBegan = false
@@ -144,10 +189,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.addGestureRecognizer(tapGesture)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.topAnchor.constraint(equalTo: retroScreenView.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: retroScreenView.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor),
         ])
     }
 
@@ -187,12 +232,13 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         emptyLabel.textAlignment = .center
         emptyLabel.textColor = .secondaryLabel
         emptyLabel.numberOfLines = 0
-        view.addSubview(emptyLabel)
+        retroScreenView.addSubview(emptyLabel)
+        retroScreenView.bringSubviewToFront(emptyLabel)
         NSLayoutConstraint.activate([
-            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            emptyLabel.centerXAnchor.constraint(equalTo: retroScreenView.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: retroScreenView.centerYAnchor),
+            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: retroScreenView.leadingAnchor, constant: 20),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: retroScreenView.trailingAnchor, constant: -20),
         ])
     }
 
@@ -200,9 +246,178 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "セット名で検索"
-        navigationItem.searchController = searchController // 検索
-        navigationItem.hidesSearchBarWhenScrolling = true
+        searchController.searchBar.sizeToFit()
         definesPresentationContext = true
+    }
+
+    private func configureRetroShell() {
+        retroShellView.translatesAutoresizingMaskIntoConstraints = false
+        retroScreenView.translatesAutoresizingMaskIntoConstraints = false
+        retroKeypadView.translatesAutoresizingMaskIntoConstraints = false
+        retroSpeakerView.translatesAutoresizingMaskIntoConstraints = false
+        retroBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        retroKeypadGrid.translatesAutoresizingMaskIntoConstraints = false
+        retroKeypadRowTop.translatesAutoresizingMaskIntoConstraints = false
+        retroKeypadRowBottom.translatesAutoresizingMaskIntoConstraints = false
+        retroAntennaView.translatesAutoresizingMaskIntoConstraints = false
+        retroAntennaTipView.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelView.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelCenterView.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelVerticalDivider.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelHorizontalDivider.translatesAutoresizingMaskIntoConstraints = false
+        retroStickerView.translatesAutoresizingMaskIntoConstraints = false
+        retroStickerIcon.translatesAutoresizingMaskIntoConstraints = false
+        retroStickerStripe.translatesAutoresizingMaskIntoConstraints = false
+
+        retroKeypadGrid.axis = .vertical
+        retroKeypadGrid.spacing = 10
+        retroKeypadGrid.distribution = .fillEqually
+
+        retroKeypadRowTop.axis = .horizontal
+        retroKeypadRowTop.spacing = 12
+        retroKeypadRowTop.distribution = .fill
+
+        retroKeypadRowBottom.axis = .horizontal
+        retroKeypadRowBottom.spacing = 12
+        retroKeypadRowBottom.distribution = .fillEqually
+
+        retroKeyButtons = [retroFolderButton, retroWordButton, retroSortButton, retroAddButton]
+        let configButtons: [(UIButton, String)] = [
+            (retroFolderButton, "フォルダー"),
+            (retroWordButton, "単語"),
+            (retroSortButton, "並び替え"),
+            (retroAddButton, "追加")
+        ]
+        configButtons.forEach { button, title in
+            button.translatesAutoresizingMaskIntoConstraints = false
+            button.layer.cornerRadius = 12
+            button.layer.borderWidth = 1
+            button.setTitle(title, for: .normal)
+            button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
+            button.contentEdgeInsets = UIEdgeInsets(top: 16, left: 18, bottom: 16, right: 18)
+        }
+        retroFolderButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        retroWordButton.setContentHuggingPriority(.required, for: .horizontal)
+
+        retroKeypadRowTop.addArrangedSubview(retroFolderButton)
+        retroKeypadRowTop.addArrangedSubview(retroWordButton)
+        retroKeypadRowBottom.addArrangedSubview(retroSortButton)
+        retroKeypadRowBottom.addArrangedSubview(retroAddButton)
+        retroKeypadGrid.addArrangedSubview(retroKeypadRowTop)
+        retroKeypadGrid.addArrangedSubview(retroKeypadRowBottom)
+
+        retroBadgeLabel.text = "Y2K"
+        retroBadgeLabel.textAlignment = .center
+
+        retroKeypadView.addSubview(retroKeypadGrid)
+
+        retroShellView.addSubview(retroSpeakerView)
+        retroShellView.addSubview(retroAntennaView)
+        retroShellView.addSubview(retroAntennaTipView)
+        retroShellView.addSubview(retroClickWheelView)
+        retroShellView.addSubview(retroBadgeLabel)
+        retroShellView.addSubview(retroScreenView)
+        retroShellView.addSubview(retroKeypadView)
+
+        retroClickWheelView.addSubview(retroClickWheelVerticalDivider)
+        retroClickWheelView.addSubview(retroClickWheelHorizontalDivider)
+        retroClickWheelView.addSubview(retroClickWheelCenterView)
+
+        view.addSubview(retroShellView)
+
+        retroStickerView.addSubview(retroStickerStripe)
+        retroStickerView.addSubview(retroStickerIcon)
+        retroScreenView.addSubview(retroStickerView)
+
+        NSLayoutConstraint.activate([
+            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
+            retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+
+            retroSpeakerView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: 12),
+            retroSpeakerView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
+            retroSpeakerView.widthAnchor.constraint(equalToConstant: 72),
+            retroSpeakerView.heightAnchor.constraint(equalToConstant: 6),
+
+            retroAntennaView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 44),
+            retroAntennaView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: -60),
+            retroAntennaView.widthAnchor.constraint(equalToConstant: 20),
+            retroAntennaView.heightAnchor.constraint(equalToConstant: 85),
+
+            retroAntennaTipView.centerXAnchor.constraint(equalTo: retroAntennaView.centerXAnchor),
+            retroAntennaTipView.bottomAnchor.constraint(equalTo: retroAntennaView.topAnchor, constant: 4),
+            retroAntennaTipView.widthAnchor.constraint(equalToConstant: 24),
+            retroAntennaTipView.heightAnchor.constraint(equalToConstant: 24),
+
+            retroBadgeLabel.centerYAnchor.constraint(equalTo: retroSpeakerView.centerYAnchor),
+            retroBadgeLabel.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -16),
+            retroBadgeLabel.widthAnchor.constraint(equalToConstant: 44),
+            retroBadgeLabel.heightAnchor.constraint(equalToConstant: 20),
+
+            retroScreenView.topAnchor.constraint(equalTo: retroSpeakerView.bottomAnchor, constant: 4),
+            retroScreenView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 12),
+            retroScreenView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -12),
+
+            retroKeypadView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 12),
+            retroKeypadView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 16),
+            retroKeypadView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -16),
+            retroKeypadView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -190),
+            retroKeypadView.heightAnchor.constraint(equalToConstant: 150),
+
+            retroClickWheelView.topAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: 16),
+            retroClickWheelView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
+            retroClickWheelView.widthAnchor.constraint(equalToConstant: 140),
+            retroClickWheelView.heightAnchor.constraint(equalToConstant: 140),
+
+            retroClickWheelCenterView.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
+            retroClickWheelCenterView.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
+            retroClickWheelCenterView.widthAnchor.constraint(equalToConstant: 48),
+            retroClickWheelCenterView.heightAnchor.constraint(equalToConstant: 48),
+
+            retroClickWheelVerticalDivider.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
+            retroClickWheelVerticalDivider.topAnchor.constraint(equalTo: retroClickWheelView.topAnchor, constant: 18),
+            retroClickWheelVerticalDivider.bottomAnchor.constraint(equalTo: retroClickWheelView.bottomAnchor, constant: -18),
+            retroClickWheelVerticalDivider.widthAnchor.constraint(equalToConstant: 2),
+
+            retroClickWheelHorizontalDivider.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
+            retroClickWheelHorizontalDivider.leadingAnchor.constraint(equalTo: retroClickWheelView.leadingAnchor, constant: 18),
+            retroClickWheelHorizontalDivider.trailingAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -18),
+            retroClickWheelHorizontalDivider.heightAnchor.constraint(equalToConstant: 2),
+
+            retroKeypadGrid.topAnchor.constraint(equalTo: retroKeypadView.topAnchor, constant: 6),
+            retroKeypadGrid.leadingAnchor.constraint(equalTo: retroKeypadView.leadingAnchor, constant: 12),
+            retroKeypadGrid.trailingAnchor.constraint(equalTo: retroKeypadView.trailingAnchor, constant: -12),
+            retroKeypadGrid.bottomAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: -6),
+
+            retroStickerView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor, constant: -16),
+            retroStickerView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: -16),
+            retroStickerView.widthAnchor.constraint(equalToConstant: 48),
+            retroStickerView.heightAnchor.constraint(equalToConstant: 36),
+
+            retroStickerStripe.leadingAnchor.constraint(equalTo: retroStickerView.leadingAnchor, constant: 6),
+            retroStickerStripe.trailingAnchor.constraint(equalTo: retroStickerView.trailingAnchor, constant: -6),
+            retroStickerStripe.centerYAnchor.constraint(equalTo: retroStickerView.centerYAnchor),
+            retroStickerStripe.heightAnchor.constraint(equalToConstant: 6),
+
+            retroStickerIcon.centerXAnchor.constraint(equalTo: retroStickerView.centerXAnchor),
+            retroStickerIcon.centerYAnchor.constraint(equalTo: retroStickerView.centerYAnchor),
+            retroStickerIcon.widthAnchor.constraint(equalToConstant: 16),
+            retroStickerIcon.heightAnchor.constraint(equalToConstant: 16),
+        ])
+
+        let folderWidth = retroFolderButton.widthAnchor.constraint(greaterThanOrEqualTo: retroWordButton.widthAnchor, multiplier: 1.2)
+        folderWidth.priority = .defaultHigh
+        folderWidth.isActive = true
+        let equalSortWidth = retroSortButton.widthAnchor.constraint(equalTo: retroFolderButton.widthAnchor)
+        let equalAddWidth = retroAddButton.widthAnchor.constraint(equalTo: retroFolderButton.widthAnchor)
+        equalSortWidth.isActive = true
+        equalAddWidth.isActive = true
+
+        retroFolderButton.addTarget(self, action: #selector(backToFolders), for: .touchUpInside)
+        retroWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
+        retroSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
+        retroAddButton.addTarget(self, action: #selector(openAddSet), for: .touchUpInside)
     }
 
     private func configureThemeHeader() {
@@ -243,7 +458,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             themeStack.heightAnchor.constraint(equalToConstant: 36),
         ])
 
-        tableView.tableHeaderView = themeHeader
+        headerContainer.addSubview(searchController.searchBar)
+        headerContainer.addSubview(themeHeader)
+        tableView.tableHeaderView = headerContainer
     }
 
     private func reloadData() {
@@ -275,9 +492,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         cell.textLabel?.font = AppFont.jp(size: 18, weight: .bold)
         cell.detailTextLabel?.font = AppFont.jp(size: 14)
         let palette = ThemeManager.palette()
-        cell.backgroundColor = palette.surface
+        cell.backgroundColor = .clear
         cell.textLabel?.textColor = palette.text
         cell.detailTextLabel?.textColor = palette.mutedText
+        applyRetroCellStyle(cell)
         return cell
     }
 
@@ -341,13 +559,93 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         ThemeManager.applySearchBar(searchController.searchBar)
 
         tableView.backgroundColor = .clear
+        tableView.separatorStyle = .none
+        tableView.contentInset = UIEdgeInsets(top: -20, left: 0, bottom: 20, right: 0)
+        tableView.showsVerticalScrollIndicator = false
         tableView.separatorColor = palette.border
         emptyLabel.font = AppFont.jp(size: 16)
         emptyLabel.textColor = palette.mutedText
 
+        retroShellView.backgroundColor = UIColor.black
+        retroShellView.layer.cornerRadius = 36
+        retroShellView.layer.borderWidth = 0.5
+        retroShellView.layer.borderColor = UIColor.black.cgColor
+        retroShellView.layer.shadowColor = palette.border.cgColor
+        retroShellView.layer.shadowOpacity = 0.18
+        retroShellView.layer.shadowOffset = CGSize(width: 0, height: 6)
+        retroShellView.layer.shadowRadius = 12
+
+        retroScreenView.backgroundColor = palette.surfaceAlt
+        retroScreenView.layer.cornerRadius = 0
+        retroScreenView.layer.borderWidth = 8
+        retroScreenView.layer.borderColor = UIColor.darkGray.cgColor
+        retroScreenView.clipsToBounds = true
+
+        retroSpeakerView.backgroundColor = palette.border.withAlphaComponent(0.7)
+        retroSpeakerView.layer.cornerRadius = 3
+
+        retroAntennaView.backgroundColor = UIColor.black
+        retroAntennaView.layer.cornerRadius = 0
+        retroAntennaView.layer.borderWidth = 0
+        retroAntennaTipView.backgroundColor = UIColor.systemGray
+        retroAntennaTipView.layer.cornerRadius = 12
+
+        retroClickWheelView.backgroundColor = UIColor.systemGray5
+        retroClickWheelView.layer.borderWidth = 2
+        retroClickWheelView.layer.borderColor = UIColor.systemGray3.cgColor
+        retroClickWheelCenterView.backgroundColor = UIColor.systemGray4
+        retroClickWheelVerticalDivider.backgroundColor = UIColor.systemGray2
+        retroClickWheelHorizontalDivider.backgroundColor = UIColor.systemGray2
+
+        retroKeypadView.backgroundColor = palette.surface
+        retroKeypadView.layer.cornerRadius = 22
+        retroKeypadView.layer.borderWidth = 2
+        retroKeypadView.layer.borderColor = palette.border.cgColor
+
+        retroKeyButtons.forEach { key in
+            key.backgroundColor = palette.accent
+            key.layer.borderColor = palette.border.cgColor
+            key.setTitleColor(palette.text, for: .normal)
+            key.layer.shadowColor = palette.border.cgColor
+            key.layer.shadowOpacity = 0.2
+            key.layer.shadowOffset = CGSize(width: 0, height: 2)
+            key.layer.shadowRadius = 3
+        }
+
+        retroBadgeLabel.font = AppFont.title(size: 9)
+        retroBadgeLabel.textColor = palette.text
+        retroBadgeLabel.backgroundColor = palette.surfaceAlt
+        retroBadgeLabel.layer.cornerRadius = 8
+        retroBadgeLabel.layer.borderWidth = 1
+        retroBadgeLabel.layer.borderColor = palette.border.cgColor
+        retroBadgeLabel.clipsToBounds = true
+
+        retroAddButton.backgroundColor = palette.accentStrong
+        retroAddButton.setTitleColor(palette.text, for: .normal)
+        retroAddButton.layer.borderColor = palette.border.cgColor
+        retroAddButton.layer.shadowColor = palette.border.cgColor
+        retroAddButton.layer.shadowOpacity = 0.25
+        retroAddButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+        retroAddButton.layer.shadowRadius = 3
+
+        retroStickerView.backgroundColor = palette.surface
+        retroStickerView.layer.borderColor = palette.border.cgColor
+        retroStickerView.layer.borderWidth = 1.5
+        retroStickerView.layer.cornerRadius = 10
+        retroStickerView.layer.shadowColor = palette.border.cgColor
+        retroStickerView.layer.shadowOpacity = 0.2
+        retroStickerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        retroStickerView.layer.shadowRadius = 3
+
+        retroStickerStripe.backgroundColor = palette.accent
+        retroStickerStripe.layer.cornerRadius = 3
+
+        retroStickerIcon.image = UIImage(systemName: "star.fill")
+        retroStickerIcon.tintColor = palette.text
+
         themeHeader.backgroundColor = palette.surface
-        themeHeader.layer.cornerRadius = 12
-        themeHeader.layer.borderWidth = 1
+        themeHeader.layer.cornerRadius = 16
+        themeHeader.layer.borderWidth = 2
         themeHeader.layer.borderColor = palette.border.cgColor
         themeHeader.clipsToBounds = true
         themeTitleLabel.font = AppFont.jp(size: 16, weight: .bold)
@@ -358,6 +656,24 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             button.backgroundColor = ThemeManager.palette(for: theme).accent
         }
         updateThemeSelection()
+        tableView.reloadData()
+    }
+
+    private func updateHeaderLayout() {
+        guard let header = tableView.tableHeaderView else { return }
+        let width = tableView.bounds.width
+        let searchHeight = searchController.searchBar.bounds.height
+        let spacing: CGFloat = 10
+        let totalHeight = searchHeight + spacing + themeHeaderHeight
+        header.frame = CGRect(x: 0, y: 0, width: width, height: totalHeight)
+        searchController.searchBar.frame = CGRect(x: 0, y: 0, width: width, height: searchHeight)
+        themeHeader.frame = CGRect(x: 0, y: searchHeight + spacing, width: width, height: themeHeaderHeight)
+        tableView.tableHeaderView = header
+
+        let keyHeight = retroKeypadRowTop.bounds.height
+        if keyHeight > 0 {
+            retroKeyButtons.forEach { $0.layer.cornerRadius = keyHeight / 2 }
+        }
     }
 
     private func updateThemeSelection() {
@@ -375,6 +691,41 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
                 button.layer.shadowOpacity = 0
             }
         }
+    }
+
+    private func applyRetroCellStyle(_ cell: UITableViewCell) {
+        let containerTag = 9911
+        let container: UIView
+        if let existing = cell.contentView.viewWithTag(containerTag) {
+            container = existing
+        } else {
+            container = UIView()
+            container.tag = containerTag
+            container.translatesAutoresizingMaskIntoConstraints = false
+            cell.contentView.insertSubview(container, at: 0)
+            NSLayoutConstraint.activate([
+                container.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 12),
+                container.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -12),
+                container.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 6),
+                container.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -6),
+            ])
+        }
+
+        let palette = ThemeManager.palette()
+        container.backgroundColor = palette.surface
+        container.layer.cornerRadius = 16
+        container.layer.borderWidth = 1.5
+        container.layer.borderColor = palette.border.cgColor
+        container.layer.shadowColor = palette.border.cgColor
+        container.layer.shadowOpacity = 0.12
+        container.layer.shadowOffset = CGSize(width: 0, height: 2)
+        container.layer.shadowRadius = 4
+        container.layer.masksToBounds = false
+
+        cell.selectionStyle = .none
+        cell.contentView.clipsToBounds = false
+        cell.clipsToBounds = false
+        cell.contentView.sendSubviewToBack(container)
     }
 
     @objc private func openSortMenu() {
@@ -400,7 +751,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             self?.applyFilterAndReload()
         })
         alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.last
+        if let barButton = navigationItem.rightBarButtonItems?.last {
+            alert.popoverPresentationController?.barButtonItem = barButton
+        } else {
+            alert.popoverPresentationController?.sourceView = retroKeypadView
+            alert.popoverPresentationController?.sourceRect = retroKeypadView.bounds
+        }
         present(alert, animated: true)
     }
 
