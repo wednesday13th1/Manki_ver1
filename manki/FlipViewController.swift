@@ -8,7 +8,7 @@
 //
 import UIKit
 
-class FlipViewController: UIViewController {
+class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
 
     private let savedWordsFileName = "saved_words.json"
     private let resultsFileName = "results.json"
@@ -20,6 +20,23 @@ class FlipViewController: UIViewController {
     private var hasRecordedSession = false
     private var viewedWordIDs: [String] = []
     private var viewedWordIDSet: Set<String> = []
+
+    private let timerStack = UIStackView()
+    private let timerTitleLabel = UILabel()
+    private let timeTextField = UITextField()
+    private let timerStartButton = UIButton(type: .system)
+    private let remainingTimeLabel = UILabel()
+    private let timePicker = UIPickerView()
+    private let timeOptionsSec = Array(stride(from: 0, through: 1800, by: 30))
+    private var selectedTimeSeconds = 0
+    private var timer: Timer?
+    private var endTime: Date?
+
+    private var timeUpOverlay: UIControl?
+    private var timeUpContainer: UIView?
+    private var timeUpTitleLabel: UILabel?
+    private var timeUpMessageLabel: UILabel?
+    private var timeUpButtons: [UIButton] = []
 
     private let cardContainer = UIView()
     private let frontView = UIView()
@@ -55,6 +72,7 @@ class FlipViewController: UIViewController {
         title = "フリップ"
 
         configureUI()
+        configureTimePicker()
         words = presetWords ?? loadSavedWords()
         emojiMap = loadEmojiMap()
         if words.isEmpty {
@@ -84,19 +102,49 @@ class FlipViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        dismissTimeUpModal()
+        setNavigationLocked(false)
         recordFlipSessionIfNeeded()
     }
 
     private func configureUI() {
+        timerStack.axis = .vertical
+        timerStack.spacing = 8
+        timerStack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(timerStack)
+
+        timerTitleLabel.text = "フリップタイマー (0=制限なし)"
+        timerTitleLabel.font = AppFont.jp(size: 14, weight: .regular)
+        timerStack.addArrangedSubview(timerTitleLabel)
+
+        timeTextField.borderStyle = .roundedRect
+        timeTextField.font = AppFont.jp(size: 14)
+        timeTextField.text = "0 (時間制限無し)"
+        timerStack.addArrangedSubview(timeTextField)
+
+        timerStartButton.setTitle("タイマー開始", for: .normal)
+        timerStartButton.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        timerStartButton.addTarget(self, action: #selector(startTimerTapped), for: .touchUpInside)
+        timerStack.addArrangedSubview(timerStartButton)
+
+        remainingTimeLabel.font = AppFont.jp(size: 14, weight: .bold)
+        remainingTimeLabel.textColor = .secondaryLabel
+        remainingTimeLabel.text = ""
+        timerStack.addArrangedSubview(remainingTimeLabel)
+
         cardContainer.translatesAutoresizingMaskIntoConstraints = false
         cardContainer.backgroundColor = .clear
         view.addSubview(cardContainer)
 
         NSLayoutConstraint.activate([
+            timerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            timerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            timerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             cardContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             cardContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             cardContainer.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.78),
             cardContainer.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.34),
+            cardContainer.topAnchor.constraint(greaterThanOrEqualTo: timerStack.bottomAnchor, constant: 16),
         ])
 
         [frontView, backView].forEach { cardSide in
@@ -318,6 +366,9 @@ class FlipViewController: UIViewController {
         nextButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         ThemeManager.styleSecondaryButton(prevButton)
         ThemeManager.stylePrimaryButton(nextButton)
+        ThemeManager.stylePrimaryButton(timerStartButton)
+        timerTitleLabel.textColor = palette.text
+        remainingTimeLabel.textColor = palette.mutedText
 
         buttonPanel.backgroundColor = palette.surface
         buttonPanel.layer.cornerRadius = 16
@@ -327,6 +378,88 @@ class FlipViewController: UIViewController {
         buttonPanel.layer.shadowOpacity = 0.2
         buttonPanel.layer.shadowOffset = CGSize(width: 0, height: 3)
         buttonPanel.layer.shadowRadius = 6
+        updateTimeUpModalTheme()
+    }
+
+    private func configureTimePicker() {
+        timePicker.tag = 1
+        timePicker.delegate = self
+        timePicker.dataSource = self
+        timeTextField.inputView = timePicker
+        timeTextField.inputAccessoryView = makeToolbar()
+        timeTextField.tintColor = .clear
+
+        if let index = timeOptionsSec.firstIndex(of: selectedTimeSeconds) {
+            timePicker.selectRow(index, inComponent: 0, animated: false)
+        } else {
+            timeTextField.text = "0 (時間制限無し)"
+            timePicker.selectRow(0, inComponent: 0, animated: false)
+            selectedTimeSeconds = 0
+        }
+    }
+
+    private func makeToolbar() -> UIToolbar {
+        let toolbar = UIToolbar()
+        toolbar.sizeToFit()
+        let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let done = UIBarButtonItem(title: "完了", style: .done, target: self, action: #selector(dismissPicker))
+        toolbar.items = [spacer, done]
+        return toolbar
+    }
+
+    @objc private func dismissPicker() {
+        view.endEditing(true)
+    }
+
+    @objc private func startTimerTapped() {
+        startTimerIfNeeded(limitSeconds: selectedTimeSeconds)
+    }
+
+    private func startTimerIfNeeded(limitSeconds: Int) {
+        timer?.invalidate()
+        timer = nil
+        endTime = nil
+        remainingTimeLabel.text = ""
+
+        guard limitSeconds > 0 else {
+            setNavigationLocked(false)
+            timeTextField.isEnabled = true
+            return
+        }
+
+        endTime = Date().addingTimeInterval(TimeInterval(limitSeconds))
+        timerStartButton.isEnabled = false
+        timeTextField.isEnabled = false
+        setNavigationLocked(true)
+        updateRemainingTime()
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.updateRemainingTime()
+        }
+    }
+
+    private func updateRemainingTime() {
+        guard let endTime else { return }
+        let remaining = Int(endTime.timeIntervalSinceNow.rounded(.down))
+        if remaining <= 0 {
+            remainingTimeLabel.text = "残り時間: 0秒"
+            finishTimer()
+            return
+        }
+        remainingTimeLabel.text = "残り時間: \(remaining)秒"
+    }
+
+    private func finishTimer() {
+        timer?.invalidate()
+        timer = nil
+        endTime = nil
+        timerStartButton.isEnabled = true
+        timeTextField.isEnabled = true
+        showTimeUpModal()
+    }
+
+    private func setNavigationLocked(_ locked: Bool) {
+        navigationItem.hidesBackButton = locked
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = !locked
     }
 
     deinit {
@@ -652,6 +785,149 @@ class FlipViewController: UIViewController {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+
+    private func showTimeUpModal() {
+        guard timeUpOverlay == nil else { return }
+        let overlay = UIControl()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.accessibilityViewIsModal = true
+
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "時間切れ"
+        titleLabel.textAlignment = .center
+
+        let messageLabel = UILabel()
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.text = "前画面に戻りますか？"
+        messageLabel.numberOfLines = 0
+        messageLabel.textAlignment = .center
+
+        let stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .vertical
+        stack.spacing = 8
+
+        let backButton = makeTimeUpButton(title: "戻る", action: #selector(handleTimeUpBack))
+        let continueButton = makeTimeUpButton(title: "続ける", action: #selector(handleTimeUpContinue))
+
+        [backButton, continueButton].forEach { button in
+            stack.addArrangedSubview(button)
+            button.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        }
+
+        container.addSubview(titleLabel)
+        container.addSubview(messageLabel)
+        container.addSubview(stack)
+        overlay.addSubview(container)
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            container.widthAnchor.constraint(equalToConstant: 260),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            messageLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            messageLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            stack.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 12),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+        ])
+
+        timeUpOverlay = overlay
+        timeUpContainer = container
+        timeUpTitleLabel = titleLabel
+        timeUpMessageLabel = messageLabel
+        timeUpButtons = [backButton, continueButton]
+        updateTimeUpModalTheme()
+
+        overlay.alpha = 0
+        container.alpha = 0
+        container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+            overlay.alpha = 1
+            container.alpha = 1
+            container.transform = .identity
+        }
+    }
+
+    @objc private func handleTimeUpBack() {
+        dismissTimeUpModal()
+        setNavigationLocked(false)
+        navigationController?.popViewController(animated: true)
+    }
+
+    @objc private func handleTimeUpContinue() {
+        dismissTimeUpModal()
+        setNavigationLocked(false)
+    }
+
+    @objc private func dismissTimeUpModal() {
+        guard let overlay = timeUpOverlay, let container = timeUpContainer else { return }
+        UIView.animate(withDuration: 0.15, delay: 0, options: [.curveEaseIn]) {
+            overlay.alpha = 0
+            container.alpha = 0
+            container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        } completion: { [weak self] _ in
+            overlay.removeFromSuperview()
+            self?.timeUpOverlay = nil
+            self?.timeUpContainer = nil
+            self?.timeUpTitleLabel = nil
+            self?.timeUpMessageLabel = nil
+            self?.timeUpButtons = []
+        }
+    }
+
+    private func makeTimeUpButton(title: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle(title, for: .normal)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+        button.layer.borderWidth = 2
+        button.layer.cornerRadius = 0
+        button.layer.masksToBounds = true
+        return button
+    }
+
+    private func updateTimeUpModalTheme() {
+        guard let overlay = timeUpOverlay,
+              let container = timeUpContainer,
+              let titleLabel = timeUpTitleLabel,
+              let messageLabel = timeUpMessageLabel else { return }
+        let palette = ThemeManager.palette()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        container.backgroundColor = palette.surface
+        container.layer.borderWidth = 2
+        container.layer.borderColor = palette.border.cgColor
+        titleLabel.font = AppFont.jp(size: 16, weight: .bold)
+        titleLabel.textColor = palette.text
+        messageLabel.font = AppFont.jp(size: 12, weight: .regular)
+        messageLabel.textColor = palette.text
+        timeUpButtons.forEach { button in
+            button.backgroundColor = palette.surfaceAlt
+            button.layer.borderColor = palette.border.cgColor
+            button.setTitleColor(palette.text, for: .normal)
+        }
     }
 
     private func generateLocalComicImage(for word: SavedWord) -> UIImage? {
@@ -1162,6 +1438,42 @@ class FlipViewController: UIViewController {
                        endAngle: .pi * 1.8,
                        clockwise: false)
         context.strokePath()
+    }
+}
+
+extension FlipViewController {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return timeOptionsSec.count
+    }
+
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        let value = timeOptionsSec[row]
+        if value == 0 {
+            return "0 (時間制限無し)"
+        }
+        return formatSeconds(value)
+    }
+
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        let value = timeOptionsSec[row]
+        selectedTimeSeconds = value
+        timeTextField.text = value == 0 ? "0 (時間制限無し)" : formatSeconds(value)
+    }
+
+    private func formatSeconds(_ totalSeconds: Int) -> String {
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        if minutes == 0 {
+            return "\(seconds)秒"
+        }
+        if seconds == 0 {
+            return "\(minutes)分"
+        }
+        return "\(minutes)分\(seconds)秒"
     }
 }
 
