@@ -14,6 +14,10 @@
 </string>
 	<key>GeminiAPIKey</key>
 	<string>AIzaSyAtv_nsoWZsoPhYuXq33Q-KsLAYqZ4ffDg</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ステッカー用の写真を撮影するためにカメラを使用します。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ステッカー用の写真を選ぶためにフォトライブラリを使用します。</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>PixelMplus10-Regular.ttf</string>

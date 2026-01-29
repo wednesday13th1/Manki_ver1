@@ -59,6 +59,36 @@
             </objects>
             <point key="canvasLocation" x="2400" y="1442"/>
         </scene>
+        <!--Sti Cam View Controller-->
+        <scene sceneID="RAv-ej-IW9">
+            <objects>
+                <viewController id="tZ1-HX-bRy" customClass="StiCamViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="JJx-8H-NDs">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="Wqy-0Z-jSm"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Q4I-Gf-T2r" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2443" y="2164"/>
+        </scene>
+        <!--Sti Collect View Controller-->
+        <scene sceneID="FjA-6C-Pd5">
+            <objects>
+                <viewController id="2ZL-Jm-ObO" customClass="StiCollectViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Rt6-V1-P7z">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="37Y-wo-cvC"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="bJa-mg-GC6" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3121" y="2176"/>
+        </scene>
         <!--Flip View Controller-->
         <scene sceneID="Khg-CQ-uu5">
             <objects>
@@ -104,7 +134,7 @@
             </objects>
             <point key="canvasLocation" x="4780" y="1467"/>
         </scene>
-        <!--Item 2-->
+        <!--スケジュール-->
         <scene sceneID="Z4L-LQ-PLU">
             <objects>
                 <viewController id="RxA-3O-cjo" customClass="ScheduleViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">

@@ -221,13 +221,13 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             backScreen.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 14),
             backScreen.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -14),
             backScreen.topAnchor.constraint(equalTo: backView.topAnchor, constant: 14),
-            backScreen.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.48),
+            backScreen.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
             backStack.leadingAnchor.constraint(equalTo: backScreen.leadingAnchor, constant: 12),
             backStack.trailingAnchor.constraint(equalTo: backScreen.trailingAnchor, constant: -12),
             backStack.topAnchor.constraint(equalTo: backScreen.topAnchor, constant: 12),
             backStack.bottomAnchor.constraint(equalTo: backScreen.bottomAnchor, constant: -12),
-            fallbackPlaceholderView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.55),
-            backImageView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.55),
+            fallbackPlaceholderView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.6),
+            backImageView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.6),
         ])
         NSLayoutConstraint.activate([
             emojiLabel.centerXAnchor.constraint(equalTo: fallbackPlaceholderView.centerXAnchor),
@@ -645,8 +645,26 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         backImageView.isHidden = true
         fallbackPlaceholderView.isHidden = false
         emojiLabel.text = "..."
+        if let fileName = word.illustrationImageFileName,
+           let image = loadIllustrationImage(fileName: fileName) {
+            backImageView.image = image
+            backImageView.isHidden = false
+            fallbackPlaceholderView.isHidden = true
+            loadingIndicator.stopAnimating()
+            return
+        }
         loadEmoji(for: word)
         loadingIndicator.stopAnimating()
+    }
+
+    private func loadIllustrationImage(fileName: String) -> UIImage? {
+        if let sticker = StickerStore.loadStickerImage(fileName: fileName) {
+            return sticker
+        }
+        let documents = FileManager.default.urls(for: .documentDirectory,
+                                                 in: .userDomainMask).first!
+        let url = documents.appendingPathComponent(fileName)
+        return UIImage(contentsOfFile: url.path)
     }
 
     private func loadCachedComicImage(for word: SavedWord) -> UIImage? {

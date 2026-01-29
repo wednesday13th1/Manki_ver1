@@ -11,6 +11,14 @@ final class ResultViewController: UIViewController {
 
     private let resultsFileName = "results.json"
     private let textView = UITextView()
+    private let filterControl = UISegmentedControl(items: ["今日", "1週間", "1ヶ月"])
+    private var sessions: [SessionResult] = []
+
+    private enum FilterRange: Int {
+        case today = 0
+        case week = 1
+        case month = 2
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,13 +34,21 @@ final class ResultViewController: UIViewController {
     }
 
     private func configureUI() {
+        filterControl.selectedSegmentIndex = FilterRange.today.rawValue
+        filterControl.addTarget(self, action: #selector(filterChanged), for: .valueChanged)
+        filterControl.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(filterControl)
+
         textView.isEditable = false
         textView.font = .systemFont(ofSize: 14)
         textView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(textView)
 
         NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            filterControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            filterControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            filterControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            textView.topAnchor.constraint(equalTo: filterControl.bottomAnchor, constant: 12),
             textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
             textView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -12),
@@ -58,33 +74,112 @@ final class ResultViewController: UIViewController {
             return
         }
 
-        textView.text = formatResults(decoded.sessions)
+        sessions = decoded.sessions
+        applyFilter()
     }
 
-    private func formatResults(_ sessions: [SessionResult]) -> String {
-        var lines: [String] = []
-        for (index, session) in sessions.enumerated() {
-            lines.append("=== Session \(index + 1) ===")
-            lines.append("timestamp: \(session.timestamp)")
-            lines.append("reason: \(session.reason)")
+    @objc private func filterChanged() {
+        applyFilter()
+    }
+
+    private func applyFilter() {
+        guard let range = FilterRange(rawValue: filterControl.selectedSegmentIndex) else {
+            textView.attributedText = formatResultsAttributed(sessions)
+            return
+        }
+        let filtered = filterSessions(sessions, range: range)
+        if filtered.isEmpty {
+            textView.text = "指定期間の結果がありません。"
+        } else {
+            textView.attributedText = formatResultsAttributed(filtered)
+        }
+    }
+
+    private func filterSessions(_ sessions: [SessionResult], range: FilterRange) -> [SessionResult] {
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfToday = calendar.startOfDay(for: now)
+        let start: Date
+        switch range {
+        case .today:
+            start = startOfToday
+        case .week:
+            start = calendar.date(byAdding: .day, value: -6, to: startOfToday) ?? startOfToday
+        case .month:
+            start = calendar.date(byAdding: .day, value: -29, to: startOfToday) ?? startOfToday
+        }
+        let end = calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? now
+
+        return sessions.filter { session in
+            guard let date = parseTimestamp(session.timestamp) else {
+                return true
+            }
+            if range == .today {
+                return date >= start && date < end
+            }
+            return date >= start && date <= now
+        }
+    }
+
+    private func parseTimestamp(_ text: String) -> Date? {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = isoFormatter.date(from: text) {
+            return date
+        }
+        let fallback = ISO8601DateFormatter()
+        fallback.formatOptions = [.withInternetDateTime]
+        return fallback.date(from: text)
+    }
+
+    private func formatResultsAttributed(_ sessions: [SessionResult]) -> NSAttributedString {
+        let baseFont = UIFont.systemFont(ofSize: 14)
+        let boldFont = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        let baseColor = UIColor.label
+        let redColor = UIColor.systemRed
+
+        let result = NSMutableAttributedString()
+
+        func append(_ text: String, font: UIFont = baseFont, color: UIColor = baseColor) {
+            result.append(NSAttributedString(string: text, attributes: [
+                .font: font,
+                .foregroundColor: color
+            ]))
+        }
+
+        for (index, session) in sessions.enumerated().reversed() {
+            append("=== セッション \(sessions.count - index) ===\n", font: boldFont)
+            append("日時: \(session.timestamp)\n")
+            append("理由: \(session.reason)\n")
             let modeLabel = session.modeLabel ?? "不明"
             let directionLabel = session.directionLabel ?? "不明"
-            lines.append("mode: \(modeLabel) / \(directionLabel)")
-            lines.append("score: \(session.score)/\(session.answered)")
-            lines.append(String(format: "正答率: %.1f%%", session.accuracy * 100))
-            lines.append(String(format: "合計時間: %.2fs", session.totalElapsedSec))
-            lines.append("questions:")
-            for question in session.questions {
-                let result = question.correct ? "correct" : "wrong"
-                lines.append("  Q\(question.index) [\(question.type), \(question.direction)]")
-                lines.append("    prompt: \(question.prompt)")
-                lines.append("    answer: \(question.userAnswer) (\(result))")
-                lines.append("    correct: \(question.correctAnswer)")
-                lines.append(String(format: "    time: %.2fs", question.answerTimeSec))
+            append("モード: \(modeLabel) / \(directionLabel)\n")
+            append("スコア: \(session.score)/\(session.answered)\n")
+            append(String(format: "正答率: %.1f%%\n", session.accuracy * 100))
+            append(String(format: "合計時間: %.2fs\n", session.totalElapsedSec))
+            append("---- 問題 ----\n", font: boldFont)
+
+            if session.questions.isEmpty {
+                append("問題の詳細がありません。\n\n")
+                continue
             }
-            lines.append("")
+
+            for question in session.questions {
+                let isCorrect = question.correct
+                let color = isCorrect ? baseColor : redColor
+                let resultText = isCorrect ? "正解" : "不正解"
+                append("Q\(question.index)（\(question.type) / \(question.direction)）\n",
+                       font: boldFont,
+                       color: color)
+                append("質問: \(question.prompt)\n", color: color)
+                append("あなたの回答: \(question.userAnswer)（\(resultText)）\n", color: color)
+                append("正解: \(question.correctAnswer)\n", color: color)
+                append(String(format: "解答時間: %.2fs\n\n", question.answerTimeSec), color: color)
+            }
+            append("\n")
         }
-        return lines.joined(separator: "\n")
+
+        return result
     }
 }
 

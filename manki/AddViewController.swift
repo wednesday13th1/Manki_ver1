@@ -32,6 +32,12 @@ final class AddViewController: UIViewController {
     private var lastImageEnglish: String?
     private var lastImageJapanese: String?
     private let imageLoadingIndicator = UIActivityIndicatorView(style: .medium)
+    private var pendingImageSource: PendingImageSource?
+
+    private enum PendingImageSource {
+        case generated
+        case sticker
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,7 +52,9 @@ final class AddViewController: UIViewController {
         pendingScenario = nil
         lastGeneratedEnglish = nil
         lastGeneratedJapanese = nil
-        clearPendingImage(removeFile: true)
+        if pendingImageSource == .generated {
+            clearPendingImage(removeFile: true)
+        }
     }
 
     @IBAction private func saveWord() {
@@ -63,11 +71,18 @@ final class AddViewController: UIViewController {
             scenario = nil
         }
         let imageFileName: String?
-        if english == lastImageEnglish, japanese == lastImageJapanese {
+        switch pendingImageSource {
+        case .sticker:
             imageFileName = pendingImageFileName
-        } else {
+        case .generated:
+            if english == lastImageEnglish, japanese == lastImageJapanese {
+                imageFileName = pendingImageFileName
+            } else {
+                imageFileName = nil
+                clearPendingImage(removeFile: true)
+            }
+        case .none:
             imageFileName = nil
-            clearPendingImage(removeFile: true)
         }
         savedWords.append(SavedWord(english: english,
                                     japanese: japanese,
@@ -94,13 +109,20 @@ final class AddViewController: UIViewController {
     }
 
     @objc private func generateIllustrationImageTapped() {
-        let english = englishTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let japanese = japaneseTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !english.isEmpty, !japanese.isEmpty else {
-            showAlert(title: "入力エラー", message: "英語と日本語を入力してください。")
-            return
+        let picker = StiCollectViewController()
+        picker.selectionHandler = { [weak self] sticker in
+            guard let self else { return }
+            guard let image = StickerStore.loadStickerImage(fileName: sticker.imageFileName) else {
+                self.showAlert(title: "選択エラー", message: "ステッカー画像を読み込めませんでした。")
+                return
+            }
+            self.pendingImageFileName = sticker.imageFileName
+            self.pendingImageSource = .sticker
+            self.previewImageView.image = image
         }
-        generateIllustrationImage(english: english, japanese: japanese)
+        let nav = UINavigationController(rootViewController: picker)
+        nav.modalPresentationStyle = .pageSheet
+        present(nav, animated: true)
     }
 
     private func savedWordsFileURL() -> URL {
@@ -152,7 +174,7 @@ final class AddViewController: UIViewController {
 
     private func configurePreviewImageView() {
         generateImageButton.translatesAutoresizingMaskIntoConstraints = false
-        generateImageButton.setTitle("画像生成", for: .normal)
+        generateImageButton.setTitle("ステッカーを選ぶ", for: .normal)
         generateImageButton.addTarget(self, action: #selector(generateIllustrationImageTapped), for: .touchUpInside)
 
         previewImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -205,13 +227,21 @@ final class AddViewController: UIViewController {
     private func clearPendingImage(removeFile: Bool) {
         imageTask?.cancel()
         if removeFile, let fileName = pendingImageFileName {
-            try? FileManager.default.removeItem(at: imageFileURL(fileName: fileName))
+            if !stickerFileExists(fileName: fileName) {
+                try? FileManager.default.removeItem(at: imageFileURL(fileName: fileName))
+            }
         }
         pendingImageFileName = nil
+        pendingImageSource = nil
         lastImageEnglish = nil
         lastImageJapanese = nil
         previewImageView.image = nil
         imageLoadingIndicator.stopAnimating()
+    }
+
+    private func stickerFileExists(fileName: String) -> Bool {
+        let url = StickerStore.stickersDirectoryURL(createIfNeeded: false).appendingPathComponent(fileName)
+        return FileManager.default.fileExists(atPath: url.path)
     }
 
     private func generateIllustrationScenario(english: String, japanese: String) {
@@ -347,6 +377,7 @@ final class AddViewController: UIViewController {
                 self.previewImageView.image = image
                 if let fileName {
                     self.pendingImageFileName = fileName
+                    self.pendingImageSource = .generated
                     self.lastImageEnglish = english
                     self.lastImageJapanese = japanese
                 } else {

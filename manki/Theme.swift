@@ -39,12 +39,7 @@ struct ThemePalette {
 
 enum AppFont {
     static func jp(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
-        let name: String
-        if weight == .bold || weight == .semibold || weight == .heavy || weight == .black {
-            name = "PixelMplus10-Bold"
-        } else {
-            name = "PixelMplus10-Regular"
-        }
+        let name = "PixelMplus10-Regular"
         if let font = UIFont(name: name, size: size) {
             return font
         }
@@ -59,10 +54,10 @@ enum AppFont {
     }
 
     static func title(size: CGFloat) -> UIFont {
-        if let font = UIFont(name: "PressStart2P-Regular", size: size) {
+        if let font = UIFont(name: "PixelMplus10-Regular", size: size) {
             return font
         }
-        return UIFont.systemFont(ofSize: size, weight: .bold)
+        return UIFont.systemFont(ofSize: size, weight: .regular)
     }
 }
 

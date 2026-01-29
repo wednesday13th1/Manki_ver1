@@ -42,13 +42,25 @@ class ModeViewController: UIViewController {
         action: #selector(goToSetting)
     )
 
+    private lazy var stickerButton: UIButton = makeButton(
+        title: "ステッカーへ",
+        action: #selector(goToSticker)
+    )
+
     private func setupUI() {
         titleLabel.text = "MANKI"
         titleLabel.textAlignment = .center
         subtitleLabel.text = "Study Mode"
         subtitleLabel.textAlignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, folderButton, tabBarButton, settingButton])
+        let stack = UIStackView(arrangedSubviews: [
+            titleLabel,
+            subtitleLabel,
+            folderButton,
+            tabBarButton,
+            stickerButton,
+            settingButton
+        ])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = 14
@@ -95,6 +107,13 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
+    @objc private func goToSticker() {
+        let controller = StiCamViewController()
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
     private func applyTheme() {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
@@ -104,6 +123,7 @@ class ModeViewController: UIViewController {
         subtitleLabel.textColor = palette.mutedText
         ThemeManager.stylePrimaryButton(folderButton)
         ThemeManager.stylePrimaryButton(tabBarButton)
+        ThemeManager.stylePrimaryButton(stickerButton)
         ThemeManager.styleSecondaryButton(settingButton)
     }
 

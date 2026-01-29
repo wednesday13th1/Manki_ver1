@@ -35,6 +35,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let tapGesture = UITapGestureRecognizer()
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
+    private let searchContainer = UIView()
     private var searchText: String = ""
     private let themeHeader = UIView()
     private let themeTitleLabel = UILabel()
@@ -180,7 +181,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.delegate = self
         tableView.rowHeight = 72
         tableView.delaysContentTouches = false
+        retroScreenView.addSubview(searchContainer)
         retroScreenView.addSubview(tableView)
+
+        searchContainer.translatesAutoresizingMaskIntoConstraints = false
+        searchController.searchBar.translatesAutoresizingMaskIntoConstraints = false
+        searchContainer.addSubview(searchController.searchBar)
         let gesture = UILongPressGestureRecognizer(target: self, action: #selector(handleSetRenameLongPress(_:)))
         gesture.cancelsTouchesInView = false
         gesture.delaysTouchesBegan = false
@@ -195,7 +201,16 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.addGestureRecognizer(tapGesture)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: retroScreenView.topAnchor),
+            searchContainer.topAnchor.constraint(equalTo: retroScreenView.topAnchor, constant: 12),
+            searchContainer.leadingAnchor.constraint(equalTo: retroScreenView.leadingAnchor, constant: 12),
+            searchContainer.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor, constant: -12),
+
+            searchController.searchBar.topAnchor.constraint(equalTo: searchContainer.topAnchor, constant: 6),
+            searchController.searchBar.leadingAnchor.constraint(equalTo: searchContainer.leadingAnchor, constant: 6),
+            searchController.searchBar.trailingAnchor.constraint(equalTo: searchContainer.trailingAnchor, constant: -6),
+            searchController.searchBar.bottomAnchor.constraint(equalTo: searchContainer.bottomAnchor, constant: -6),
+
+            tableView.topAnchor.constraint(equalTo: searchContainer.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: retroScreenView.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor),
@@ -323,7 +338,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
             button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
         }
-        retroClickWheelFolderButton.setTitle("戻る", for: .normal)
+        retroClickWheelFolderButton.setTitle("追加", for: .normal)
         retroClickWheelWordButton.setTitle("単語", for: .normal)
 
         retroKeypadView.addSubview(retroKeypadGrid)
@@ -447,7 +462,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
         retroSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
         retroAddButton.addTarget(self, action: #selector(openWhichView), for: .touchUpInside)
-        retroClickWheelFolderButton.addTarget(self, action: #selector(backToFolders), for: .touchUpInside)
+        retroClickWheelFolderButton.addTarget(self, action: #selector(openAddSet), for: .touchUpInside)
         retroClickWheelWordButton.addTarget(self, action: #selector(openWordMenuFromClickWheel), for: .touchUpInside)
     }
 
@@ -489,7 +504,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             themeStack.heightAnchor.constraint(equalToConstant: 36),
         ])
 
-        headerContainer.addSubview(searchController.searchBar)
         headerContainer.addSubview(themeHeader)
         tableView.tableHeaderView = headerContainer
     }
@@ -620,6 +634,11 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.separatorColor = palette.border
         emptyLabel.font = AppFont.jp(size: 16)
         emptyLabel.textColor = palette.mutedText
+
+        searchContainer.backgroundColor = palette.surface
+        searchContainer.layer.cornerRadius = 12
+        searchContainer.layer.borderWidth = 1.5
+        searchContainer.layer.borderColor = palette.border.cgColor
 
         retroShellView.backgroundColor = UIColor.black
         retroShellView.layer.cornerRadius = 36
@@ -858,12 +877,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private func updateHeaderLayout() {
         guard let header = tableView.tableHeaderView else { return }
         let width = tableView.bounds.width
-        let searchHeight = searchController.searchBar.bounds.height
-        let spacing: CGFloat = 10
-        let totalHeight = searchHeight + spacing + themeHeaderHeight
+        let totalHeight = themeHeaderHeight
         header.frame = CGRect(x: 0, y: 0, width: width, height: totalHeight)
-        searchController.searchBar.frame = CGRect(x: 0, y: 0, width: width, height: searchHeight)
-        themeHeader.frame = CGRect(x: 0, y: searchHeight + spacing, width: width, height: themeHeaderHeight)
+        themeHeader.frame = CGRect(x: 0, y: 0, width: width, height: themeHeaderHeight)
         tableView.tableHeaderView = header
 
         let keyHeight = retroKeypadRowTop.bounds.height
