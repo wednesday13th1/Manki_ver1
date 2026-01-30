@@ -59,19 +59,19 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     private let backStickerIcon = UIImageView()
     private let stickerAssetNames = [
         "billiard",
-        "candy",
-        "car",
-        "casset",
-        "diary",
+        "candy-xbg",
+        "car-xbg",
+        "casset-xbg",
+        "diary-xbg",
         "guitar",
-        "heart",
-        "pin",
-        "recordtrack",
+        "heart-Xbg",
+        "pin-Xbg",
+        "record-xbg",
         "ribbon",
-        "star",
-        "sunglass",
+        "star-Xbg",
+        "sunglass_xbg",
         "tape",
-        "telephone"
+        "telephone-xbg"
     ]
     private var frontStickerDecorViews: [StickerDecorView] = []
     private var backStickerDecorViews: [StickerDecorView] = []
@@ -272,6 +272,8 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         ])
         frontStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
         backStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
+        frontStickerContainer.isHidden = true
+        backStickerContainer.isHidden = true
 
         configureStickerDecorations()
 
@@ -372,7 +374,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             bottomCenter.centerXAnchor.constraint(equalTo: cardSide.centerXAnchor),
             bottomCenter.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -14),
 
-            bottomLeft.widthAnchor.constraint(equalToConstant: 56),
+            bottomLeft.widthAnchor.constraint(equalToConstant: 80),
             bottomLeft.heightAnchor.constraint(equalTo: bottomLeft.widthAnchor),
             bottomRight.widthAnchor.constraint(equalTo: bottomLeft.widthAnchor),
             bottomRight.heightAnchor.constraint(equalTo: bottomLeft.heightAnchor),
@@ -484,11 +486,24 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         if let image = UIImage(named: name) {
             return image
         }
-        if let image = UIImage(named: "\(name).jpg") {
-            return image
-        }
-        if let image = UIImage(named: "\(name).png") {
-            return image
+        let candidates = [name, "\(name).jpg", "\(name).png"]
+        for candidate in candidates {
+            if let image = UIImage(named: candidate) {
+                return image
+            }
+            if let url = Bundle.main.url(forResource: candidate, withExtension: nil),
+               let image = UIImage(contentsOfFile: url.path) {
+                return image
+            }
+            let parts = candidate.split(separator: ".", omittingEmptySubsequences: false)
+            if parts.count >= 2 {
+                let base = parts.dropLast().joined(separator: ".")
+                let ext = String(parts.last ?? "")
+                if let url = Bundle.main.url(forResource: base, withExtension: ext),
+                   let image = UIImage(contentsOfFile: url.path) {
+                    return image
+                }
+            }
         }
         return nil
     }
@@ -1629,12 +1644,12 @@ private final class StickerDecorView: UIView {
         layer.shadowRadius = 4
 
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.contentMode = .scaleAspectFill
-        imageView.backgroundColor = .white
-        imageView.layer.cornerRadius = 10
-        imageView.layer.borderWidth = 2
-        imageView.layer.borderColor = UIColor.white.cgColor
-        imageView.clipsToBounds = true
+        imageView.contentMode = .scaleAspectFit
+        imageView.backgroundColor = .clear
+        imageView.layer.cornerRadius = 0
+        imageView.layer.borderWidth = 0
+        imageView.layer.borderColor = UIColor.clear.cgColor
+        imageView.clipsToBounds = false
         addSubview(imageView)
 
         NSLayoutConstraint.activate([
