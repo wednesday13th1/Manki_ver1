@@ -57,6 +57,24 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     private let backStickerContainer = UIView()
     private let backStickerLabel = UILabel()
     private let backStickerIcon = UIImageView()
+    private let stickerAssetNames = [
+        "billiard",
+        "candy",
+        "car",
+        "casset",
+        "diary",
+        "guitar",
+        "heart",
+        "pin",
+        "recordtrack",
+        "ribbon",
+        "star",
+        "sunglass",
+        "tape",
+        "telephone"
+    ]
+    private var frontStickerDecorViews: [StickerDecorView] = []
+    private var backStickerDecorViews: [StickerDecorView] = []
     private let buttonPanel = UIView()
     private let buttonStack = UIStackView()
     private let prevButton = UIButton(type: .system)
@@ -255,6 +273,8 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         frontStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
         backStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
 
+        configureStickerDecorations()
+
         backView.isHidden = true
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(flipCard))
@@ -325,13 +345,51 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         ])
     }
 
+    private func configureStickerDecorations() {
+        frontStickerDecorViews = makeStickerDecorations(in: frontView)
+        backStickerDecorViews = makeStickerDecorations(in: backView)
+    }
+
+    private func makeStickerDecorations(in cardSide: UIView) -> [StickerDecorView] {
+        let bottomLeft = StickerDecorView()
+        let bottomRight = StickerDecorView()
+        let bottomCenter = StickerDecorView()
+        let decorations = [bottomLeft, bottomRight, bottomCenter]
+
+        decorations.forEach { decor in
+            decor.translatesAutoresizingMaskIntoConstraints = false
+            cardSide.addSubview(decor)
+            cardSide.bringSubviewToFront(decor)
+        }
+
+        NSLayoutConstraint.activate([
+            bottomLeft.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12),
+            bottomLeft.leadingAnchor.constraint(equalTo: cardSide.leadingAnchor, constant: 12),
+
+            bottomRight.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12),
+            bottomRight.trailingAnchor.constraint(equalTo: cardSide.trailingAnchor, constant: -12),
+
+            bottomCenter.centerXAnchor.constraint(equalTo: cardSide.centerXAnchor),
+            bottomCenter.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -14),
+
+            bottomLeft.widthAnchor.constraint(equalToConstant: 56),
+            bottomLeft.heightAnchor.constraint(equalTo: bottomLeft.widthAnchor),
+            bottomRight.widthAnchor.constraint(equalTo: bottomLeft.widthAnchor),
+            bottomRight.heightAnchor.constraint(equalTo: bottomLeft.heightAnchor),
+            bottomCenter.widthAnchor.constraint(equalTo: bottomLeft.widthAnchor),
+            bottomCenter.heightAnchor.constraint(equalTo: bottomLeft.heightAnchor),
+        ])
+
+        return decorations
+    }
+
     private func applyTheme() {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
         ThemeManager.applyNavigationAppearance(to: navigationController)
 
         [frontView, backView].forEach { cardSide in
-            cardSide.backgroundColor = palette.surfaceAlt
+            cardSide.backgroundColor = UIColor.black.withAlphaComponent(0.85)
             cardSide.layer.borderColor = palette.border.cgColor
             cardSide.layer.borderWidth = 2
             cardSide.layer.shadowColor = palette.border.cgColor
@@ -340,7 +398,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             cardSide.layer.shadowRadius = 8
         }
         [frontScreen, backScreen].forEach { screen in
-            screen.backgroundColor = UIColor.black.withAlphaComponent(0.85)
+            screen.backgroundColor = palette.surfaceAlt
             screen.layer.borderColor = palette.border.cgColor
             screen.layer.shadowColor = palette.accent.cgColor
             screen.layer.shadowOpacity = 0.35
@@ -379,6 +437,60 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         buttonPanel.layer.shadowOffset = CGSize(width: 0, height: 3)
         buttonPanel.layer.shadowRadius = 6
         updateTimeUpModalTheme()
+    }
+
+    private func applyStickerDecorations() {
+        let count = Int.random(in: 2...3)
+        let positions = Array(0..<frontStickerDecorViews.count).shuffled().prefix(count)
+        let assets = stickerAssetNames.shuffled()
+        let rotationBase: [CGFloat] = [-0.12, 0.1, -0.08]
+        let rotations = Dictionary(uniqueKeysWithValues: positions.map { index in
+            let jitter = CGFloat.random(in: -0.05...0.05)
+            return (index, rotationBase[index] + jitter)
+        })
+        applyStickerDecorations(to: frontStickerDecorViews,
+                                positions: Array(positions),
+                                assets: assets,
+                                rotations: rotations)
+        applyStickerDecorations(to: backStickerDecorViews,
+                                positions: Array(positions),
+                                assets: assets,
+                                rotations: rotations)
+    }
+
+    private func applyStickerDecorations(to views: [StickerDecorView],
+                                         positions: [Int],
+                                         assets: [String],
+                                         rotations: [Int: CGFloat]) {
+        views.enumerated().forEach { index, view in
+            view.isHidden = true
+            view.transform = .identity
+            view.setImage(nil)
+        }
+        for (offset, position) in positions.enumerated() {
+            guard position < views.count else { continue }
+            let name = assets[offset % assets.count]
+            let image = loadStickerAsset(named: name)
+            let view = views[position]
+            view.setImage(image)
+            view.isHidden = (image == nil)
+            if let angle = rotations[position] {
+                view.transform = CGAffineTransform(rotationAngle: angle)
+            }
+        }
+    }
+
+    private func loadStickerAsset(named name: String) -> UIImage? {
+        if let image = UIImage(named: name) {
+            return image
+        }
+        if let image = UIImage(named: "\(name).jpg") {
+            return image
+        }
+        if let image = UIImage(named: "\(name).png") {
+            return image
+        }
+        return nil
     }
 
     private func configureTimePicker() {
@@ -571,6 +683,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         frontLabel.text = word.english
         backLabel.text = word.japanese
         updateCardFonts(frontText: word.english, backText: word.japanese)
+        applyStickerDecorations()
         loadComicImage(for: word)
         setCardSide(isFront: true, animated: false)
     }
@@ -1492,6 +1605,48 @@ extension FlipViewController {
             return "\(minutes)分"
         }
         return "\(minutes)分\(seconds)秒"
+    }
+}
+
+private final class StickerDecorView: UIView {
+    private let imageView = UIImageView()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        configure()
+    }
+
+    private func configure() {
+        backgroundColor = .clear
+        layer.shadowColor = UIColor.black.withAlphaComponent(0.25).cgColor
+        layer.shadowOpacity = 1
+        layer.shadowOffset = CGSize(width: 0, height: 2)
+        layer.shadowRadius = 4
+
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFill
+        imageView.backgroundColor = .white
+        imageView.layer.cornerRadius = 10
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.white.cgColor
+        imageView.clipsToBounds = true
+        addSubview(imageView)
+
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            imageView.topAnchor.constraint(equalTo: topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
+    }
+
+    func setImage(_ image: UIImage?) {
+        imageView.image = image
     }
 }
 

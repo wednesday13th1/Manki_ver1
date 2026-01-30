@@ -14,6 +14,8 @@ final class StiDrawViewController: UIViewController {
     private let doneButton = UIButton(type: .system)
     private let eraserButton = UIButton(type: .system)
     private let colorStack = UIStackView()
+    private let pastelStack = UIStackView()
+    private let popStack = UIStackView()
     private let sizeSlider = UISlider()
     var onSave: ((UIImage) -> Void)?
 
@@ -22,6 +24,7 @@ final class StiDrawViewController: UIViewController {
 
         title = "手書きステッカー"
         view.backgroundColor = .systemBackground
+        ThemeManager.applyNavigationAppearance(to: navigationController)
         configureUI()
     }
 
@@ -32,23 +35,49 @@ final class StiDrawViewController: UIViewController {
         canvasView.clipsToBounds = true
 
         colorStack.translatesAutoresizingMaskIntoConstraints = false
-        colorStack.axis = .horizontal
-        colorStack.spacing = 10
+        colorStack.axis = .vertical
+        colorStack.spacing = 8
         colorStack.distribution = .fillEqually
 
-        let colors: [UIColor] = [.black, .systemBlue, .systemRed, .systemGreen, .systemOrange, .systemPurple]
-        colors.forEach { color in
-            let button = UIButton(type: .system)
-            button.translatesAutoresizingMaskIntoConstraints = false
-            button.backgroundColor = color
-            button.layer.cornerRadius = 10
-            button.layer.borderWidth = 1
-            button.layer.borderColor = UIColor.black.withAlphaComponent(0.2).cgColor
-            button.heightAnchor.constraint(equalToConstant: 28).isActive = true
-            button.addTarget(self, action: #selector(colorTapped(_:)), for: .touchUpInside)
-            button.accessibilityValue = color.accessibilityName
-            colorStack.addArrangedSubview(button)
+        pastelStack.translatesAutoresizingMaskIntoConstraints = false
+        pastelStack.axis = .horizontal
+        pastelStack.spacing = 10
+        pastelStack.distribution = .fillEqually
+
+        popStack.translatesAutoresizingMaskIntoConstraints = false
+        popStack.axis = .horizontal
+        popStack.spacing = 10
+        popStack.distribution = .fillEqually
+
+        let pastelColors: [UIColor] = [
+            UIColor(red: 0.98, green: 0.55, blue: 0.62, alpha: 1.0), // pastel pink
+            UIColor(red: 0.86, green: 0.71, blue: 0.98, alpha: 1.0), // lavender
+            UIColor(red: 0.53, green: 0.79, blue: 0.98, alpha: 1.0), // sky
+            UIColor(red: 0.55, green: 0.89, blue: 0.76, alpha: 1.0), // mint
+            UIColor(red: 1.00, green: 0.75, blue: 0.47, alpha: 1.0), // peach
+            UIColor(red: 0.98, green: 0.90, blue: 0.54, alpha: 1.0)  // lemon
+        ]
+
+        let popColors: [UIColor] = [
+            UIColor(red: 1.00, green: 0.24, blue: 0.32, alpha: 1.0), // pop red
+            UIColor(red: 1.00, green: 0.58, blue: 0.00, alpha: 1.0), // pop orange
+            UIColor(red: 1.00, green: 0.85, blue: 0.00, alpha: 1.0), // pop yellow
+            UIColor(red: 0.21, green: 0.76, blue: 0.35, alpha: 1.0), // pop green
+            UIColor(red: 0.14, green: 0.60, blue: 1.00, alpha: 1.0), // pop blue
+            UIColor(red: 0.52, green: 0.36, blue: 1.00, alpha: 1.0)  // pop purple
+        ]
+
+        pastelColors.forEach { color in
+            pastelStack.addArrangedSubview(makeColorButton(color))
         }
+        popColors.forEach { color in
+            popStack.addArrangedSubview(makeColorButton(color))
+        }
+
+        colorStack.addArrangedSubview(pastelStack)
+        colorStack.addArrangedSubview(popStack)
+
+        canvasView.strokeColor = pastelColors.first ?? canvasView.strokeColor
 
         sizeSlider.translatesAutoresizingMaskIntoConstraints = false
         sizeSlider.minimumValue = 2
@@ -131,6 +160,19 @@ final class StiDrawViewController: UIViewController {
 
     private func updateEraserUI(active: Bool) {
         eraserButton.setTitleColor(active ? .systemRed : .label, for: .normal)
+    }
+
+    private func makeColorButton(_ color: UIColor) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = color
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.black.withAlphaComponent(0.2).cgColor
+        button.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        button.addTarget(self, action: #selector(colorTapped(_:)), for: .touchUpInside)
+        button.accessibilityValue = color.accessibilityName
+        return button
     }
 }
 

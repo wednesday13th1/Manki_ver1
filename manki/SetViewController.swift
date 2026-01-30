@@ -122,7 +122,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         let foldersButton = UIBarButtonItem(title: "フォルダー",
                                             style: .plain,
                                             target: self,
-                                            action: #selector(backToFolders))
+                                            action: #selector(openFolderView))
         navigationItem.leftBarButtonItems = [foldersButton, wordsButton]
     }
 
@@ -306,7 +306,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
         retroKeyButtons = [retroFolderButton, retroWordButton, retroSortButton, retroAddButton]
         let configButtons: [(UIButton, String)] = [
-            (retroFolderButton, "フォルダー"),
+            (retroFolderButton, "追加"),
             (retroWordButton, "赤シート"),
             (retroSortButton, "並び替え"),
             (retroAddButton, "学習")
@@ -322,10 +322,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroFolderButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
         retroWordButton.setContentHuggingPriority(.required, for: .horizontal)
 
-        retroKeypadRowTop.addArrangedSubview(retroFolderButton)
+        retroKeypadRowTop.addArrangedSubview(retroAddButton)
         retroKeypadRowTop.addArrangedSubview(retroWordButton)
         retroKeypadRowBottom.addArrangedSubview(retroSortButton)
-        retroKeypadRowBottom.addArrangedSubview(retroAddButton)
+        retroKeypadRowBottom.addArrangedSubview(retroFolderButton)
         retroKeypadGrid.addArrangedSubview(retroKeypadRowTop)
         retroKeypadGrid.addArrangedSubview(retroKeypadRowBottom)
 
@@ -338,7 +338,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
             button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
         }
-        retroClickWheelFolderButton.setTitle("追加", for: .normal)
+        retroClickWheelFolderButton.setTitle("戻る", for: .normal)
         retroClickWheelWordButton.setTitle("単語", for: .normal)
 
         retroKeypadView.addSubview(retroKeypadGrid)
@@ -458,11 +458,11 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         equalSortWidth.isActive = true
         equalAddWidth.isActive = true
 
-        retroFolderButton.addTarget(self, action: #selector(backToFolders), for: .touchUpInside)
+        retroFolderButton.addTarget(self, action: #selector(openAddSet), for: .touchUpInside)
         retroWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
         retroSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
         retroAddButton.addTarget(self, action: #selector(openWhichView), for: .touchUpInside)
-        retroClickWheelFolderButton.addTarget(self, action: #selector(openAddSet), for: .touchUpInside)
+        retroClickWheelFolderButton.addTarget(self, action: #selector(openFolderView), for: .touchUpInside)
         retroClickWheelWordButton.addTarget(self, action: #selector(openWordMenuFromClickWheel), for: .touchUpInside)
     }
 
@@ -610,8 +610,20 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         navigationController?.pushViewController(whichVC, animated: true)
     }
 
+    @objc private func openFolderView() {
+        guard let navigationController else { return }
+        if let target = navigationController.viewControllers.first(where: { $0 is FolderViewController }) {
+            navigationController.popToViewController(target, animated: true)
+            return
+        }
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        if let controller = storyboard.instantiateViewController(withIdentifier: "FolderViewController") as? FolderViewController {
+            navigationController.pushViewController(controller, animated: true)
+        }
+    }
+
     @objc private func backToFolders() {
-        navigationController?.popViewController(animated: true)
+        openFolderView()
     }
 
     @objc private func selectTheme(_ sender: UIButton) {
@@ -640,7 +652,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         searchContainer.layer.borderWidth = 1.5
         searchContainer.layer.borderColor = palette.border.cgColor
 
-        retroShellView.backgroundColor = UIColor.black
+        retroShellView.backgroundColor = UIColor(white: 0.18, alpha: 1.0)
         retroShellView.layer.cornerRadius = 36
         retroShellView.layer.borderWidth = 0.5
         retroShellView.layer.borderColor = UIColor(white: 0.2, alpha: 1.0).cgColor
@@ -649,7 +661,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroShellView.layer.shadowOffset = CGSize(width: 0, height: 6)
         retroShellView.layer.shadowRadius = 12
 
-        retroScreenView.backgroundColor = palette.surfaceAlt
+        retroScreenView.backgroundColor = palette.accentStrong
         retroScreenView.layer.cornerRadius = 0
         retroScreenView.layer.borderWidth = 8
         retroScreenView.layer.borderColor = UIColor.darkGray.cgColor
@@ -677,16 +689,16 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelWordButton.layer.borderColor = UIColor.systemGray3.cgColor
         retroClickWheelWordButton.setTitleColor(palette.text, for: .normal)
 
-        retroKeypadView.backgroundColor = palette.surface
+        retroKeypadView.backgroundColor = UIColor(white: 0.18, alpha: 1.0)
         retroKeypadView.layer.cornerRadius = 22
         retroKeypadView.layer.borderWidth = 2
         retroKeypadView.layer.borderColor = palette.border.cgColor
 
         retroKeyButtons.forEach { key in
-            key.backgroundColor = palette.accent
-            key.layer.borderColor = palette.border.cgColor
+            key.backgroundColor = UIColor.systemGray6
+            key.layer.borderColor = UIColor.systemGray3.cgColor
             key.setTitleColor(palette.text, for: .normal)
-            key.layer.shadowColor = palette.border.cgColor
+            key.layer.shadowColor = UIColor.systemGray3.cgColor
             key.layer.shadowOpacity = 0.2
             key.layer.shadowOffset = CGSize(width: 0, height: 2)
             key.layer.shadowRadius = 3
@@ -700,10 +712,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroBadgeLabel.layer.borderColor = palette.border.cgColor
         retroBadgeLabel.clipsToBounds = true
 
-        retroAddButton.backgroundColor = palette.accentStrong
+        retroAddButton.backgroundColor = UIColor.systemGray6
         retroAddButton.setTitleColor(palette.text, for: .normal)
-        retroAddButton.layer.borderColor = palette.border.cgColor
-        retroAddButton.layer.shadowColor = palette.border.cgColor
+        retroAddButton.layer.borderColor = UIColor.systemGray3.cgColor
+        retroAddButton.layer.shadowColor = UIColor.systemGray3.cgColor
         retroAddButton.layer.shadowOpacity = 0.25
         retroAddButton.layer.shadowOffset = CGSize(width: 0, height: 2)
         retroAddButton.layer.shadowRadius = 3

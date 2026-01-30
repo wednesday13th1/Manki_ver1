@@ -25,6 +25,8 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
 
         title = "Sticker Mode"
         view.backgroundColor = .systemBackground
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "戻る", style: .plain, target: nil, action: nil)
         configureNavigation()
         configureTitleFont()
         configureUI()
@@ -70,7 +72,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
 
         captureButton.translatesAutoresizingMaskIntoConstraints = false
         captureButton.setTitle("カメラ", for: .normal)
-        captureButton.titleLabel?.font = AppFont.jp(size: 18, weight: .regular)
+        captureButton.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
         captureButton.addTarget(self, action: #selector(captureTapped), for: .touchUpInside)
 
         drawButton.translatesAutoresizingMaskIntoConstraints = false

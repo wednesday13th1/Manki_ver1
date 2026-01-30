@@ -10,6 +10,7 @@ import UIKit
 final class StiCollectViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
     private var stickers: [SavedSticker] = []
+    private var stickerWordMap: [String: [SavedWord]] = [:]
     private var collectionView: UICollectionView!
     private let emptyLabel = UILabel()
     var selectionHandler: ((SavedSticker) -> Void)?
@@ -69,6 +70,11 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
 
     private func reloadStickers() {
         stickers = StickerStore.loadStickers()
+        let words = loadSavedWords()
+        stickerWordMap = Dictionary(grouping: words.compactMap { word in
+            guard word.illustrationImageFileName != nil else { return nil }
+            return word
+        }, by: { $0.illustrationImageFileName ?? "" })
         collectionView.reloadData()
         emptyLabel.isHidden = !stickers.isEmpty
     }
@@ -84,7 +90,9 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
             return UICollectionViewCell()
         }
         let sticker = stickers[indexPath.item]
-        cell.configure(with: StickerStore.loadStickerImage(fileName: sticker.imageFileName))
+        let wordText = wordLabelText(for: sticker.imageFileName)
+        cell.configure(with: StickerStore.loadStickerImage(fileName: sticker.imageFileName),
+                       wordText: wordText)
         return cell
     }
 
@@ -120,7 +128,7 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
         let columns: CGFloat = collectionView.bounds.width < 360 ? 2 : 3
         let totalSpacing: CGFloat = (columns - 1) * 12
         let width = (collectionView.bounds.width - totalSpacing) / columns
-        return CGSize(width: width, height: width)
+        return CGSize(width: width, height: width + 38)
     }
 
     private func configureSelectionBarItem() {
@@ -144,12 +152,50 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
         collectionView.deleteItems(at: [indexPath])
         emptyLabel.isHidden = !stickers.isEmpty
     }
+
+    private func wordLabelText(for fileName: String) -> NSAttributedString? {
+        guard let words = stickerWordMap[fileName], let first = words.first else { return nil }
+        let englishAttributes: [NSAttributedString.Key: Any] = [
+            .font: AppFont.en(size: 14, weight: .regular),
+            .foregroundColor: UIColor.label
+        ]
+        let japaneseAttributes: [NSAttributedString.Key: Any] = [
+            .font: AppFont.jp(size: 12, weight: .regular),
+            .foregroundColor: UIColor.secondaryLabel
+        ]
+        let result = NSMutableAttributedString(string: first.english, attributes: englishAttributes)
+        var japaneseLine = first.japanese
+        if words.count > 1 {
+            japaneseLine += " ほか\(words.count - 1)"
+        }
+        result.append(NSAttributedString(string: "\n", attributes: japaneseAttributes))
+        result.append(NSAttributedString(string: japaneseLine, attributes: japaneseAttributes))
+        return result
+    }
+
+    private func loadSavedWords() -> [SavedWord] {
+        let documents = FileManager.default.urls(for: .documentDirectory,
+                                                 in: .userDomainMask).first!
+        let fileURL = documents.appendingPathComponent("saved_words.json")
+        if let data = try? Data(contentsOf: fileURL),
+           let decoded = try? JSONDecoder().decode([SavedWord].self, from: data) {
+            return decoded
+        }
+        let legacy = UserDefaults.standard.array(forKey: "WORD") as? [[String: String]] ?? []
+        return legacy.map {
+            SavedWord(english: $0["english"] ?? "",
+                      japanese: $0["japanese"] ?? "",
+                      illustrationScenario: nil,
+                      illustrationImageFileName: nil)
+        }
+    }
 }
 
 private final class StickerCell: UICollectionViewCell {
     static let reuseID = "StickerCell"
 
     private let imageView = UIImageView()
+    private let wordLabel = UILabel()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -171,15 +217,27 @@ private final class StickerCell: UICollectionViewCell {
         imageView.clipsToBounds = true
         contentView.addSubview(imageView)
 
+        wordLabel.translatesAutoresizingMaskIntoConstraints = false
+        wordLabel.numberOfLines = 2
+        wordLabel.textAlignment = .center
+        contentView.addSubview(wordLabel)
+
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor),
+
+            wordLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 6),
+            wordLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 6),
+            wordLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -6),
+            wordLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
         ])
     }
 
-    func configure(with image: UIImage?) {
+    func configure(with image: UIImage?, wordText: NSAttributedString?) {
         imageView.image = image
+        wordLabel.attributedText = wordText
+        wordLabel.isHidden = (wordText == nil)
     }
 }

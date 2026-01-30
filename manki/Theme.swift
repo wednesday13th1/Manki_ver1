@@ -39,7 +39,7 @@ struct ThemePalette {
 
 enum AppFont {
     static func jp(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
-        let name = "PixelMplus10-Regular"
+        let name = weight >= .semibold ? "PixelMplus12-Bold" : "PixelMplus12-Regular"
         if let font = UIFont(name: name, size: size) {
             return font
         }
@@ -54,7 +54,7 @@ enum AppFont {
     }
 
     static func title(size: CGFloat) -> UIFont {
-        if let font = UIFont(name: "PixelMplus10-Regular", size: size) {
+        if let font = UIFont(name: "PixelMplus12-Regular", size: size) {
             return font
         }
         return UIFont.systemFont(ofSize: size, weight: .regular)
@@ -191,9 +191,20 @@ enum ThemeManager {
             .foregroundColor: palette.text,
             .font: AppFont.jp(size: 18, weight: .bold)
         ]
+        let barAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: palette.text,
+            .font: AppFont.jp(size: 14, weight: .bold)
+        ]
         appearance.shadowColor = palette.border
+        appearance.buttonAppearance.normal.titleTextAttributes = barAttributes
+        appearance.buttonAppearance.highlighted.titleTextAttributes = barAttributes
+        appearance.doneButtonAppearance.normal.titleTextAttributes = barAttributes
+        appearance.doneButtonAppearance.highlighted.titleTextAttributes = barAttributes
+        appearance.backButtonAppearance.normal.titleTextAttributes = barAttributes
+        appearance.backButtonAppearance.highlighted.titleTextAttributes = barAttributes
         navigationController.navigationBar.standardAppearance = appearance
         navigationController.navigationBar.scrollEdgeAppearance = appearance
+        navigationController.navigationBar.compactAppearance = appearance
         navigationController.navigationBar.tintColor = palette.text
     }
 

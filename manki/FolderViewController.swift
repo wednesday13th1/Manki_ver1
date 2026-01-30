@@ -20,7 +20,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "フォルダー"
+        title = "戻る"
         configureTableView()
         configureEmptyLabel()
         configureSearch()
