@@ -11,16 +11,14 @@ final class TimeViewController: UIViewController {
 
     private let resultsFileName = "results.json"
     private let summaryCard = UIView()
-    private let historyCard = UIView()
+    private let rangeSegmented = UISegmentedControl(items: ["1日", "1週間", "1ヶ月"])
     private let summaryTitleLabel = UILabel()
-    private let historyTitleLabel = UILabel()
     private let totalTitleLabel = UILabel()
     private let streakTitleLabel = UILabel()
     private let wordsTitleLabel = UILabel()
     private let totalValueLabel = UILabel()
     private let streakValueLabel = UILabel()
     private let wordsValueLabel = UILabel()
-    private let textView = UITextView()
     private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
@@ -47,19 +45,18 @@ final class TimeViewController: UIViewController {
 
     private func configureUI() {
         summaryCard.translatesAutoresizingMaskIntoConstraints = false
-        historyCard.translatesAutoresizingMaskIntoConstraints = false
         summaryCard.layer.cornerRadius = 16
         summaryCard.layer.borderWidth = 1
-        historyCard.layer.cornerRadius = 16
-        historyCard.layer.borderWidth = 1
 
-        summaryTitleLabel.text = "Summary"
+        summaryTitleLabel.text = "勉強時間"
         summaryTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        historyTitleLabel.text = "History"
-        historyTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        rangeSegmented.selectedSegmentIndex = 0
+        rangeSegmented.translatesAutoresizingMaskIntoConstraints = false
+        rangeSegmented.addTarget(self, action: #selector(rangeChanged), for: .valueChanged)
 
         let totalStack = makeStatStack(titleLabel: totalTitleLabel, valueLabel: totalValueLabel, title: "合計時間")
-        let streakStack = makeStatStack(titleLabel: streakTitleLabel, valueLabel: streakValueLabel, title: "連続日数")
+        let streakStack = makeStatStack(titleLabel: streakTitleLabel, valueLabel: streakValueLabel, title: "勉強日数")
         let wordsStack = makeStatStack(titleLabel: wordsTitleLabel, valueLabel: wordsValueLabel, title: "単語数")
 
         let statsStack = UIStackView(arrangedSubviews: [totalStack, streakStack, wordsStack])
@@ -70,17 +67,14 @@ final class TimeViewController: UIViewController {
         summaryCard.addSubview(summaryTitleLabel)
         summaryCard.addSubview(statsStack)
 
-        textView.isEditable = false
-        textView.font = AppFont.jp(size: 14)
-        textView.translatesAutoresizingMaskIntoConstraints = false
-        historyCard.addSubview(historyTitleLabel)
-        historyCard.addSubview(textView)
-
+        view.addSubview(rangeSegmented)
         view.addSubview(summaryCard)
-        view.addSubview(historyCard)
 
         NSLayoutConstraint.activate([
-            summaryCard.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            rangeSegmented.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            rangeSegmented.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            summaryCard.topAnchor.constraint(equalTo: rangeSegmented.bottomAnchor, constant: 12),
             summaryCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             summaryCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
@@ -92,20 +86,6 @@ final class TimeViewController: UIViewController {
             statsStack.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor, constant: 16),
             statsStack.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -16),
             statsStack.bottomAnchor.constraint(equalTo: summaryCard.bottomAnchor, constant: -16),
-
-            historyCard.topAnchor.constraint(equalTo: summaryCard.bottomAnchor, constant: 16),
-            historyCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            historyCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            historyCard.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16),
-
-            historyTitleLabel.topAnchor.constraint(equalTo: historyCard.topAnchor, constant: 12),
-            historyTitleLabel.leadingAnchor.constraint(equalTo: historyCard.leadingAnchor, constant: 16),
-            historyTitleLabel.trailingAnchor.constraint(equalTo: historyCard.trailingAnchor, constant: -16),
-
-            textView.topAnchor.constraint(equalTo: historyTitleLabel.bottomAnchor, constant: 8),
-            textView.leadingAnchor.constraint(equalTo: historyCard.leadingAnchor, constant: 12),
-            textView.trailingAnchor.constraint(equalTo: historyCard.trailingAnchor, constant: -12),
-            textView.bottomAnchor.constraint(equalTo: historyCard.bottomAnchor, constant: -12),
         ])
     }
 
@@ -119,7 +99,6 @@ final class TimeViewController: UIViewController {
         let url = resultsFileURL()
         guard let data = try? Data(contentsOf: url),
               let decoded = try? JSONDecoder().decode(ResultsDatabase.self, from: data) else {
-            textView.text = "フリップ履歴がありません。"
             totalValueLabel.text = "-"
             streakValueLabel.text = "-"
             wordsValueLabel.text = "-"
@@ -131,20 +110,19 @@ final class TimeViewController: UIViewController {
         }
 
         if flipSessions.isEmpty {
-            textView.text = "フリップ履歴がありません。"
             totalValueLabel.text = "-"
             streakValueLabel.text = "-"
             wordsValueLabel.text = "-"
             return
         }
 
-        let learnedCount = learnedWordCount(from: decoded.sessions)
-        let totalSeconds = flipSessions.reduce(0) { $0 + $1.totalElapsedSec }
-        let streak = calculateStreakDays(flipSessions)
+        let filteredSessions = filterSessions(flipSessions)
+        let learnedCount = learnedWordCount(from: filteredSessions)
+        let totalSeconds = filteredSessions.reduce(0) { $0 + $1.totalElapsedSec }
+        let streak = calculateStudyDays(filteredSessions)
         totalValueLabel.text = formatDuration(totalSeconds)
         streakValueLabel.text = "\(streak)日"
         wordsValueLabel.text = "\(learnedCount)"
-        textView.text = formatResults(flipSessions, allSessions: decoded.sessions)
     }
 
     private func checkDailyGoalAchievement() {
@@ -182,19 +160,8 @@ final class TimeViewController: UIViewController {
         return total
     }
 
-    private func formatResults(_ sessions: [SessionResult], allSessions: [SessionResult]) -> String {
-        var lines: [String] = []
-        lines.append("フリップ履歴")
-        lines.append("")
-
-        for (index, session) in sessions.enumerated() {
-            let timestampText = formatTimestamp(session.timestamp)
-            lines.append("#\(index + 1)  \(timestampText)")
-            lines.append("  \(formatDuration(session.totalElapsedSec))")
-            lines.append("")
-        }
-
-        return lines.joined(separator: "\n")
+    @objc private func rangeChanged() {
+        reloadResults()
     }
 
     private func formatDuration(_ seconds: Double) -> String {
@@ -218,22 +185,11 @@ final class TimeViewController: UIViewController {
         return output.string(from: date)
     }
 
-    private func calculateStreakDays(_ sessions: [SessionResult]) -> Int {
+    private func calculateStudyDays(_ sessions: [SessionResult]) -> Int {
         let calendar = Calendar.current
-        let dates = sessions.compactMap { session -> Date? in
-            return parseISO(session.timestamp)
-        }
+        let dates = sessions.compactMap { parseISO($0.timestamp) }
         let daySet = Set(dates.map { calendar.startOfDay(for: $0) })
-        guard !daySet.isEmpty else { return 0 }
-
-        var streak = 0
-        var current = calendar.startOfDay(for: Date())
-        while daySet.contains(current) {
-            streak += 1
-            guard let prev = calendar.date(byAdding: .day, value: -1, to: current) else { break }
-            current = prev
-        }
-        return streak
+        return daySet.count
     }
 
     private func learnedWordCount(from sessions: [SessionResult]) -> Int {
@@ -252,6 +208,32 @@ final class TimeViewController: UIViewController {
             }
         }
         return keys.count
+    }
+
+    private func filterSessions(_ sessions: [SessionResult]) -> [SessionResult] {
+        guard !sessions.isEmpty else { return [] }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        if rangeSegmented.selectedSegmentIndex == 0 {
+            return sessions.filter { session in
+                guard let date = parseISO(session.timestamp) else { return false }
+                return calendar.startOfDay(for: date) == today
+            }
+        }
+        if rangeSegmented.selectedSegmentIndex == 1 {
+            guard let start = calendar.date(byAdding: .day, value: -6, to: today) else { return sessions }
+            return sessions.filter { session in
+                guard let date = parseISO(session.timestamp) else { return false }
+                let day = calendar.startOfDay(for: date)
+                return day >= start && day <= today
+            }
+        }
+        guard let start = calendar.date(byAdding: .day, value: -29, to: today) else { return sessions }
+        return sessions.filter { session in
+            guard let date = parseISO(session.timestamp) else { return false }
+            let day = calendar.startOfDay(for: date)
+            return day >= start && day <= today
+        }
     }
 
     private func normalizeKey(_ text: String) -> String {
@@ -283,15 +265,13 @@ final class TimeViewController: UIViewController {
         ThemeManager.applyBackground(to: view)
         ThemeManager.applyNavigationAppearance(to: navigationController)
 
-        [summaryCard, historyCard].forEach { card in
+        [summaryCard].forEach { card in
             card.backgroundColor = palette.surface
             card.layer.borderColor = palette.border.cgColor
         }
 
         summaryTitleLabel.font = AppFont.title(size: 14)
         summaryTitleLabel.textColor = palette.text
-        historyTitleLabel.font = AppFont.title(size: 14)
-        historyTitleLabel.textColor = palette.text
 
         [totalTitleLabel, streakTitleLabel, wordsTitleLabel].forEach { label in
             label.font = AppFont.jp(size: 13, weight: .bold)
@@ -301,13 +281,10 @@ final class TimeViewController: UIViewController {
             label.font = AppFont.jp(size: 18, weight: .bold)
             label.textColor = palette.text
         }
-
-        textView.backgroundColor = palette.surfaceAlt
-        textView.textColor = palette.text
-        textView.layer.cornerRadius = 12
-        textView.layer.borderWidth = 1
-        textView.layer.borderColor = palette.border.cgColor
-        textView.clipsToBounds = true
+        let attrs = [NSAttributedString.Key.font: AppFont.jp(size: 12, weight: .bold)]
+        rangeSegmented.setTitleTextAttributes(attrs, for: .normal)
+        rangeSegmented.setTitleTextAttributes(attrs, for: .selected)
+        rangeSegmented.selectedSegmentTintColor = palette.accent
     }
 
     deinit {

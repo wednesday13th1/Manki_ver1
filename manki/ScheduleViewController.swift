@@ -32,6 +32,7 @@ final class ScheduleViewController: UIViewController {
     private var selectedColorIndex: Int = 0
     private var themeObserver: NSObjectProtocol?
     private let tabTitle = "スケジュール"
+    private let showCountdown = true
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -60,6 +61,14 @@ final class ScheduleViewController: UIViewController {
         navigationController?.setNavigationBarHidden(true, animated: false)
         applyTheme()
         reloadItems()
+        if showCountdown {
+            countdownLabel.isHidden = false
+        }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        updateCountdown()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -74,11 +83,14 @@ final class ScheduleViewController: UIViewController {
     }
 
     private func configureUI() {
-        countdownLabel.font = AppFont.jp(size: 18, weight: .bold)
-        countdownLabel.numberOfLines = 0
-        countdownLabel.textAlignment = .center
-        countdownLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(countdownLabel)
+        if showCountdown {
+            countdownLabel.font = AppFont.jp(size: 18, weight: .bold)
+            countdownLabel.numberOfLines = 0
+            countdownLabel.textAlignment = .center
+            countdownLabel.text = "次の小テストを読み込み中..."
+            countdownLabel.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(countdownLabel)
+        }
 
         prevMonthButton.setTitle("＜", for: .normal)
         prevMonthButton.addTarget(self, action: #selector(showPrevMonth), for: .touchUpInside)
@@ -139,7 +151,7 @@ final class ScheduleViewController: UIViewController {
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(emptyLabel)
 
-        NSLayoutConstraint.activate([
+        var constraints: [NSLayoutConstraint] = [
             monthHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             monthHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             monthHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
@@ -155,12 +167,20 @@ final class ScheduleViewController: UIViewController {
 
             addButton.topAnchor.constraint(equalTo: calendarCollectionView.bottomAnchor, constant: 8),
             addButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+        ]
 
-            countdownLabel.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 10),
-            countdownLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            countdownLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+        if showCountdown {
+            constraints.append(contentsOf: [
+                countdownLabel.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 10),
+                countdownLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+                countdownLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+                tableView.topAnchor.constraint(equalTo: countdownLabel.bottomAnchor, constant: 12),
+            ])
+        } else {
+            constraints.append(tableView.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 12))
+        }
 
-            tableView.topAnchor.constraint(equalTo: countdownLabel.bottomAnchor, constant: 12),
+        constraints.append(contentsOf: [
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -170,6 +190,8 @@ final class ScheduleViewController: UIViewController {
             emptyLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             emptyLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ])
+
+        NSLayoutConstraint.activate(constraints)
 
         updateMonthLabel()
     }
@@ -183,10 +205,12 @@ final class ScheduleViewController: UIViewController {
     }
 
     private func updateCountdown() {
+        guard showCountdown else { return }
         let now = Date()
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: now)
         let quizDates = items.filter { $0.isQuiz }.map { calendar.startOfDay(for: $0.dateValue) }
+        let fallbackDates = items.map { calendar.startOfDay(for: $0.dateValue) }
 
         if let nextQuiz = quizDates.filter({ $0 >= startOfToday }).min() {
             let days = calendar.dateComponents([.day], from: startOfToday, to: nextQuiz).day ?? 0
@@ -206,6 +230,20 @@ final class ScheduleViewController: UIViewController {
                 tabBarController?.navigationItem.title = text
                 navigationController?.navigationBar.topItem?.title = text
             }
+            return
+        }
+
+        if quizDates.isEmpty, let nextItem = fallbackDates.filter({ $0 >= startOfToday }).min() {
+            let days = calendar.dateComponents([.day], from: startOfToday, to: nextItem).day ?? 0
+            let dateText = formatDate(nextItem)
+            let text = days == 0
+                ? "次の予定は今日です！ (\(dateText))"
+                : "次の予定まであと \(days)日 (\(dateText))"
+            countdownLabel.text = text
+            navigationItem.title = text
+            tabBarController?.title = text
+            tabBarController?.navigationItem.title = text
+            navigationController?.navigationBar.topItem?.title = text
             return
         }
 
@@ -665,6 +703,13 @@ final class CalendarDayCell: UICollectionViewCell {
             contentView.backgroundColor = .clear
         }
         contentView.layer.cornerRadius = 8
+        if hasEvent {
+            contentView.layer.borderWidth = 2
+            contentView.layer.borderColor = (palette?.accentStrong ?? UIColor.systemRed).cgColor
+        } else {
+            contentView.layer.borderWidth = 0
+            contentView.layer.borderColor = UIColor.clear.cgColor
+        }
     }
 
     func applyTheme(_ palette: ThemePalette) {

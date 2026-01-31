@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		0DEFC4A6F9524C4ABC981EDD /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6402183AF1E4D6885365071 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf */; };
+		101F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/billiard.png in Resources */ = {isa = PBXBuildFile; fileRef = 201F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/billiard.png */; };
+		191F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/ribbon.png in Resources */ = {isa = PBXBuildFile; fileRef = 291F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/ribbon.png */; };
+		1C1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/tape.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/tape.png */; };
 		1E1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/candy-xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 2E1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/candy-xbg.png */; };
 		1F1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/car-xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 2F1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/car-xbg.png */; };
 		201F1A0A9B0E4E9A9C2A1A11 /* manki/Assets.xcassets/casset-xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 301F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/casset-xbg.png */; };
@@ -18,11 +21,8 @@
 		251F1A0A9B0E4E9A9C2A1A11 /* manki/Assets.xcassets/record-xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 351F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/record-xbg.png */; };
 		261F1A0A9B0E4E9A9C2A1A11 /* manki/Assets.xcassets/star-Xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 361F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/star-Xbg.png */; };
 		271F1A0A9B0E4E9A9C2A1A11 /* manki/Assets.xcassets/sunglass_xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 371F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/sunglass_xbg.png */; };
-		281F1A0A9B0E4E9A9C2A1A11 /* manki/Assets.xcassets/telephone-xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 381F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/telephone-xbg.png */; };
-		101F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/billiard.png in Resources */ = {isa = PBXBuildFile; fileRef = 201F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/billiard.png */; };
-		191F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/ribbon.png in Resources */ = {isa = PBXBuildFile; fileRef = 291F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/ribbon.png */; };
-		1C1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/tape.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/tape.png */; };
 		2748CCD42C95438BBA3FE050 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 021BC866FC8643EEA4E35EFF /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf */; };
+		281F1A0A9B0E4E9A9C2A1A11 /* manki/Assets.xcassets/telephone-xbg.png in Resources */ = {isa = PBXBuildFile; fileRef = 381F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/telephone-xbg.png */; };
 		4F294EF788FC4614A3FF0B54 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AD7F5A8DCF5C42528B5ECCE9 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf */; };
 		5AD7B3EBBB0A403F9703542D /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 531751D051E44BB3A8462C34 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf */; };
 		AC983B51321044F685C9F357 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FB2611C5BADB4EC5AA047765 /* manki/manki-font/Press_Start_2P,VT323/VT323/VT323-Regular.ttf */; };
@@ -49,23 +49,23 @@
 /* Begin PBXFileReference section */
 		019FE173B6724701915D1048 /* manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/Press_Start_2P,VT323/Press_Start_2P/PressStart2P-Regular.ttf"; sourceTree = "<group>"; };
 		021BC866FC8643EEA4E35EFF /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus12-Bold.ttf"; sourceTree = "<group>"; };
+		201F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/billiard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = manki/Assets.xcassets/billiard.png; sourceTree = "<group>"; };
+		291F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/ribbon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = manki/Assets.xcassets/ribbon.png; sourceTree = "<group>"; };
+		2C1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/tape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = manki/Assets.xcassets/tape.png; sourceTree = "<group>"; };
+		2CF7FA852EFE80B500BCC44B /* manki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = manki.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CF7FA9B2EFE80B600BCC44B /* mankiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mankiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CF7FAA52EFE80B600BCC44B /* mankiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mankiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2E1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/candy-xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/candy-xbg.png"; sourceTree = "<group>"; };
 		2F1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/car-xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/car-xbg.png"; sourceTree = "<group>"; };
 		301F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/casset-xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/casset-xbg.png"; sourceTree = "<group>"; };
 		311F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/diary-xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/diary-xbg.png"; sourceTree = "<group>"; };
-		321F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/guitar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/guitar.png"; sourceTree = "<group>"; };
+		321F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/guitar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = manki/Assets.xcassets/guitar.png; sourceTree = "<group>"; };
 		331F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/heart-Xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/heart-Xbg.png"; sourceTree = "<group>"; };
 		341F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/pin-Xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/pin-Xbg.png"; sourceTree = "<group>"; };
 		351F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/record-xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/record-xbg.png"; sourceTree = "<group>"; };
 		361F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/star-Xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/star-Xbg.png"; sourceTree = "<group>"; };
-		371F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/sunglass_xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/sunglass_xbg.png"; sourceTree = "<group>"; };
+		371F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/sunglass_xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = manki/Assets.xcassets/sunglass_xbg.png; sourceTree = "<group>"; };
 		381F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/telephone-xbg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/telephone-xbg.png"; sourceTree = "<group>"; };
-		201F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/billiard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/billiard.png"; sourceTree = "<group>"; };
-		291F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/ribbon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/ribbon.png"; sourceTree = "<group>"; };
-		2C1F1A0A9B0E4E9A9C2A1A10 /* manki/Assets.xcassets/tape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "manki/Assets.xcassets/tape.png"; sourceTree = "<group>"; };
-		2CF7FA852EFE80B500BCC44B /* manki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = manki.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2CF7FA9B2EFE80B600BCC44B /* mankiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mankiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		2CF7FAA52EFE80B600BCC44B /* mankiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mankiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		531751D051E44BB3A8462C34 /* manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus12-Regular.ttf"; sourceTree = "<group>"; };
 		AD7F5A8DCF5C42528B5ECCE9 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus10-Bold.ttf"; sourceTree = "<group>"; };
 		C6402183AF1E4D6885365071 /* manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "manki/manki-font/PixelMplus-20130602/PixelMplus10-Regular.ttf"; sourceTree = "<group>"; };

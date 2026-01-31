@@ -186,7 +186,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         contentStack.addArrangedSubview(answerTextField)
 
         choicesStack.axis = .vertical
-        choicesStack.spacing = 8
+        choicesStack.spacing = 12
         contentStack.addArrangedSubview(choicesStack)
 
         submitButton.setTitle("回答する", for: .normal)
@@ -330,6 +330,12 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         }
         let selectedMode = typeSegmented.selectedSegmentIndex
         let selectedDirection = directionSegmented.selectedSegmentIndex
+        let maxChoices = maxUniqueChoiceCount(for: selectedDirection, words: filteredWords)
+        if numChoicesInput > maxChoices {
+            showPixelAlert(title: "選択肢数が多すぎます",
+                           message: "現在の単語数/重複の関係で最大 \(maxChoices) 個までです。")
+            return
+        }
         sessionModeLabel = modeLabel(for: selectedMode)
         sessionDirectionLabel = directionLabel(for: selectedDirection)
 
@@ -392,6 +398,19 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             questions.append(question)
         }
         return questions
+    }
+
+    private func maxUniqueChoiceCount(for directionIndex: Int, words: [SavedWord]) -> Int {
+        let uniqueJP = Set(words.map { $0.japanese }).count
+        let uniqueEN = Set(words.map { $0.english }).count
+        switch directionIndex {
+        case 0:
+            return uniqueJP
+        case 1:
+            return uniqueEN
+        default:
+            return min(uniqueJP, uniqueEN)
+        }
     }
 
     private func buildQuestion(word: SavedWord,
@@ -487,7 +506,9 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         for (index, text) in choices.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(text, for: .normal)
+            button.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
             button.contentHorizontalAlignment = .left
+            button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
             button.layer.borderWidth = 1
             button.layer.cornerRadius = 8
             button.layer.borderColor = UIColor.systemGray4.cgColor
@@ -651,6 +672,23 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
             onOK?()
         })
+        present(alert, animated: true)
+    }
+
+    private func showPixelAlert(title: String, message: String, onOK: (() -> Void)? = nil) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .alert)
+        let titleAttr = NSAttributedString(string: title, attributes: [
+            .font: AppFont.jp(size: 16, weight: .regular)
+        ])
+        let messageAttr = NSAttributedString(string: message, attributes: [
+            .font: AppFont.jp(size: 14, weight: .regular)
+        ])
+        alert.setValue(titleAttr, forKey: "attributedTitle")
+        alert.setValue(messageAttr, forKey: "attributedMessage")
+        let ok = UIAlertAction(title: "OK", style: .default) { _ in
+            onOK?()
+        }
+        alert.addAction(ok)
         present(alert, animated: true)
     }
 

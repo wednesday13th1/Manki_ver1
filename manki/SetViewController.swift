@@ -1357,6 +1357,7 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     }
 
     @objc private func openFlip() {
+        LastStudyStore.save(setID: setID, setName: setName)
         let controller = FlipViewController()
         controller.presetWords = words
         controller.title = "\(setName) フリップ"
@@ -1364,6 +1365,7 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     }
 
     @objc private func openTest() {
+        LastStudyStore.save(setID: setID, setName: setName)
         let controller = TestViewController()
         controller.presetWords = words
         controller.title = "\(setName) テスト"

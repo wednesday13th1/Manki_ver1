@@ -10,6 +10,7 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    private var launchQuizModal: QuickQuizModal?
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -31,6 +32,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
         // Temporarily disabled to isolate launch crash.
         // presentDailyGoalPromptIfNeeded()
+        presentLaunchQuizIfNeeded()
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
@@ -81,4 +83,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         return root
     }
 
+    private func presentLaunchQuizIfNeeded() {
+        guard launchQuizModal == nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self else { return }
+            guard let top = self.topViewController(from: self.window?.rootViewController),
+                  top.presentedViewController == nil,
+                  let data = QuickQuizFactory.makeQuestion() else {
+                return
+            }
+            let modal = QuickQuizModal(data: data)
+            modal.onDismiss = { [weak self] in
+                self?.launchQuizModal = nil
+            }
+            self.launchQuizModal = modal
+            modal.show(in: top.view)
+        }
+    }
 }

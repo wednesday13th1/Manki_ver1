@@ -21,6 +21,7 @@ final class MainTabBarController: UITabBarController {
         super.viewDidLoad()
 
         navigationItem.leftBarButtonItem = closeButton
+        attachHistoryTabIfNeeded()
         applyTheme()
         NotificationCenter.default.addObserver(
             self,
@@ -28,6 +29,16 @@ final class MainTabBarController: UITabBarController {
             name: ThemeManager.didChange,
             object: nil
         )
+    }
+
+    private func attachHistoryTabIfNeeded() {
+        guard let controllers = viewControllers else { return }
+        if controllers.contains(where: { $0 is HistoryViewController }) {
+            return
+        }
+        let historyVC = HistoryViewController()
+        historyVC.tabBarItem = UITabBarItem(title: "履歴", image: nil, tag: controllers.count)
+        viewControllers = controllers + [historyVC]
     }
 
     @objc private func closeSelf() {

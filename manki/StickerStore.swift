@@ -79,4 +79,5 @@ enum StickerStore {
         let url = stickersDirectoryURL(createIfNeeded: false).appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: url)
     }
+
 }

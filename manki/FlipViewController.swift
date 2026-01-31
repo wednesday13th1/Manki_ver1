@@ -75,6 +75,10 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     ]
     private var frontStickerDecorViews: [StickerDecorView] = []
     private var backStickerDecorViews: [StickerDecorView] = []
+    private var frontStickerDecorBottomConstraints: [NSLayoutConstraint] = []
+    private var backStickerDecorBottomConstraints: [NSLayoutConstraint] = []
+    private var frontStickerDecorBottomBase: [CGFloat] = []
+    private var backStickerDecorBottomBase: [CGFloat] = []
     private let buttonPanel = UIView()
     private let buttonStack = UIStackView()
     private let prevButton = UIButton(type: .system)
@@ -300,7 +304,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         buttonStack.addArrangedSubview(nextButton)
 
         NSLayoutConstraint.activate([
-            buttonPanel.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 20),
+            buttonPanel.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 28),
             buttonPanel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             buttonPanel.widthAnchor.constraint(equalTo: cardContainer.widthAnchor),
             buttonPanel.heightAnchor.constraint(equalTo: cardContainer.heightAnchor, multiplier: 0.22),
@@ -348,11 +352,17 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     }
 
     private func configureStickerDecorations() {
-        frontStickerDecorViews = makeStickerDecorations(in: frontView)
-        backStickerDecorViews = makeStickerDecorations(in: backView)
+        let front = makeStickerDecorations(in: frontView)
+        frontStickerDecorViews = front.views
+        frontStickerDecorBottomConstraints = front.bottomConstraints
+        frontStickerDecorBottomBase = front.baseConstants
+        let back = makeStickerDecorations(in: backView)
+        backStickerDecorViews = back.views
+        backStickerDecorBottomConstraints = back.bottomConstraints
+        backStickerDecorBottomBase = back.baseConstants
     }
 
-    private func makeStickerDecorations(in cardSide: UIView) -> [StickerDecorView] {
+    private func makeStickerDecorations(in cardSide: UIView) -> (views: [StickerDecorView], bottomConstraints: [NSLayoutConstraint], baseConstants: [CGFloat]) {
         let bottomLeft = StickerDecorView()
         let bottomRight = StickerDecorView()
         let bottomCenter = StickerDecorView()
@@ -364,15 +374,18 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             cardSide.bringSubviewToFront(decor)
         }
 
+        let bottomLeftBottom = bottomLeft.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12)
+        let bottomRightBottom = bottomRight.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12)
+        let bottomCenterBottom = bottomCenter.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -14)
         NSLayoutConstraint.activate([
-            bottomLeft.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12),
+            bottomLeftBottom,
             bottomLeft.leadingAnchor.constraint(equalTo: cardSide.leadingAnchor, constant: 12),
 
-            bottomRight.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12),
+            bottomRightBottom,
             bottomRight.trailingAnchor.constraint(equalTo: cardSide.trailingAnchor, constant: -12),
 
             bottomCenter.centerXAnchor.constraint(equalTo: cardSide.centerXAnchor),
-            bottomCenter.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -14),
+            bottomCenterBottom,
 
             bottomLeft.widthAnchor.constraint(equalToConstant: 80),
             bottomLeft.heightAnchor.constraint(equalTo: bottomLeft.widthAnchor),
@@ -382,7 +395,8 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             bottomCenter.heightAnchor.constraint(equalTo: bottomLeft.heightAnchor),
         ])
 
-        return decorations
+        let bases = [bottomLeftBottom.constant, bottomRightBottom.constant, bottomCenterBottom.constant]
+        return (decorations, [bottomLeftBottom, bottomRightBottom, bottomCenterBottom], bases)
     }
 
     private func applyTheme() {
@@ -407,8 +421,8 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             screen.layer.shadowOffset = CGSize(width: 0, height: 4)
             screen.layer.shadowRadius = 10
         }
-        frontLabel.textColor = .white
-        backLabel.textColor = .white
+        frontLabel.textColor = .black
+        backLabel.textColor = .black
         errorLabel.textColor = palette.mutedText
         fallbackPlaceholderView.backgroundColor = palette.surfaceAlt
         loadingIndicator.color = palette.accentStrong
@@ -458,6 +472,19 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
                                 positions: Array(positions),
                                 assets: assets,
                                 rotations: rotations)
+        randomizeStickerDecorationOffsets(frontStickerDecorBottomConstraints, baseConstants: frontStickerDecorBottomBase)
+        randomizeStickerDecorationOffsets(backStickerDecorBottomConstraints, baseConstants: backStickerDecorBottomBase)
+    }
+
+    private func randomizeStickerDecorationOffsets(_ constraints: [NSLayoutConstraint], baseConstants: [CGFloat]) {
+        for (index, constraint) in constraints.enumerated() {
+            let base = index < baseConstants.count ? baseConstants[index] : constraint.constant
+            let jitter = CGFloat.random(in: -10...6)
+            let proposed = base + jitter - 4
+            let minConstant: CGFloat = -28
+            let maxConstant: CGFloat = -8
+            constraint.constant = min(max(proposed, minConstant), maxConstant)
+        }
     }
 
     private func applyStickerDecorations(to views: [StickerDecorView],
@@ -704,15 +731,19 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     }
 
     private func updateCardFonts(frontText: String, backText: String) {
-        frontLabel.font = fontForText(frontText, jpSize: 26, enSize: 34)
-        backLabel.font = fontForText(backText, jpSize: 22, enSize: 28)
+        frontLabel.font = fontForText(frontText, jpSize: 26, enSize: 34, jpWeight: .light, enWeight: .light)
+        backLabel.font = fontForText(backText, jpSize: 22, enSize: 28, jpWeight: .light, enWeight: .light)
     }
 
-    private func fontForText(_ text: String, jpSize: CGFloat, enSize: CGFloat) -> UIFont {
+    private func fontForText(_ text: String,
+                             jpSize: CGFloat,
+                             enSize: CGFloat,
+                             jpWeight: UIFont.Weight,
+                             enWeight: UIFont.Weight) -> UIFont {
         if text.range(of: "[\\p{Hiragana}\\p{Katakana}\\p{Han}]", options: .regularExpression) != nil {
-            return AppFont.jp(size: jpSize, weight: .bold)
+            return AppFont.jp(size: jpSize, weight: jpWeight)
         }
-        return AppFont.en(size: enSize, weight: .regular)
+        return AppFont.en(size: enSize, weight: enWeight)
     }
 
     private func recordViewedWordIfNeeded() {
