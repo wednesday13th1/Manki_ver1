@@ -42,6 +42,11 @@ class ModeViewController: UIViewController {
         action: #selector(goToSetting)
     )
 
+    private lazy var goalButton: UIButton = makeButton(
+        title: "目標設定",
+        action: #selector(goToGoal)
+    )
+
     private lazy var stickerButton: UIButton = makeButton(
         title: "ステッカーへ",
         action: #selector(goToSticker)
@@ -58,6 +63,7 @@ class ModeViewController: UIViewController {
             subtitleLabel,
             folderButton,
             tabBarButton,
+            goalButton,
             stickerButton,
             settingButton
         ])
@@ -114,6 +120,13 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
+    @objc private func goToGoal() {
+        let controller = GoalViewController()
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
     private func applyTheme() {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
@@ -123,6 +136,7 @@ class ModeViewController: UIViewController {
         subtitleLabel.textColor = palette.mutedText
         ThemeManager.stylePrimaryButton(folderButton)
         ThemeManager.stylePrimaryButton(tabBarButton)
+        ThemeManager.stylePrimaryButton(goalButton)
         ThemeManager.stylePrimaryButton(stickerButton)
         ThemeManager.styleSecondaryButton(settingButton)
     }

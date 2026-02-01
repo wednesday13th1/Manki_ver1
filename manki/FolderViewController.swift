@@ -20,14 +20,6 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private var themeObserver: NSObjectProtocol?
     private let retroShellView = UIView()
     private let retroScreenView = UIView()
-    private let retroKeypadView = UIView()
-    private let retroKeypadGrid = UIStackView()
-    private let retroKeypadRowTop = UIStackView()
-    private let retroKeypadRowBottom = UIStackView()
-    private let retroAddButton = UIButton(type: .system)
-    private let retroWordButton = UIButton(type: .system)
-    private let retroSortButton = UIButton(type: .system)
-    private let retroCloseButton = UIButton(type: .system)
     private let retroAntennaView = UIView()
     private let retroAntennaTipView = UIView()
     private let retroSpeakerView = UIView()
@@ -36,11 +28,9 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private let retroClickWheelVerticalDivider = UIView()
     private let retroClickWheelHorizontalDivider = UIView()
     private let retroClickWheelBackButton = UIButton(type: .system)
-    private let retroClickWheelWordButton = UIButton(type: .system)
+    private let retroClickWheelAddButton = UIButton(type: .system)
+    private let retroClickWheelSortButton = UIButton(type: .system)
     private let retroBadgeLabel = UILabel()
-    private let retroStickerView = UIView()
-    private let retroStickerIcon = UIImageView()
-    private let retroStickerStripe = UIView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -157,12 +147,8 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private func configureRetroShell() {
         retroShellView.translatesAutoresizingMaskIntoConstraints = false
         retroScreenView.translatesAutoresizingMaskIntoConstraints = false
-        retroKeypadView.translatesAutoresizingMaskIntoConstraints = false
         retroSpeakerView.translatesAutoresizingMaskIntoConstraints = false
         retroBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
-        retroKeypadGrid.translatesAutoresizingMaskIntoConstraints = false
-        retroKeypadRowTop.translatesAutoresizingMaskIntoConstraints = false
-        retroKeypadRowBottom.translatesAutoresizingMaskIntoConstraints = false
         retroAntennaView.translatesAutoresizingMaskIntoConstraints = false
         retroAntennaTipView.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelView.translatesAutoresizingMaskIntoConstraints = false
@@ -170,60 +156,21 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         retroClickWheelVerticalDivider.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelHorizontalDivider.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelBackButton.translatesAutoresizingMaskIntoConstraints = false
-        retroClickWheelWordButton.translatesAutoresizingMaskIntoConstraints = false
-        retroStickerView.translatesAutoresizingMaskIntoConstraints = false
-        retroStickerIcon.translatesAutoresizingMaskIntoConstraints = false
-        retroStickerStripe.translatesAutoresizingMaskIntoConstraints = false
-
-        retroKeypadGrid.axis = .vertical
-        retroKeypadGrid.spacing = 10
-        retroKeypadGrid.distribution = .fillEqually
-
-        retroKeypadRowTop.axis = .horizontal
-        retroKeypadRowTop.spacing = 12
-        retroKeypadRowTop.distribution = .fill
-
-        retroKeypadRowBottom.axis = .horizontal
-        retroKeypadRowBottom.spacing = 12
-        retroKeypadRowBottom.distribution = .fillEqually
-
-        let configButtons: [(UIButton, String)] = [
-            (retroAddButton, "追加"),
-            (retroWordButton, "単語"),
-            (retroSortButton, "並び替え"),
-            (retroCloseButton, "戻る")
-        ]
-        configButtons.forEach { button, title in
-            button.translatesAutoresizingMaskIntoConstraints = false
-            button.layer.cornerRadius = 12
-            button.layer.borderWidth = 1
-            button.setTitle(title, for: .normal)
-            button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
-            button.contentEdgeInsets = UIEdgeInsets(top: 16, left: 18, bottom: 16, right: 18)
-        }
-        retroAddButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        retroWordButton.setContentHuggingPriority(.required, for: .horizontal)
-
-        retroKeypadRowTop.addArrangedSubview(retroAddButton)
-        retroKeypadRowTop.addArrangedSubview(retroWordButton)
-        retroKeypadRowBottom.addArrangedSubview(retroSortButton)
-        retroKeypadRowBottom.addArrangedSubview(retroCloseButton)
-        retroKeypadGrid.addArrangedSubview(retroKeypadRowTop)
-        retroKeypadGrid.addArrangedSubview(retroKeypadRowBottom)
+        retroClickWheelAddButton.translatesAutoresizingMaskIntoConstraints = false
+        retroClickWheelSortButton.translatesAutoresizingMaskIntoConstraints = false
 
         retroBadgeLabel.text = "Y2K"
         retroBadgeLabel.textAlignment = .center
 
-        [retroClickWheelBackButton, retroClickWheelWordButton].forEach { button in
+        [retroClickWheelBackButton, retroClickWheelAddButton, retroClickWheelSortButton].forEach { button in
             button.layer.cornerRadius = 10
             button.layer.borderWidth = 1
             button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
             button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
         }
         retroClickWheelBackButton.setTitle("戻る", for: .normal)
-        retroClickWheelWordButton.setTitle("単語", for: .normal)
-
-        retroKeypadView.addSubview(retroKeypadGrid)
+        retroClickWheelAddButton.setTitle("追加", for: .normal)
+        retroClickWheelSortButton.setTitle("並替", for: .normal)
 
         retroShellView.addSubview(retroSpeakerView)
         retroShellView.addSubview(retroAntennaView)
@@ -231,19 +178,15 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         retroShellView.addSubview(retroClickWheelView)
         retroShellView.addSubview(retroBadgeLabel)
         retroShellView.addSubview(retroScreenView)
-        retroShellView.addSubview(retroKeypadView)
 
         retroClickWheelView.addSubview(retroClickWheelVerticalDivider)
         retroClickWheelView.addSubview(retroClickWheelHorizontalDivider)
         retroClickWheelView.addSubview(retroClickWheelCenterView)
         retroClickWheelView.addSubview(retroClickWheelBackButton)
-        retroClickWheelView.addSubview(retroClickWheelWordButton)
+        retroClickWheelView.addSubview(retroClickWheelAddButton)
+        retroClickWheelView.addSubview(retroClickWheelSortButton)
 
         view.addSubview(retroShellView)
-
-        retroStickerView.addSubview(retroStickerStripe)
-        retroStickerView.addSubview(retroStickerIcon)
-        retroScreenView.addSubview(retroStickerView)
 
         NSLayoutConstraint.activate([
             retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
@@ -275,16 +218,11 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             retroScreenView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 12),
             retroScreenView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -12),
 
-            retroKeypadView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 12),
-            retroKeypadView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 16),
-            retroKeypadView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -16),
-            retroKeypadView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -190),
-            retroKeypadView.heightAnchor.constraint(equalToConstant: 150),
-
-            retroClickWheelView.topAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: 16),
+            retroClickWheelView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 28),
             retroClickWheelView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
             retroClickWheelView.widthAnchor.constraint(equalToConstant: 140),
             retroClickWheelView.heightAnchor.constraint(equalToConstant: 140),
+            retroClickWheelView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -32),
 
             retroClickWheelCenterView.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
             retroClickWheelCenterView.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
@@ -306,46 +244,20 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             retroClickWheelBackButton.widthAnchor.constraint(equalToConstant: 50),
             retroClickWheelBackButton.heightAnchor.constraint(equalToConstant: 32),
 
-            retroClickWheelWordButton.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
-            retroClickWheelWordButton.centerXAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -35),
-            retroClickWheelWordButton.widthAnchor.constraint(equalToConstant: 50),
-            retroClickWheelWordButton.heightAnchor.constraint(equalToConstant: 32),
+            retroClickWheelAddButton.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
+            retroClickWheelAddButton.centerXAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -35),
+            retroClickWheelAddButton.widthAnchor.constraint(equalToConstant: 50),
+            retroClickWheelAddButton.heightAnchor.constraint(equalToConstant: 32),
 
-            retroKeypadGrid.topAnchor.constraint(equalTo: retroKeypadView.topAnchor, constant: 6),
-            retroKeypadGrid.leadingAnchor.constraint(equalTo: retroKeypadView.leadingAnchor, constant: 12),
-            retroKeypadGrid.trailingAnchor.constraint(equalTo: retroKeypadView.trailingAnchor, constant: -12),
-            retroKeypadGrid.bottomAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: -6),
+            retroClickWheelSortButton.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
+            retroClickWheelSortButton.centerYAnchor.constraint(equalTo: retroClickWheelView.topAnchor, constant: 30),
+            retroClickWheelSortButton.widthAnchor.constraint(equalToConstant: 50),
+            retroClickWheelSortButton.heightAnchor.constraint(equalToConstant: 32),
 
-            retroStickerView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor, constant: -16),
-            retroStickerView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: -16),
-            retroStickerView.widthAnchor.constraint(equalToConstant: 48),
-            retroStickerView.heightAnchor.constraint(equalToConstant: 36),
-
-            retroStickerStripe.leadingAnchor.constraint(equalTo: retroStickerView.leadingAnchor, constant: 6),
-            retroStickerStripe.trailingAnchor.constraint(equalTo: retroStickerView.trailingAnchor, constant: -6),
-            retroStickerStripe.centerYAnchor.constraint(equalTo: retroStickerView.centerYAnchor),
-            retroStickerStripe.heightAnchor.constraint(equalToConstant: 6),
-
-            retroStickerIcon.centerXAnchor.constraint(equalTo: retroStickerView.centerXAnchor),
-            retroStickerIcon.centerYAnchor.constraint(equalTo: retroStickerView.centerYAnchor),
-            retroStickerIcon.widthAnchor.constraint(equalToConstant: 16),
-            retroStickerIcon.heightAnchor.constraint(equalToConstant: 16),
         ])
-
-        let closeWidth = retroCloseButton.widthAnchor.constraint(greaterThanOrEqualTo: retroWordButton.widthAnchor, multiplier: 1.2)
-        closeWidth.priority = .defaultHigh
-        closeWidth.isActive = true
-        let equalSortWidth = retroSortButton.widthAnchor.constraint(equalTo: retroCloseButton.widthAnchor)
-        let equalAddWidth = retroAddButton.widthAnchor.constraint(equalTo: retroCloseButton.widthAnchor)
-        equalSortWidth.isActive = true
-        equalAddWidth.isActive = true
-
-        retroAddButton.addTarget(self, action: #selector(addFolder), for: .touchUpInside)
-        retroWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
-        retroSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
-        retroCloseButton.addTarget(self, action: #selector(closeSelf), for: .touchUpInside)
         retroClickWheelBackButton.addTarget(self, action: #selector(closeSelf), for: .touchUpInside)
-        retroClickWheelWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
+        retroClickWheelAddButton.addTarget(self, action: #selector(addFolder), for: .touchUpInside)
+        retroClickWheelSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
     }
 
     private func reloadData() {
@@ -519,19 +431,8 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         retroClickWheelCenterView.backgroundColor = UIColor.systemGray4
         retroClickWheelVerticalDivider.backgroundColor = UIColor.systemGray2
         retroClickWheelHorizontalDivider.backgroundColor = UIColor.systemGray2
-        retroClickWheelBackButton.backgroundColor = UIColor.systemGray6
-        retroClickWheelBackButton.layer.borderColor = UIColor.systemGray3.cgColor
-        retroClickWheelBackButton.setTitleColor(palette.text, for: .normal)
-        retroClickWheelWordButton.backgroundColor = UIColor.systemGray6
-        retroClickWheelWordButton.layer.borderColor = UIColor.systemGray3.cgColor
-        retroClickWheelWordButton.setTitleColor(palette.text, for: .normal)
 
-        retroKeypadView.backgroundColor = UIColor(white: 0.18, alpha: 1.0)
-        retroKeypadView.layer.cornerRadius = 22
-        retroKeypadView.layer.borderWidth = 2
-        retroKeypadView.layer.borderColor = palette.border.cgColor
-
-        [retroAddButton, retroWordButton, retroSortButton, retroCloseButton].forEach { button in
+        [retroClickWheelBackButton, retroClickWheelAddButton, retroClickWheelSortButton].forEach { button in
             button.backgroundColor = UIColor.systemGray6
             button.layer.borderColor = UIColor.systemGray3.cgColor
             button.setTitleColor(palette.text, for: .normal)
@@ -543,11 +444,6 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         retroBadgeLabel.layer.cornerRadius = 6
         retroBadgeLabel.layer.masksToBounds = true
 
-        retroStickerView.backgroundColor = palette.surface
-        retroStickerView.layer.cornerRadius = 8
-        retroStickerStripe.backgroundColor = palette.accentStrong
-        retroStickerIcon.image = UIImage(systemName: "folder")
-        retroStickerIcon.tintColor = palette.text
     }
 
     deinit {
@@ -607,8 +503,8 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             self?.applyFilterAndReload(sortByNameAsc: false)
         })
         alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.popoverPresentationController?.sourceView = retroKeypadView
-        alert.popoverPresentationController?.sourceRect = retroKeypadView.bounds
+        alert.popoverPresentationController?.sourceView = retroClickWheelView
+        alert.popoverPresentationController?.sourceRect = retroClickWheelView.bounds
         present(alert, animated: true)
     }
 

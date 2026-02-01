@@ -215,6 +215,10 @@ final class QuickQuizModal {
         resultLabel.text = correct ? "正解！" : "不正解… 正解: \(data.correct)"
         resultLabel.isHidden = false
         choiceButtons.forEach { $0.isEnabled = false }
+        cancelButton.isEnabled = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
+            self?.dismiss()
+        }
     }
 
     @objc private func dismiss() {

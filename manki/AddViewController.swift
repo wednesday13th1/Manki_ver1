@@ -46,6 +46,8 @@ final class AddViewController: UIViewController {
         englishTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         japaneseTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         configurePreviewImageView()
+        applyPixelFonts()
+        applyPixelNavigationFonts()
     }
 
     @objc private func textFieldEdited() {
@@ -194,12 +196,8 @@ final class AddViewController: UIViewController {
         view.addSubview(generateImageButton)
         view.addSubview(previewImageView)
 
-        let anchorButton = findButton(in: view, title: "AI生成")
-        let topAnchor = anchorButton?.bottomAnchor ?? view.safeAreaLayoutGuide.topAnchor
-        let topConstant: CGFloat = anchorButton == nil ? 200 : 16
-
         NSLayoutConstraint.activate([
-            generateImageButton.topAnchor.constraint(equalTo: topAnchor, constant: topConstant),
+            generateImageButton.topAnchor.constraint(equalTo: englishTextField.bottomAnchor, constant: 24),
             generateImageButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             generateImageButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
             generateImageButton.heightAnchor.constraint(equalToConstant: 44),
@@ -211,17 +209,37 @@ final class AddViewController: UIViewController {
         ])
     }
 
-    private func findButton(in root: UIView, title: String) -> UIButton? {
-        for subview in root.subviews {
-            if let button = subview as? UIButton,
-               button.title(for: .normal) == title {
-                return button
-            }
-            if let found = findButton(in: subview, title: title) {
-                return found
-            }
+    private func applyPixelFonts() {
+        applyPixelFontRecursively(to: view)
+    }
+
+    private func applyPixelFontRecursively(to view: UIView) {
+        if let label = view as? UILabel {
+            let size = label.font?.pointSize ?? 17
+            label.font = AppFont.jp(size: size)
+        } else if let textField = view as? UITextField {
+            let size = textField.font?.pointSize ?? 14
+            textField.font = AppFont.jp(size: size)
+        } else if let button = view as? UIButton, let titleLabel = button.titleLabel {
+            let size = titleLabel.font.pointSize
+            button.titleLabel?.font = AppFont.jp(size: size)
+        } else if let textView = view as? UITextView {
+            let size = textView.font?.pointSize ?? 14
+            textView.font = AppFont.jp(size: size)
         }
-        return nil
+
+        for subview in view.subviews {
+            applyPixelFontRecursively(to: subview)
+        }
+    }
+
+    private func applyPixelNavigationFonts() {
+        navigationController?.navigationBar.titleTextAttributes = [
+            .font: AppFont.jp(size: 18, weight: .semibold)
+        ]
+        let barFont = AppFont.jp(size: 16)
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.font: barFont], for: .normal)
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes([.font: barFont], for: .highlighted)
     }
 
     private func clearPendingImage(removeFile: Bool) {

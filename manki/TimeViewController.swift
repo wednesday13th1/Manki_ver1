@@ -126,15 +126,15 @@ final class TimeViewController: UIViewController {
     }
 
     private func checkDailyGoalAchievement() {
-        guard let goalMinutes = DailyGoalStore.goalMinutesForToday(),
-              DailyGoalStore.shouldShowAchievedAlert() else {
+        guard let goalMinutes = GoalStore.goalMinutesForToday(),
+              GoalStore.shouldShowAchievedAlert() else {
             return
         }
         let todayTotal = todayFlipSeconds()
         if todayTotal >= Double(goalMinutes * 60) {
-            DailyGoalStore.markAchievedAlertShown()
-            let message = "目標 \(goalMinutes)分を達成しました！"
-            showAlert(title: "達成おめでとう！", message: message)
+            GoalStore.markAchievedAlertShown()
+            let modal = GoalAchievedViewController(minutes: goalMinutes)
+            present(modal, animated: true)
         }
     }
 

@@ -89,10 +89,10 @@
             </objects>
             <point key="canvasLocation" x="3121" y="2176"/>
         </scene>
-        <!--View Controller-->
+        <!--Goal View Controller-->
         <scene sceneID="Zon-DB-MCM">
             <objects>
-                <viewController id="Vbr-jZ-q4V" sceneMemberID="viewController">
+                <viewController id="Vbr-jZ-q4V" customClass="GoalViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="R4W-lQ-Kxw">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -103,6 +103,36 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="r6R-qt-N1U" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="3902" y="2182"/>
+        </scene>
+        <!--Lucky View Controller-->
+        <scene sceneID="p1p-VI-liB">
+            <objects>
+                <viewController id="IbT-b9-M8D" customClass="LuckyViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="gej-TP-49Y">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="VwG-Yb-Kia"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="UXh-vM-CTs" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4575" y="2203"/>
+        </scene>
+        <!--Lucky Col View Controller-->
+        <scene sceneID="aKI-9P-knS">
+            <objects>
+                <viewController id="igN-wC-4PD" customClass="LuckyColViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ykL-kd-8Vb">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="75T-hu-wcM"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ivq-65-spl" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5272" y="2204"/>
         </scene>
         <!--Flip View Controller-->
         <scene sceneID="Khg-CQ-uu5">
@@ -179,6 +209,21 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="beI-x2-QOZ" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="6657" y="779"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="xe5-Bm-2QW">
+            <objects>
+                <viewController id="t9u-BB-D5M" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ji1-tL-SiC">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="u2b-WV-exk"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="QDm-99-Mkq" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="7512" y="814"/>
         </scene>
         <!--Item 1-->
         <scene sceneID="0DA-ZG-CAv">
@@ -294,40 +339,29 @@
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="英語" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="n3L-kF-g4z">
-                                <rect key="frame" x="28" y="208" width="32" height="21"/>
+                                <rect key="frame" x="28" y="208" width="48" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="p2t-Pp-mPe">
-                                <rect key="frame" x="96" y="201.66666666666666" width="269" height="34"/>
+                                <rect key="frame" x="112" y="201.66666666666666" width="253" height="34"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1UE-Vh-0M4">
-                                <rect key="frame" x="28" y="276.66666666666669" width="337" height="44"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <state key="normal" title="AI生成"/>
-                                <connections>
-                                    <action selector="generateAIWord" destination="H9x-gP-Ff1" eventType="touchUpInside" id="ZyU-94-Au8"/>
-                                </connections>
-                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="isx-i7-bai"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="p2t-Pp-mPe" firstAttribute="leading" secondItem="n3L-kF-g4z" secondAttribute="trailing" constant="36" id="4o2-9F-42r"/>
+                            <constraint firstItem="veM-j6-02y" firstAttribute="width" secondItem="n3L-kF-g4z" secondAttribute="width" id="5fX-5q-mvS"/>
                             <constraint firstItem="veM-j6-02y" firstAttribute="top" secondItem="isx-i7-bai" secondAttribute="top" constant="139" id="5nK-oY-u1m"/>
-                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="top" secondItem="p2t-Pp-mPe" secondAttribute="bottom" constant="41" id="8kR-kE-5x3"/>
                             <constraint firstItem="p2t-Pp-mPe" firstAttribute="height" constant="34" id="E80-5Z-3kD"/>
-                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="height" constant="44" id="G7h-0T-Bte"/>
-                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="leading" secondItem="isx-i7-bai" secondAttribute="leading" constant="28" id="HLf-Ag-0iL"/>
                             <constraint firstItem="p2t-Pp-mPe" firstAttribute="centerY" secondItem="n3L-kF-g4z" secondAttribute="centerY" id="J8u-BB-uQ1"/>
                             <constraint firstItem="n3L-kF-g4z" firstAttribute="top" secondItem="veM-j6-02y" secondAttribute="bottom" constant="48" id="LwU-n2-tQF"/>
                             <constraint firstItem="hfv-qZ-MTq" firstAttribute="height" constant="34" id="QkY-cZ-7cZ"/>
                             <constraint firstItem="hfv-qZ-MTq" firstAttribute="trailing" secondItem="isx-i7-bai" secondAttribute="trailing" constant="-28" id="a1f-nB-FnY"/>
                             <constraint firstItem="hfv-qZ-MTq" firstAttribute="centerY" secondItem="veM-j6-02y" secondAttribute="centerY" id="g9H-7v-w7X"/>
-                            <constraint firstItem="1UE-Vh-0M4" firstAttribute="trailing" secondItem="isx-i7-bai" secondAttribute="trailing" constant="-28" id="gh0-Yz-9pg"/>
                             <constraint firstItem="p2t-Pp-mPe" firstAttribute="trailing" secondItem="isx-i7-bai" secondAttribute="trailing" constant="-28" id="mtu-xM-2M1"/>
                             <constraint firstItem="n3L-kF-g4z" firstAttribute="leading" secondItem="isx-i7-bai" secondAttribute="leading" constant="28" id="pOF-1a-3a5"/>
                             <constraint firstItem="hfv-qZ-MTq" firstAttribute="leading" secondItem="veM-j6-02y" secondAttribute="trailing" constant="36" id="u6W-5j-5pN"/>

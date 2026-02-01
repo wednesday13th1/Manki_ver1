@@ -1,5 +1,5 @@
 //
-//  DailyGoalStore.swift
+//  GoalStore.swift
 //  manki
 //
 //  Created by Codex.
@@ -7,24 +7,10 @@
 
 import Foundation
 
-enum DailyGoalStore {
-    private static let lastPromptDateKey = "last_goal_prompt_date"
+enum GoalStore {
     private static let goalMinutesKey = "daily_goal_minutes"
     private static let goalDateKey = "daily_goal_date"
     private static let lastAchievedAlertDateKey = "daily_goal_achieved_alert_date"
-
-    static func shouldPromptToday(now: Date = Date()) -> Bool {
-        let defaults = UserDefaults.standard
-        if let last = defaults.object(forKey: lastPromptDateKey) as? Date,
-           Calendar.current.isDate(last, inSameDayAs: now) {
-            return false
-        }
-        return true
-    }
-
-    static func markPromptedToday(now: Date = Date()) {
-        UserDefaults.standard.set(now, forKey: lastPromptDateKey)
-    }
 
     static func setGoal(minutes: Int, for date: Date = Date()) {
         let defaults = UserDefaults.standard
@@ -39,6 +25,11 @@ enum DailyGoalStore {
             return nil
         }
         let minutes = defaults.integer(forKey: goalMinutesKey)
+        return minutes > 0 ? minutes : nil
+    }
+
+    static func lastSavedMinutes() -> Int? {
+        let minutes = UserDefaults.standard.integer(forKey: goalMinutesKey)
         return minutes > 0 ? minutes : nil
     }
 
