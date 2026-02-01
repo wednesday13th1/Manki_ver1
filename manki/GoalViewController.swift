@@ -9,6 +9,7 @@ import UIKit
 
 final class GoalViewController: UIViewController, UITextFieldDelegate {
 
+    private let periodSegmented = UISegmentedControl(items: ["1日", "1週間", "1ヶ月"])
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let minutesField = UITextField()
@@ -23,9 +24,16 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
     private var themeObserver: NSObjectProtocol?
 
     private let minMinutes = 0
-    private let maxMinutes = 300
+    private let dayMaxMinutes = 300
+    private let weekMaxMinutes = 2100
+    private let monthMaxMinutes = 9000
     private let stepMinutes = 5
+    private let defaultGoalMinutes = 30
     private let resultsFileName = "results.json"
+
+    private var selectedPeriod: GoalPeriod {
+        GoalPeriod(rawValue: periodSegmented.selectedSegmentIndex) ?? .day
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,16 +47,12 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         ) { [weak self] _ in
             self?.applyTheme()
         }
-        let initial = GoalStore.goalMinutesForToday()
-            ?? GoalStore.lastSavedMinutes()
-            ?? 30
-        updateGoal(minutes: initial, syncText: true)
-        updateLuckyVisibility()
+        refreshGoalFromStore(syncText: true)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        updateLuckyVisibility()
+        refreshGoalFromStore(syncText: true)
     }
 
     private func configureNavigation() {
@@ -63,6 +67,9 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
     }
 
     private func configureUI() {
+        periodSegmented.selectedSegmentIndex = 0
+        periodSegmented.addTarget(self, action: #selector(periodChanged), for: .valueChanged)
+
         titleLabel.text = "1日の勉強時間目標"
         titleLabel.textAlignment = .center
 
@@ -77,7 +84,7 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         minutesField.addTarget(self, action: #selector(textChanged), for: .editingChanged)
 
         slider.minimumValue = Float(minMinutes)
-        slider.maximumValue = Float(maxMinutes)
+        slider.maximumValue = Float(dayMaxMinutes)
         slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
 
         valueLabel.textAlignment = .center
@@ -89,6 +96,7 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         luckyButton.addTarget(self, action: #selector(openLucky), for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [
+            periodSegmented,
             titleLabel,
             subtitleLabel,
             minutesField,
@@ -96,7 +104,7 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
             valueLabel
         ])
         stack.axis = .vertical
-        stack.spacing = 12
+        stack.spacing = 16
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -104,23 +112,23 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         view.addSubview(saveButton)
         view.addSubview(luckyButton)
         NSLayoutConstraint.activate([
-            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
-            saveButton.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 16),
+            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            saveButton.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 24),
             saveButton.heightAnchor.constraint(equalToConstant: 48),
-            luckyButton.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: 12),
+            luckyButton.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: 16),
             luckyButton.heightAnchor.constraint(equalToConstant: 44),
-            luckyButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            luckyButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32)
         ])
         saveButton.translatesAutoresizingMaskIntoConstraints = false
-        saveButtonLeading = saveButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
-        saveButtonTrailing = saveButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+        saveButtonLeading = saveButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40)
+        saveButtonTrailing = saveButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
         saveButtonLeading?.isActive = true
         saveButtonTrailing?.isActive = true
         luckyButton.translatesAutoresizingMaskIntoConstraints = false
-        luckyButtonLeading = luckyButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
-        luckyButtonTrailing = luckyButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+        luckyButtonLeading = luckyButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40)
+        luckyButtonTrailing = luckyButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
         luckyButtonLeading?.isActive = true
         luckyButtonTrailing?.isActive = true
 
@@ -144,6 +152,16 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         minutesField.layer.borderColor = palette.border.cgColor
         valueLabel.font = AppFont.jp(size: 16, weight: .bold)
         valueLabel.textColor = palette.text
+        let segmentAttrs: [NSAttributedString.Key: Any] = [
+            .font: AppFont.jp(size: 12, weight: .bold),
+            .foregroundColor: palette.text
+        ]
+        periodSegmented.setTitleTextAttributes(segmentAttrs, for: .normal)
+        periodSegmented.setTitleTextAttributes(segmentAttrs, for: .selected)
+        periodSegmented.selectedSegmentTintColor = palette.accent
+        periodSegmented.backgroundColor = palette.surface
+        periodSegmented.layer.borderWidth = 1
+        periodSegmented.layer.borderColor = palette.border.cgColor
         ThemeManager.stylePrimaryButton(saveButton)
         saveButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         ThemeManager.styleSecondaryButton(luckyButton)
@@ -153,7 +171,7 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
     }
 
     private func updateGoal(minutes: Int, syncText: Bool) {
-        let clamped = max(minMinutes, min(maxMinutes, minutes))
+        let clamped = max(minMinutes, min(maxMinutes(for: selectedPeriod), minutes))
         let stepped = (clamped / stepMinutes) * stepMinutes
         slider.value = Float(stepped)
         valueLabel.text = "\(stepped)分"
@@ -163,7 +181,8 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
     }
 
     private func updateLuckyVisibility() {
-        guard let goalMinutes = GoalStore.goalMinutesForToday() else {
+        guard selectedPeriod == .day,
+              let goalMinutes = GoalStore.goalMinutesForToday() else {
             luckyButton.isHidden = true
             return
         }
@@ -210,6 +229,12 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         updateGoal(minutes: raw, syncText: true)
     }
 
+    @objc private func periodChanged() {
+        updatePeriodLabels()
+        updateSliderRange()
+        refreshGoalFromStore(syncText: true)
+    }
+
     @objc private func textChanged() {
         let text = minutesField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard let minutes = Int(text) else { return }
@@ -225,8 +250,10 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
     @objc private func saveGoal() {
         let text = minutesField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let minutes = Int(text) ?? Int(slider.value.rounded())
-        let clamped = max(minMinutes, min(maxMinutes, minutes))
-        GoalStore.setGoal(minutes: clamped)
+        let clamped = max(minMinutes, min(maxMinutes(for: selectedPeriod), minutes))
+        GoalStore.setGoal(minutes: clamped, period: selectedPeriod)
+        updateSaveButtonTitle()
+        updateLuckyVisibility()
         let alert = UIAlertController(title: "保存しました", message: "目標 \(clamped)分", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
@@ -244,6 +271,52 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
     deinit {
         if let observer = themeObserver {
             NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    private func updatePeriodLabels() {
+        switch selectedPeriod {
+        case .day:
+            titleLabel.text = "1日の勉強時間目標"
+        case .week:
+            titleLabel.text = "1週間の勉強時間目標"
+        case .month:
+            titleLabel.text = "1ヶ月の勉強時間目標"
+        }
+    }
+
+    private func updateSliderRange() {
+        slider.minimumValue = Float(minMinutes)
+        slider.maximumValue = Float(maxMinutes(for: selectedPeriod))
+    }
+
+    private func refreshGoalFromStore(syncText: Bool) {
+        let minutes = GoalStore.goalMinutes(for: selectedPeriod)
+            ?? GoalStore.lastSavedMinutes(for: selectedPeriod)
+            ?? defaultGoalMinutes
+        updatePeriodLabels()
+        updateSliderRange()
+        updateGoal(minutes: minutes, syncText: syncText)
+        updateSaveButtonTitle()
+        updateLuckyVisibility()
+    }
+
+    private func updateSaveButtonTitle() {
+        if GoalStore.goalMinutes(for: selectedPeriod) != nil {
+            saveButton.setTitle("変更", for: .normal)
+        } else {
+            saveButton.setTitle("保存", for: .normal)
+        }
+    }
+
+    private func maxMinutes(for period: GoalPeriod) -> Int {
+        switch period {
+        case .day:
+            return dayMaxMinutes
+        case .week:
+            return weekMaxMinutes
+        case .month:
+            return monthMaxMinutes
         }
     }
 }
