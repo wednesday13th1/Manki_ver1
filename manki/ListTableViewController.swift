@@ -11,10 +11,11 @@ class ListTableViewController: UITableViewController {
     private var wordArray: [SavedWord] = []
     private let savedWordsFileName = "saved_words.json"
     private var hiddenMode: WordHiddenMode = .none
-    private var hideButton: UIBarButtonItem?
     private var revealedWordIDs: Set<String> = []
+    private var hideButton: UIBarButtonItem?
     var startEditing = false
     var hideTestAndAdd = false
+    var showHideButton = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,12 +27,16 @@ class ListTableViewController: UITableViewController {
                                        style: .plain,
                                        target: self,
                                        action: #selector(openWordMenu))
-        let hideItem = UIBarButtonItem(title: "隠す",
-                                       style: .plain,
-                                       target: self,
-                                       action: #selector(toggleHiddenMode))
-        navigationItem.leftBarButtonItems = [backItem, hideItem]
-        hideButton = hideItem
+        var leftItems = [backItem]
+        if showHideButton {
+            let hideItem = UIBarButtonItem(title: "隠す",
+                                           style: .plain,
+                                           target: self,
+                                           action: #selector(toggleHiddenMode))
+            leftItems.append(hideItem)
+            hideButton = hideItem
+        }
+        navigationItem.leftBarButtonItems = leftItems
         if hideTestAndAdd {
             navigationItem.rightBarButtonItems = nil
         } else if let addItem = navigationItem.rightBarButtonItem {
@@ -176,7 +181,7 @@ class ListTableViewController: UITableViewController {
             self?.tableView.reloadData()
         })
         alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
-        alert.popoverPresentationController?.barButtonItem = navigationItem.leftBarButtonItem
+        alert.popoverPresentationController?.barButtonItem = hideButton
         present(alert, animated: true, completion: nil)
     }
 

@@ -52,6 +52,11 @@ class ModeViewController: UIViewController {
         action: #selector(goToSticker)
     )
 
+    private lazy var chatButton: UIButton = makeButton(
+        title: "Study Chat",
+        action: #selector(goToChat)
+    )
+
     private func setupUI() {
         titleLabel.text = "MANKI"
         titleLabel.textAlignment = .center
@@ -65,6 +70,7 @@ class ModeViewController: UIViewController {
             tabBarButton,
             goalButton,
             stickerButton,
+            chatButton,
             settingButton
         ])
         stack.axis = .vertical
@@ -127,6 +133,13 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
+    @objc private func goToChat() {
+        let controller = ChatViewController()
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
     private func applyTheme() {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
@@ -138,6 +151,7 @@ class ModeViewController: UIViewController {
         ThemeManager.stylePrimaryButton(tabBarButton)
         ThemeManager.stylePrimaryButton(goalButton)
         ThemeManager.stylePrimaryButton(stickerButton)
+        ThemeManager.stylePrimaryButton(chatButton)
         ThemeManager.styleSecondaryButton(settingButton)
     }
 

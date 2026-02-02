@@ -134,6 +134,36 @@
             </objects>
             <point key="canvasLocation" x="5272" y="2204"/>
         </scene>
+        <!--Explain View Controller-->
+        <scene sceneID="X2c-Ge-RUB">
+            <objects>
+                <viewController id="WrX-eq-eBk" customClass="ExplainViewController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="VSu-hX-8Hv">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="bcg-gt-NUM"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="U5A-7M-vDT" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="5972" y="2208"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="uSh-Ni-Tt3">
+            <objects>
+                <viewController id="847-FZ-OMR" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="PxI-cg-bYS">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="HvE-Jq-fQ5"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ppR-Cl-chL" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="6651" y="2230"/>
+        </scene>
         <!--Flip View Controller-->
         <scene sceneID="Khg-CQ-uu5">
             <objects>

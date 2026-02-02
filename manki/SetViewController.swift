@@ -580,10 +580,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     @objc private func openWordList() {
-        openWordListForEditing(false, hideActions: true)
+        openWordListForEditing(false, hideActions: true, showHideButton: true)
     }
 
-    private func openWordListForEditing(_ editing: Bool, hideActions: Bool) {
+    private func openWordListForEditing(_ editing: Bool,
+                                        hideActions: Bool,
+                                        showHideButton: Bool = false) {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         guard let listVC = storyboard.instantiateViewController(withIdentifier: "ListTableViewController")
                 as? ListTableViewController else {
@@ -591,6 +593,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
         listVC.startEditing = editing
         listVC.hideTestAndAdd = hideActions
+        listVC.showHideButton = showHideButton
         navigationController?.pushViewController(listVC, animated: true)
     }
 
@@ -877,6 +880,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         container.backgroundColor = palette.surface
         container.layer.borderWidth = 2
         container.layer.borderColor = palette.border.cgColor
+        container.layer.cornerRadius = 0
         titleLabel.font = AppFont.jp(size: 16, weight: .bold)
         titleLabel.textColor = palette.text
         wordMenuButtons.forEach { button in
@@ -1258,11 +1262,6 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         searchController.searchBar.sizeToFit()
         headerContainer.addSubview(searchController.searchBar)
 
-        hideToggleButton.setTitle("隠す", for: .normal)
-        hideToggleButton.contentHorizontalAlignment = .left
-        hideToggleButton.addTarget(self, action: #selector(toggleHiddenMode), for: .touchUpInside)
-        headerContainer.addSubview(hideToggleButton)
-
         tableView.tableHeaderView = headerContainer
         definesPresentationContext = true
     }
@@ -1271,11 +1270,9 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         guard let header = tableView.tableHeaderView else { return }
         let width = tableView.bounds.width
         let searchHeight = searchController.searchBar.bounds.height
-        let buttonHeight: CGFloat = 36
-        let headerHeight = searchHeight + buttonHeight
+        let headerHeight = searchHeight
         header.frame = CGRect(x: 0, y: 0, width: width, height: headerHeight)
         searchController.searchBar.frame = CGRect(x: 0, y: 0, width: width, height: searchHeight)
-        hideToggleButton.frame = CGRect(x: 16, y: searchHeight, width: width - 32, height: buttonHeight)
         tableView.tableHeaderView = header
     }
 

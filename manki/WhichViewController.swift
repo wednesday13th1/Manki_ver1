@@ -27,6 +27,11 @@ class WhichViewController: UIViewController {
         action: #selector(openFlip)
     )
 
+    private lazy var explainButton: UIButton = makeButton(
+        title: "アキネーター",
+        action: #selector(openExplain)
+    )
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -46,7 +51,7 @@ class WhichViewController: UIViewController {
         subtitleLabel.text = ""
         subtitleLabel.textAlignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton, explainButton])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = 14
@@ -78,6 +83,17 @@ class WhichViewController: UIViewController {
         navigationController?.pushViewController(controller, animated: true)
     }
 
+    @objc private func openExplain() {
+        let controller = ExplainViewController()
+        if let nav = navigationController {
+            nav.pushViewController(controller, animated: true)
+        } else {
+            let nav = UINavigationController(rootViewController: controller)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+        }
+    }
+
     private func applyTheme() {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
@@ -87,6 +103,7 @@ class WhichViewController: UIViewController {
         subtitleLabel.textColor = palette.mutedText
         ThemeManager.stylePrimaryButton(testButton)
         ThemeManager.styleSecondaryButton(flipButton)
+        ThemeManager.styleSecondaryButton(explainButton)
         updateTestMenuTheme()
     }
 
