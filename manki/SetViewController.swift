@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import MultipeerConnectivity
 
 private func needsWordIDMigration(from data: Data) -> Bool {
     guard let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
@@ -75,6 +76,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var wordMenuContainer: UIView?
     private var wordMenuTitleLabel: UILabel?
     private var wordMenuButtons: [UIButton] = []
+    private let shareManager = MPCShareManager.shared
 
     init(folderID: String?, showsAll: Bool = false) {
         self.folderID = folderID
@@ -105,6 +107,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         ) { [weak self] _ in
             self?.applyTheme()
         }
+        setupShareManager()
 
         let addButton = UIBarButtonItem(title: "追加",
                                         style: .plain,
@@ -136,6 +139,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         navigationController?.setNavigationBarHidden(false, animated: false)
+        shareManager.stop()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -144,6 +148,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.delegate = self
         tableView.allowsSelection = true
         tableView.allowsSelectionDuringEditing = true
+        shareManager.start()
     }
 
     override func viewDidLayoutSubviews() {
@@ -307,7 +312,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroKeyButtons = [retroFolderButton, retroWordButton, retroSortButton, retroAddButton]
         let configButtons: [(UIButton, String)] = [
             (retroFolderButton, "追加"),
-            (retroWordButton, "赤シート"),
+            (retroWordButton, "共有"),
             (retroSortButton, "並び替え"),
             (retroAddButton, "学習")
         ]
@@ -459,7 +464,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         equalAddWidth.isActive = true
 
         retroFolderButton.addTarget(self, action: #selector(openAddSet), for: .touchUpInside)
-        retroWordButton.addTarget(self, action: #selector(openWordList), for: .touchUpInside)
+        retroWordButton.addTarget(self, action: #selector(openShareMenu), for: .touchUpInside)
         retroSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
         retroAddButton.addTarget(self, action: #selector(openWhichView), for: .touchUpInside)
         retroClickWheelFolderButton.addTarget(self, action: #selector(openFolderView), for: .touchUpInside)
@@ -581,6 +586,145 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     @objc private func openWordList() {
         openWordListForEditing(false, hideActions: true, showHideButton: true)
+    }
+
+    @objc private func openShareMenu() {
+        let sets = displayedSets()
+        guard !sets.isEmpty else {
+            showAlert(title: "共有できるセットがありません", message: "先にセットを作成してください。")
+            return
+        }
+        let sheet = UIAlertController(title: "共有するセット", message: nil, preferredStyle: .actionSheet)
+        sets.forEach { set in
+            sheet.addAction(UIAlertAction(title: set.name, style: .default) { [weak self] _ in
+                self?.shareSet(set)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        sheet.popoverPresentationController?.sourceView = retroWordButton
+        sheet.popoverPresentationController?.sourceRect = retroWordButton.bounds
+        present(sheet, animated: true)
+    }
+
+    private func shareSet(_ set: SavedSet) {
+        let peers = shareManager.availablePeers()
+        guard !peers.isEmpty else {
+            showAlert(title: "近くの端末が見つかりません", message: "相手がアプリを開いているか確認してください。")
+            return
+        }
+        let sheet = UIAlertController(title: "送信先を選択", message: nil, preferredStyle: .actionSheet)
+        peers.forEach { peer in
+            sheet.addAction(UIAlertAction(title: peer.displayName, style: .default) { [weak self] _ in
+                self?.sendSet(set, to: peer)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        sheet.popoverPresentationController?.sourceView = retroWordButton
+        sheet.popoverPresentationController?.sourceRect = retroWordButton.bounds
+        present(sheet, animated: true)
+    }
+
+    private func sendSet(_ set: SavedSet, to peer: MCPeerID) {
+        let data = buildShareData(for: set)
+        guard !data.isEmpty else {
+            showAlert(title: "共有エラー", message: "データの作成に失敗しました。")
+            return
+        }
+        shareManager.send(data, to: peer)
+    }
+
+    private func buildShareData(for set: SavedSet) -> Data {
+        let allWords = loadSavedWords()
+        let wordMap = Dictionary(uniqueKeysWithValues: allWords.map { ($0.id, $0) })
+        let words = set.wordIDs.compactMap { wordMap[$0] }
+        let payload = SharedWordSet(set: set, words: words)
+        return (try? JSONEncoder().encode(payload)) ?? Data()
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    private struct SharedWordSet: Codable {
+        let set: SavedSet
+        let words: [SavedWord]
+    }
+
+    private func setupShareManager() {
+        shareManager.onReceiveData = { [weak self] data, peer in
+            DispatchQueue.main.async {
+                self?.handleReceivedShare(data: data, from: peer)
+            }
+        }
+        shareManager.onStatus = { [weak self] text in
+            DispatchQueue.main.async {
+                self?.retroBadgeLabel.text = "共有"
+                self?.retroBadgeLabel.accessibilityLabel = text
+            }
+        }
+        shareManager.onError = { [weak self] text in
+            DispatchQueue.main.async {
+                self?.showAlert(title: "共有エラー", message: text)
+            }
+        }
+    }
+
+    private func handleReceivedShare(data: Data, from peer: MCPeerID) {
+        guard let payload = try? JSONDecoder().decode(SharedWordSet.self, from: data) else {
+            showAlert(title: "受信エラー", message: "データの読み込みに失敗しました。")
+            return
+        }
+        importSharedSet(payload)
+        reloadData()
+        showAlert(title: "受信完了", message: "\(payload.set.name) を追加しました。")
+    }
+
+    private func importSharedSet(_ payload: SharedWordSet) {
+        var savedWords = loadSavedWords()
+        var existingByID: [String: SavedWord] = [:]
+        savedWords.forEach { existingByID[$0.id] = $0 }
+
+        var idMap: [String: String] = [:]
+        for word in payload.words {
+            if let existing = existingByID[word.id] {
+                if existing.english == word.english && existing.japanese == word.japanese {
+                    idMap[word.id] = word.id
+                } else {
+                    let newWord = SavedWord(english: word.english,
+                                            japanese: word.japanese,
+                                            illustrationScenario: word.illustrationScenario,
+                                            illustrationImageFileName: word.illustrationImageFileName,
+                                            isFavorite: word.isFavorite,
+                                            importanceLevel: word.importanceLevel)
+                    savedWords.append(newWord)
+                    idMap[word.id] = newWord.id
+                }
+            } else {
+                savedWords.append(word)
+                idMap[word.id] = word.id
+            }
+        }
+        saveSavedWords(savedWords)
+
+        var sets = SetStore.loadSets()
+        let newName = uniqueSetName(payload.set.name, existing: sets.map { $0.name })
+        let newIDs = payload.set.wordIDs.compactMap { idMap[$0] }
+        let newSet = SavedSet(name: newName,
+                              wordIDs: newIDs,
+                              folderID: payload.set.folderID)
+        sets.append(newSet)
+        SetStore.saveSets(sets)
+    }
+
+    private func uniqueSetName(_ base: String, existing: [String]) -> String {
+        if !existing.contains(base) { return base }
+        var index = 2
+        while existing.contains("\(base) (共有\(index))") {
+            index += 1
+        }
+        return "\(base) (共有\(index))"
     }
 
     private func openWordListForEditing(_ editing: Bool,

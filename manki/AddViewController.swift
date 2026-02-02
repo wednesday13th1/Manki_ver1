@@ -13,6 +13,7 @@ final class AddViewController: UIViewController {
     @IBOutlet private var japaneseTextField: UITextField!
 
     private let generateImageButton = UIButton(type: .system)
+    private let importButton = UIButton(type: .system)
     private let previewImageView = UIImageView()
 
     private struct AIWord: Codable {
@@ -33,6 +34,9 @@ final class AddViewController: UIViewController {
     private var lastImageJapanese: String?
     private let imageLoadingIndicator = UIActivityIndicatorView(style: .medium)
     private var pendingImageSource: PendingImageSource?
+    private var importOverlay: UIControl?
+    private var importContainer: UIView?
+    private var importTextView: UITextView?
 
     private enum PendingImageSource {
         case generated
@@ -46,6 +50,7 @@ final class AddViewController: UIViewController {
         englishTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         japaneseTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         configurePreviewImageView()
+        configureImportButton()
         applyPixelFonts()
         applyPixelNavigationFonts()
     }
@@ -209,6 +214,20 @@ final class AddViewController: UIViewController {
         ])
     }
 
+    private func configureImportButton() {
+        importButton.translatesAutoresizingMaskIntoConstraints = false
+        importButton.setTitle("Google Sheet/CSVから追加", for: .normal)
+        importButton.addTarget(self, action: #selector(openImportModal), for: .touchUpInside)
+        view.addSubview(importButton)
+
+        NSLayoutConstraint.activate([
+            importButton.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: 14),
+            importButton.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
+            importButton.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
+            importButton.heightAnchor.constraint(equalToConstant: 44),
+        ])
+    }
+
     private func applyPixelFonts() {
         applyPixelFontRecursively(to: view)
     }
@@ -240,6 +259,184 @@ final class AddViewController: UIViewController {
         let barFont = AppFont.jp(size: 16)
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.font: barFont], for: .normal)
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.font: barFont], for: .highlighted)
+    }
+
+    @objc private func openImportModal() {
+        guard importOverlay == nil else { return }
+        let overlay = UIControl()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.addTarget(self, action: #selector(dismissImportModal), for: .touchUpInside)
+        overlay.accessibilityViewIsModal = true
+
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "貼り付けインポート"
+        titleLabel.textAlignment = .center
+        titleLabel.font = AppFont.jp(size: 16, weight: .bold)
+
+        let textView = UITextView()
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.font = AppFont.jp(size: 14)
+        textView.layer.borderWidth = 2
+        textView.layer.cornerRadius = 0
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
+
+        let importButton = UIButton(type: .system)
+        importButton.translatesAutoresizingMaskIntoConstraints = false
+        importButton.setTitle("読み込み", for: .normal)
+        importButton.titleLabel?.font = AppFont.jp(size: 15, weight: .bold)
+        importButton.addTarget(self, action: #selector(handleImport), for: .touchUpInside)
+
+        let cancelButton = UIButton(type: .system)
+        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        cancelButton.setTitle("キャンセル", for: .normal)
+        cancelButton.titleLabel?.font = AppFont.jp(size: 15, weight: .bold)
+        cancelButton.addTarget(self, action: #selector(dismissImportModal), for: .touchUpInside)
+
+        let buttonStack = UIStackView(arrangedSubviews: [importButton, cancelButton])
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+        buttonStack.axis = .vertical
+        buttonStack.spacing = 8
+
+        container.addSubview(titleLabel)
+        container.addSubview(textView)
+        container.addSubview(buttonStack)
+        overlay.addSubview(container)
+        view.addSubview(overlay)
+
+        NSLayoutConstraint.activate([
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            container.widthAnchor.constraint(equalToConstant: 300),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            textView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            textView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            textView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            textView.heightAnchor.constraint(equalToConstant: 180),
+
+            buttonStack.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: 12),
+            buttonStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            buttonStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            buttonStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+        ])
+
+        let palette = ThemeManager.palette()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        container.backgroundColor = palette.surface
+        container.layer.borderWidth = 2
+        container.layer.borderColor = palette.border.cgColor
+        container.layer.cornerRadius = 0
+        titleLabel.textColor = palette.text
+        textView.backgroundColor = palette.surfaceAlt
+        textView.textColor = palette.text
+        textView.layer.borderColor = palette.border.cgColor
+        [importButton, cancelButton].forEach { button in
+            button.backgroundColor = palette.surfaceAlt
+            button.layer.borderWidth = 2
+            button.layer.borderColor = palette.border.cgColor
+            button.setTitleColor(palette.text, for: .normal)
+            button.layer.cornerRadius = 0
+        }
+
+        importOverlay = overlay
+        importContainer = container
+        importTextView = textView
+
+        overlay.alpha = 0
+        container.alpha = 0
+        container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+            overlay.alpha = 1
+            container.alpha = 1
+            container.transform = .identity
+        }
+    }
+
+    @objc private func dismissImportModal() {
+        guard let overlay = importOverlay, let container = importContainer else { return }
+        UIView.animate(withDuration: 0.15, delay: 0, options: [.curveEaseIn]) {
+            overlay.alpha = 0
+            container.alpha = 0
+            container.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        } completion: { [weak self] _ in
+            overlay.removeFromSuperview()
+            self?.importOverlay = nil
+            self?.importContainer = nil
+            self?.importTextView = nil
+        }
+    }
+
+    @objc private func handleImport() {
+        guard let raw = importTextView?.text, !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            showAlert(title: "入力エラー", message: "シート内容を貼り付けてください。")
+            return
+        }
+        let pairs = parseImportText(raw)
+        if pairs.isEmpty {
+            showAlert(title: "形式エラー", message: "英語と日本語の2列を貼り付けてください。")
+            return
+        }
+        savedWords = loadSavedWords()
+        var added = 0
+        var updated = 0
+        for (english, japanese) in pairs {
+            if let index = savedWords.firstIndex(where: { $0.english.caseInsensitiveCompare(english) == .orderedSame }) {
+                let existing = savedWords[index]
+                let updatedWord = SavedWord(english: english,
+                                            japanese: japanese,
+                                            illustrationScenario: existing.illustrationScenario,
+                                            illustrationImageFileName: existing.illustrationImageFileName,
+                                            isFavorite: existing.isFavorite,
+                                            importanceLevel: existing.importanceLevel,
+                                            id: existing.id)
+                savedWords[index] = updatedWord
+                updated += 1
+            } else {
+                savedWords.append(SavedWord(english: english,
+                                            japanese: japanese,
+                                            illustrationScenario: nil,
+                                            illustrationImageFileName: nil))
+                added += 1
+            }
+        }
+        saveSavedWords()
+        dismissImportModal()
+        showAlert(title: "インポート完了", message: "追加 \(added)件 / 上書き \(updated)件")
+    }
+
+    private func parseImportText(_ raw: String) -> [(String, String)] {
+        let lines = raw.split(whereSeparator: \.isNewline)
+        var results: [(String, String)] = []
+        for lineSub in lines {
+            let line = String(lineSub).trimmingCharacters(in: .whitespacesAndNewlines)
+            if line.isEmpty { continue }
+            let cols: [String]
+            if line.contains("\t") {
+                cols = line.components(separatedBy: "\t")
+            } else {
+                cols = line.components(separatedBy: ",")
+            }
+            guard cols.count >= 2 else { continue }
+            let english = cols[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            let japanese = cols[1].trimmingCharacters(in: .whitespacesAndNewlines)
+            if english.isEmpty || japanese.isEmpty { continue }
+            results.append((english, japanese))
+        }
+        return results
     }
 
     private func clearPendingImage(removeFile: Bool) {

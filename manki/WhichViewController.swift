@@ -27,6 +27,11 @@ class WhichViewController: UIViewController {
         action: #selector(openFlip)
     )
 
+    private lazy var redSheetButton: UIButton = makeButton(
+        title: "赤シート",
+        action: #selector(openRedSheet)
+    )
+
     private lazy var explainButton: UIButton = makeButton(
         title: "アキネーター",
         action: #selector(openExplain)
@@ -51,7 +56,7 @@ class WhichViewController: UIViewController {
         subtitleLabel.text = ""
         subtitleLabel.textAlignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton, explainButton])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton, redSheetButton, explainButton])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = 14
@@ -83,6 +88,18 @@ class WhichViewController: UIViewController {
         navigationController?.pushViewController(controller, animated: true)
     }
 
+    @objc private func openRedSheet() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let listVC = storyboard.instantiateViewController(withIdentifier: "ListTableViewController")
+                as? ListTableViewController else {
+            return
+        }
+        listVC.startEditing = false
+        listVC.hideTestAndAdd = true
+        listVC.showHideButton = true
+        navigationController?.pushViewController(listVC, animated: true)
+    }
+
     @objc private func openExplain() {
         let controller = ExplainViewController()
         if let nav = navigationController {
@@ -103,6 +120,7 @@ class WhichViewController: UIViewController {
         subtitleLabel.textColor = palette.mutedText
         ThemeManager.stylePrimaryButton(testButton)
         ThemeManager.styleSecondaryButton(flipButton)
+        ThemeManager.styleSecondaryButton(redSheetButton)
         ThemeManager.styleSecondaryButton(explainButton)
         updateTestMenuTheme()
     }
