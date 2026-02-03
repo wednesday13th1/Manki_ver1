@@ -9,6 +9,7 @@ import UIKit
 
 class ModeViewController: UIViewController {
 
+    private let backgroundImageView = UIImageView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private var themeObserver: NSObjectProtocol?
@@ -58,11 +59,17 @@ class ModeViewController: UIViewController {
     )
 
     private func setupUI() {
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.alpha = 0.6
+
         titleLabel.text = "MANKI"
         titleLabel.textAlignment = .center
         subtitleLabel.text = "Study Mode"
         subtitleLabel.textAlignment = .center
 
+        view.addSubview(backgroundImageView)
         let stack = UIStackView(arrangedSubviews: [
             titleLabel,
             subtitleLabel,
@@ -80,6 +87,10 @@ class ModeViewController: UIViewController {
 
         view.addSubview(stack)
         NSLayoutConstraint.activate([
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7)
@@ -142,7 +153,8 @@ class ModeViewController: UIViewController {
 
     private func applyTheme() {
         let palette = ThemeManager.palette()
-        ThemeManager.applyBackground(to: view)
+        view.backgroundColor = palette.background
+        backgroundImageView.image = backgroundImage(for: ThemeManager.current)
         titleLabel.font = AppFont.title(size: 20)
         titleLabel.textColor = palette.text
         subtitleLabel.font = AppFont.en(size: 22)
@@ -153,6 +165,33 @@ class ModeViewController: UIViewController {
         ThemeManager.stylePrimaryButton(stickerButton)
         ThemeManager.stylePrimaryButton(chatButton)
         ThemeManager.styleSecondaryButton(settingButton)
+    }
+
+    private func backgroundImage(for theme: AppTheme) -> UIImage? {
+        let baseName: String
+        switch theme {
+        case .pink:
+            baseName = "pnk"
+        case .purple:
+            baseName = "prpl"
+        case .green:
+            baseName = "grrn"
+        case .yellow:
+            baseName = "yllw"
+        case .blue:
+            baseName = "bleu"
+        }
+        if let image = UIImage(named: baseName) {
+            return image
+        }
+        let extensions = ["png", "jpg", "jpeg"]
+        for ext in extensions {
+            if let path = Bundle.main.path(forResource: baseName, ofType: ext),
+               let image = UIImage(contentsOfFile: path) {
+                return image
+            }
+        }
+        return nil
     }
 
     deinit {

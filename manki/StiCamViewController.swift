@@ -17,7 +17,10 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     private let saveButton = UIButton(type: .system)
     private let collectionButton = UIButton(type: .system)
     private let drawButton = UIButton(type: .system)
+    private let emojiButton = UIButton(type: .system)
     private let hintLabel = UILabel()
+    private var baseStickerImage: UIImage?
+    private var selectedEmoji: String?
     private var pendingStickerImage: UIImage?
 
     override func viewDidLoad() {
@@ -80,6 +83,12 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         drawButton.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
         drawButton.addTarget(self, action: #selector(drawTapped), for: .touchUpInside)
 
+        emojiButton.translatesAutoresizingMaskIntoConstraints = false
+        emojiButton.setTitle("絵文字", for: .normal)
+        emojiButton.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
+        emojiButton.isEnabled = true
+        emojiButton.addTarget(self, action: #selector(emojiTapped), for: .touchUpInside)
+
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButton.setTitle("ステッカー保存", for: .normal)
         saveButton.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
@@ -91,7 +100,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         collectionButton.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
         collectionButton.addTarget(self, action: #selector(collectionTapped), for: .touchUpInside)
 
-        let buttonStack = UIStackView(arrangedSubviews: [captureButton, drawButton, saveButton, collectionButton])
+        let buttonStack = UIStackView(arrangedSubviews: [captureButton, drawButton, emojiButton, saveButton, collectionButton])
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .vertical
         buttonStack.spacing = 12
@@ -181,22 +190,41 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         let drawVC = StiDrawViewController()
         drawVC.onSave = { [weak self] image in
             guard let self else { return }
-            let stickerImage = makeStickerImage(from: image)
-            pendingStickerImage = stickerImage
-            previewImageView.image = stickerImage
-            saveButton.isEnabled = true
+            baseStickerImage = makeStickerImage(from: image)
+            selectedEmoji = nil
+            updatePreview()
         }
         navigationController?.pushViewController(drawVC, animated: true)
+    }
+
+    @objc private func emojiTapped() {
+        let alert = UIAlertController(title: "絵文字を追加", message: "使いたい絵文字を1つ入力してください。", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "😀"
+            textField.textAlignment = .center
+        }
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        alert.addAction(UIAlertAction(title: "追加", style: .default) { [weak self] _ in
+            guard let self else { return }
+            let text = alert.textFields?.first?.text ?? ""
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let firstCharacter = trimmed.first else {
+                self.showAlert(title: "入力エラー", message: "絵文字を入力してください。")
+                return
+            }
+            self.selectedEmoji = String(firstCharacter)
+            self.updatePreview()
+        })
+        present(alert, animated: true)
     }
 
     func imagePickerController(_ picker: UIImagePickerController,
                                didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         let pickedImage = (info[.editedImage] ?? info[.originalImage]) as? UIImage
         if let pickedImage {
-            let stickerImage = makeStickerImage(from: pickedImage)
-            pendingStickerImage = stickerImage
-            previewImageView.image = stickerImage
-            saveButton.isEnabled = true
+            baseStickerImage = makeStickerImage(from: pickedImage)
+            selectedEmoji = nil
+            updatePreview()
         } else {
             showAlert(title: "取得エラー", message: "画像を取得できませんでした。")
         }
@@ -226,10 +254,9 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
             DispatchQueue.main.async {
                 if let image = object as? UIImage {
-                    let stickerImage = self?.makeStickerImage(from: image)
-                    self?.pendingStickerImage = stickerImage
-                    self?.previewImageView.image = stickerImage
-                    self?.saveButton.isEnabled = true
+                    self?.baseStickerImage = self?.makeStickerImage(from: image)
+                    self?.selectedEmoji = nil
+                    self?.updatePreview()
                 } else {
                     self?.showAlert(title: "取得エラー", message: error?.localizedDescription ?? "画像を取得できませんでした。")
                 }
@@ -250,6 +277,71 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
             context.cgContext.setLineWidth(10)
             context.cgContext.addPath(path.cgPath)
             context.cgContext.strokePath()
+        }
+    }
+
+    private func updatePreview() {
+        let updatedImage: UIImage?
+        if let baseStickerImage {
+            if let emoji = selectedEmoji {
+                updatedImage = applyEmoji(emoji, to: baseStickerImage)
+            } else {
+                updatedImage = baseStickerImage
+            }
+        } else if let emoji = selectedEmoji {
+            updatedImage = makeEmojiSticker(emoji)
+        } else {
+            updatedImage = nil
+        }
+        pendingStickerImage = updatedImage
+        previewImageView.image = updatedImage
+        saveButton.isEnabled = (updatedImage != nil)
+    }
+
+    private func applyEmoji(_ emoji: String, to image: UIImage) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: image.size)
+        return renderer.image { _ in
+            let rect = CGRect(origin: .zero, size: image.size)
+            image.draw(in: rect)
+            let fontSize = image.size.width * 0.35
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: fontSize),
+                .foregroundColor: UIColor.white
+            ]
+            let emojiSize = (emoji as NSString).size(withAttributes: attributes)
+            let origin = CGPoint(
+                x: (image.size.width - emojiSize.width) / 2,
+                y: (image.size.height - emojiSize.height) / 2
+            )
+            (emoji as NSString).draw(at: origin, withAttributes: attributes)
+        }
+    }
+
+    private func makeEmojiSticker(_ emoji: String) -> UIImage {
+        let size: CGFloat = 512
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+        return renderer.image { context in
+            let rect = CGRect(origin: .zero, size: CGSize(width: size, height: size))
+            let path = UIBezierPath(ovalIn: rect)
+            context.cgContext.setFillColor(UIColor.systemGray6.cgColor)
+            context.cgContext.addPath(path.cgPath)
+            context.cgContext.fillPath()
+            context.cgContext.setStrokeColor(UIColor.white.withAlphaComponent(0.9).cgColor)
+            context.cgContext.setLineWidth(10)
+            context.cgContext.addPath(path.cgPath)
+            context.cgContext.strokePath()
+
+            let fontSize = size * 0.45
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: fontSize),
+                .foregroundColor: UIColor.white
+            ]
+            let emojiSize = (emoji as NSString).size(withAttributes: attributes)
+            let origin = CGPoint(
+                x: (size - emojiSize.width) / 2,
+                y: (size - emojiSize.height) / 2
+            )
+            (emoji as NSString).draw(at: origin, withAttributes: attributes)
         }
     }
 

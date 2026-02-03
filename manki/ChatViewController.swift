@@ -31,6 +31,7 @@ class ChatViewController: UIViewController {
         super.viewDidLoad()
         title = "Study Chat"
         view.backgroundColor = .systemBackground
+        configureNavigation()
         configureLayout()
         applyTheme()
         registerForKeyboard()
@@ -42,6 +43,16 @@ class ChatViewController: UIViewController {
             self?.applyTheme()
             self?.tableView.reloadData()
         }
+    }
+
+    private func configureNavigation() {
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "戻る",
+            style: .plain,
+            target: self,
+            action: #selector(closeTapped)
+        )
+        ThemeManager.applyNavigationAppearance(to: navigationController)
     }
 
     private func configureLayout() {
@@ -330,6 +341,11 @@ class ChatViewController: UIViewController {
         inputTextView.textColor = palette.text
         inputTextView.layer.borderColor = palette.border.cgColor
         ThemeManager.stylePrimaryButton(sendButton)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+    }
+
+    @objc private func closeTapped() {
+        dismiss(animated: true)
     }
 
     deinit {
