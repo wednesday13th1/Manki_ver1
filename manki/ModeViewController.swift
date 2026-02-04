@@ -62,7 +62,7 @@ class ModeViewController: UIViewController {
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.clipsToBounds = true
-        backgroundImageView.alpha = 0.6
+        backgroundImageView.alpha = 0.8
 
         titleLabel.text = "MANKI"
         titleLabel.textAlignment = .center
