@@ -65,10 +65,14 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let retroClickWheelFolderButton = UIButton(type: .system)
     private let retroClickWheelWordButton = UIButton(type: .system)
     private let retroBadgeLabel = UILabel()
-    private let retroStickerView = UIView()
-    private let retroStickerIcon = UIImageView()
-    private let retroStickerStripe = UIView()
     private let headerContainer = UIView()
+    private let keyboardDismissTap = UITapGestureRecognizer()
+    private var retroShellBottomConstraint: NSLayoutConstraint?
+    private var keypadTopConstraint: NSLayoutConstraint?
+    private var clickWheelTopConstraint: NSLayoutConstraint?
+    private var clickWheelBottomConstraint: NSLayoutConstraint?
+    private var screenBottomConstraint: NSLayoutConstraint?
+    private var keyboardObservers: [NSObjectProtocol] = []
     private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
     private var isHandlingSelection = false
@@ -94,6 +98,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         super.viewDidLoad()
         title = showsAll ? "セット" : (folderID == nil ? "未分類" : "セット")
         view.backgroundColor = .systemBackground
+        configureKeyboardDismiss()
+        configureKeyboardObservers()
         configureRetroShell()
         configureTableView()
         configureEmptyLabel()
@@ -186,6 +192,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.delegate = self
         tableView.rowHeight = 72
         tableView.delaysContentTouches = false
+        tableView.keyboardDismissMode = .onDrag
         retroScreenView.addSubview(searchContainer)
         retroScreenView.addSubview(tableView)
 
@@ -230,8 +237,16 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     @objc private func handleTableTap(_ gesture: UITapGestureRecognizer) {
         guard gesture.state == .ended else { return }
         let location = gesture.location(in: tableView)
-        guard let indexPath = tableView.indexPathForRow(at: location) else { return }
+        guard let indexPath = tableView.indexPathForRow(at: location) else {
+            view.endEditing(true)
+            return
+        }
+        view.endEditing(true)
         handleSelection(at: indexPath)
+    }
+
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
 
     private func handleSelection(at indexPath: IndexPath) {
@@ -276,6 +291,63 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         definesPresentationContext = true
     }
 
+    private func configureKeyboardDismiss() {
+        keyboardDismissTap.addTarget(self, action: #selector(dismissKeyboard))
+        keyboardDismissTap.cancelsTouchesInView = false
+        keyboardDismissTap.delegate = self
+        view.addGestureRecognizer(keyboardDismissTap)
+    }
+
+    private func configureKeyboardObservers() {
+        let center = NotificationCenter.default
+        let show = center.addObserver(forName: UIResponder.keyboardWillShowNotification,
+                                      object: nil,
+                                      queue: .main) { [weak self] _ in
+            self?.setKeyboardCompactLayout(true)
+        }
+        let hide = center.addObserver(forName: UIResponder.keyboardWillHideNotification,
+                                      object: nil,
+                                      queue: .main) { [weak self] _ in
+            self?.setKeyboardCompactLayout(false)
+        }
+        keyboardObservers = [show, hide]
+    }
+
+    private func setKeyboardCompactLayout(_ compact: Bool) {
+        if compact {
+            retroKeypadView.isHidden = true
+            retroClickWheelView.isHidden = true
+            if let keypadTopConstraint {
+                NSLayoutConstraint.deactivate([keypadTopConstraint])
+            }
+            if let clickWheelTopConstraint {
+                NSLayoutConstraint.deactivate([clickWheelTopConstraint])
+            }
+            if let clickWheelBottomConstraint {
+                NSLayoutConstraint.deactivate([clickWheelBottomConstraint])
+            }
+            if let screenBottomConstraint {
+                NSLayoutConstraint.activate([screenBottomConstraint])
+            }
+        } else {
+            retroKeypadView.isHidden = false
+            retroClickWheelView.isHidden = false
+            if let screenBottomConstraint {
+                NSLayoutConstraint.deactivate([screenBottomConstraint])
+            }
+            if let keypadTopConstraint {
+                NSLayoutConstraint.activate([keypadTopConstraint])
+            }
+            if let clickWheelTopConstraint {
+                NSLayoutConstraint.activate([clickWheelTopConstraint])
+            }
+            if let clickWheelBottomConstraint {
+                NSLayoutConstraint.activate([clickWheelBottomConstraint])
+            }
+        }
+        view.layoutIfNeeded()
+    }
+
     private func configureRetroShell() {
         retroShellView.translatesAutoresizingMaskIntoConstraints = false
         retroScreenView.translatesAutoresizingMaskIntoConstraints = false
@@ -293,9 +365,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelHorizontalDivider.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelFolderButton.translatesAutoresizingMaskIntoConstraints = false
         retroClickWheelWordButton.translatesAutoresizingMaskIntoConstraints = false
-        retroStickerView.translatesAutoresizingMaskIntoConstraints = false
-        retroStickerIcon.translatesAutoresizingMaskIntoConstraints = false
-        retroStickerStripe.translatesAutoresizingMaskIntoConstraints = false
 
         retroKeypadGrid.axis = .vertical
         retroKeypadGrid.spacing = 10
@@ -364,15 +433,23 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
         view.addSubview(retroShellView)
 
-        retroStickerView.addSubview(retroStickerStripe)
-        retroStickerView.addSubview(retroStickerIcon)
-        retroScreenView.addSubview(retroStickerView)
+        retroShellBottomConstraint = {
+            if #available(iOS 15.0, *) {
+                return retroShellView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -16)
+            }
+            return retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        }()
+
+        keypadTopConstraint = retroKeypadView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 12)
+        clickWheelTopConstraint = retroClickWheelView.topAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: 16)
+        clickWheelBottomConstraint = retroClickWheelView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -16)
+        screenBottomConstraint = retroScreenView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -16)
 
         NSLayoutConstraint.activate([
-            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
             retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+            retroShellBottomConstraint!,
 
             retroSpeakerView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: 12),
             retroSpeakerView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
@@ -398,16 +475,13 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             retroScreenView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 12),
             retroScreenView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -12),
 
-            retroKeypadView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 12),
+            keypadTopConstraint!,
             retroKeypadView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 16),
             retroKeypadView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -16),
-            retroKeypadView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -190),
-            retroKeypadView.heightAnchor.constraint(equalToConstant: 150),
 
-            retroClickWheelView.topAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: 16),
+            clickWheelTopConstraint!,
             retroClickWheelView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
-            retroClickWheelView.widthAnchor.constraint(equalToConstant: 140),
-            retroClickWheelView.heightAnchor.constraint(equalToConstant: 140),
+            clickWheelBottomConstraint!,
 
             retroClickWheelCenterView.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
             retroClickWheelCenterView.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
@@ -439,21 +513,32 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             retroKeypadGrid.trailingAnchor.constraint(equalTo: retroKeypadView.trailingAnchor, constant: -12),
             retroKeypadGrid.bottomAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: -6),
 
-            retroStickerView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor, constant: -16),
-            retroStickerView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: -16),
-            retroStickerView.widthAnchor.constraint(equalToConstant: 48),
-            retroStickerView.heightAnchor.constraint(equalToConstant: 36),
-
-            retroStickerStripe.leadingAnchor.constraint(equalTo: retroStickerView.leadingAnchor, constant: 6),
-            retroStickerStripe.trailingAnchor.constraint(equalTo: retroStickerView.trailingAnchor, constant: -6),
-            retroStickerStripe.centerYAnchor.constraint(equalTo: retroStickerView.centerYAnchor),
-            retroStickerStripe.heightAnchor.constraint(equalToConstant: 6),
-
-            retroStickerIcon.centerXAnchor.constraint(equalTo: retroStickerView.centerXAnchor),
-            retroStickerIcon.centerYAnchor.constraint(equalTo: retroStickerView.centerYAnchor),
-            retroStickerIcon.widthAnchor.constraint(equalToConstant: 16),
-            retroStickerIcon.heightAnchor.constraint(equalToConstant: 16),
         ])
+
+        let screenMinHeight = retroScreenView.heightAnchor.constraint(greaterThanOrEqualToConstant: 160)
+        screenMinHeight.priority = .defaultLow
+        screenMinHeight.isActive = true
+
+        let keypadPreferredHeight = retroKeypadView.heightAnchor.constraint(equalToConstant: 140)
+        keypadPreferredHeight.priority = .defaultHigh
+        keypadPreferredHeight.isActive = true
+        let keypadMaxHeight = retroKeypadView.heightAnchor.constraint(lessThanOrEqualToConstant: 150)
+        keypadMaxHeight.priority = .required
+        keypadMaxHeight.isActive = true
+        let keypadMinHeight = retroKeypadView.heightAnchor.constraint(greaterThanOrEqualToConstant: 96)
+        keypadMinHeight.priority = .defaultLow
+        keypadMinHeight.isActive = true
+
+        let wheelPreferredSize = retroClickWheelView.heightAnchor.constraint(equalToConstant: 130)
+        wheelPreferredSize.priority = .defaultHigh
+        wheelPreferredSize.isActive = true
+        let wheelMaxHeight = retroClickWheelView.heightAnchor.constraint(lessThanOrEqualToConstant: 140)
+        wheelMaxHeight.priority = .required
+        wheelMaxHeight.isActive = true
+        let wheelMinHeight = retroClickWheelView.heightAnchor.constraint(greaterThanOrEqualToConstant: 110)
+        wheelMinHeight.priority = .defaultLow
+        wheelMinHeight.isActive = true
+        retroClickWheelView.widthAnchor.constraint(equalTo: retroClickWheelView.heightAnchor).isActive = true
 
         let folderWidth = retroFolderButton.widthAnchor.constraint(greaterThanOrEqualTo: retroWordButton.widthAnchor, multiplier: 1.2)
         folderWidth.priority = .defaultHigh
@@ -644,6 +729,13 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
+        if let presented = presentedViewController as? UIAlertController {
+            presented.dismiss(animated: false) { [weak self] in
+                self?.present(alert, animated: true)
+            }
+            return
+        }
+        guard presentedViewController == nil else { return }
         present(alert, animated: true)
     }
 
@@ -866,21 +958,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroAddButton.layer.shadowOpacity = 0.25
         retroAddButton.layer.shadowOffset = CGSize(width: 0, height: 2)
         retroAddButton.layer.shadowRadius = 3
-
-        retroStickerView.backgroundColor = palette.surface
-        retroStickerView.layer.borderColor = palette.border.cgColor
-        retroStickerView.layer.borderWidth = 1.5
-        retroStickerView.layer.cornerRadius = 10
-        retroStickerView.layer.shadowColor = palette.border.cgColor
-        retroStickerView.layer.shadowOpacity = 0.2
-        retroStickerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        retroStickerView.layer.shadowRadius = 3
-
-        retroStickerStripe.backgroundColor = palette.accent
-        retroStickerStripe.layer.cornerRadius = 3
-
-        retroStickerIcon.image = UIImage(systemName: "star.fill")
-        retroStickerIcon.tintColor = palette.text
 
         themeHeader.backgroundColor = palette.surface
         themeHeader.layer.cornerRadius = 16
@@ -1136,6 +1213,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         if let observer = themeObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     private func displayedSets() -> [SavedSet] {

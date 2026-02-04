@@ -53,9 +53,9 @@ class ModeViewController: UIViewController {
         action: #selector(goToSticker)
     )
 
-    private lazy var chatButton: UIButton = makeButton(
-        title: "Study Chat",
-        action: #selector(goToChat)
+    private lazy var collabButton: UIButton = makeButton(
+        title: "コラボ",
+        action: #selector(goToCollab)
     )
 
     private func setupUI() {
@@ -77,7 +77,7 @@ class ModeViewController: UIViewController {
             tabBarButton,
             goalButton,
             stickerButton,
-            chatButton,
+            collabButton,
             settingButton
         ])
         stack.axis = .vertical
@@ -86,13 +86,17 @@ class ModeViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
+        let centerY = stack.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        centerY.priority = .defaultLow
         NSLayoutConstraint.activate([
             backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            centerY,
+            stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7)
         ])
     }
@@ -101,7 +105,12 @@ class ModeViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
         button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
-        button.heightAnchor.constraint(equalToConstant: 48).isActive = true
+        let preferredHeight = button.heightAnchor.constraint(equalToConstant: 48)
+        preferredHeight.priority = .defaultHigh
+        preferredHeight.isActive = true
+        let minHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+        minHeight.priority = .defaultLow
+        minHeight.isActive = true
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
@@ -137,15 +146,15 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
-    @objc private func goToGoal() {
-        let controller = GoalViewController()
+    @objc private func goToCollab() {
+        let controller = TurnCollabViewController()
         let nav = UINavigationController(rootViewController: controller)
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true)
     }
 
-    @objc private func goToChat() {
-        let controller = ChatViewController()
+    @objc private func goToGoal() {
+        let controller = GoalViewController()
         let nav = UINavigationController(rootViewController: controller)
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true)
@@ -163,7 +172,7 @@ class ModeViewController: UIViewController {
         ThemeManager.stylePrimaryButton(tabBarButton)
         ThemeManager.stylePrimaryButton(goalButton)
         ThemeManager.stylePrimaryButton(stickerButton)
-        ThemeManager.stylePrimaryButton(chatButton)
+        ThemeManager.stylePrimaryButton(collabButton)
         ThemeManager.styleSecondaryButton(settingButton)
     }
 

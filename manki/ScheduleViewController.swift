@@ -163,7 +163,7 @@ final class ScheduleViewController: UIViewController {
             calendarCollectionView.topAnchor.constraint(equalTo: weekStack.bottomAnchor, constant: 4),
             calendarCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             calendarCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            calendarCollectionView.heightAnchor.constraint(equalToConstant: 300),
+            calendarCollectionView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
 
             addButton.topAnchor.constraint(equalTo: calendarCollectionView.bottomAnchor, constant: 8),
             addButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -192,6 +192,13 @@ final class ScheduleViewController: UIViewController {
         ])
 
         NSLayoutConstraint.activate(constraints)
+
+        let calendarPreferredHeight = calendarCollectionView.heightAnchor.constraint(equalToConstant: 260)
+        calendarPreferredHeight.priority = .defaultHigh
+        calendarPreferredHeight.isActive = true
+        let calendarMinHeight = calendarCollectionView.heightAnchor.constraint(greaterThanOrEqualToConstant: 220)
+        calendarMinHeight.priority = .defaultLow
+        calendarMinHeight.isActive = true
 
         updateMonthLabel()
     }

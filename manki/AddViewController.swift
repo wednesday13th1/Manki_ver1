@@ -210,8 +210,17 @@ final class AddViewController: UIViewController {
             previewImageView.topAnchor.constraint(equalTo: generateImageButton.bottomAnchor, constant: 12),
             previewImageView.leadingAnchor.constraint(equalTo: generateImageButton.leadingAnchor),
             previewImageView.trailingAnchor.constraint(equalTo: generateImageButton.trailingAnchor),
-            previewImageView.heightAnchor.constraint(equalToConstant: 180),
         ])
+
+        let previewPreferredHeight = previewImageView.heightAnchor.constraint(equalToConstant: 160)
+        previewPreferredHeight.priority = .defaultHigh
+        previewPreferredHeight.isActive = true
+        let previewMaxHeight = previewImageView.heightAnchor.constraint(lessThanOrEqualToConstant: 180)
+        previewMaxHeight.priority = .required
+        previewMaxHeight.isActive = true
+        let previewMinHeight = previewImageView.heightAnchor.constraint(greaterThanOrEqualToConstant: 120)
+        previewMinHeight.priority = .defaultLow
+        previewMinHeight.isActive = true
     }
 
     private func configureImportButton() {
@@ -225,6 +234,7 @@ final class AddViewController: UIViewController {
             importButton.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
             importButton.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
             importButton.heightAnchor.constraint(equalToConstant: 44),
+            importButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
         ])
     }
 

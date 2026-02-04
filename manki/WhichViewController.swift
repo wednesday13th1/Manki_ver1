@@ -32,11 +32,6 @@ class WhichViewController: UIViewController {
         action: #selector(openRedSheet)
     )
 
-    private lazy var explainButton: UIButton = makeButton(
-        title: "アキネーター",
-        action: #selector(openExplain)
-    )
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -56,16 +51,20 @@ class WhichViewController: UIViewController {
         subtitleLabel.text = ""
         subtitleLabel.textAlignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton, redSheetButton, explainButton])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton, redSheetButton])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = 14
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
+        let centerY = stack.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        centerY.priority = .defaultLow
         NSLayoutConstraint.activate([
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            centerY,
+            stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7)
         ])
     }
@@ -74,7 +73,12 @@ class WhichViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
         button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
-        button.heightAnchor.constraint(equalToConstant: 48).isActive = true
+        let preferredHeight = button.heightAnchor.constraint(equalToConstant: 48)
+        preferredHeight.priority = .defaultHigh
+        preferredHeight.isActive = true
+        let minHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+        minHeight.priority = .defaultLow
+        minHeight.isActive = true
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
@@ -100,17 +104,6 @@ class WhichViewController: UIViewController {
         navigationController?.pushViewController(listVC, animated: true)
     }
 
-    @objc private func openExplain() {
-        let controller = ExplainViewController()
-        if let nav = navigationController {
-            nav.pushViewController(controller, animated: true)
-        } else {
-            let nav = UINavigationController(rootViewController: controller)
-            nav.modalPresentationStyle = .fullScreen
-            present(nav, animated: true)
-        }
-    }
-
     private func applyTheme() {
         let palette = ThemeManager.palette()
         ThemeManager.applyBackground(to: view)
@@ -121,7 +114,6 @@ class WhichViewController: UIViewController {
         ThemeManager.stylePrimaryButton(testButton)
         ThemeManager.styleSecondaryButton(flipButton)
         ThemeManager.styleSecondaryButton(redSheetButton)
-        ThemeManager.styleSecondaryButton(explainButton)
         updateTestMenuTheme()
     }
 
@@ -157,7 +149,12 @@ class WhichViewController: UIViewController {
 
         [startButton, resultButton, cancelButton].forEach { button in
             stack.addArrangedSubview(button)
-            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            let preferredHeight = button.heightAnchor.constraint(equalToConstant: 40)
+            preferredHeight.priority = .defaultHigh
+            preferredHeight.isActive = true
+            let minHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 34)
+            minHeight.priority = .defaultLow
+            minHeight.isActive = true
         }
 
         container.addSubview(titleLabel)

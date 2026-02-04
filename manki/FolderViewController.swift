@@ -189,10 +189,10 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         view.addSubview(retroShellView)
 
         NSLayoutConstraint.activate([
-            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
             retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+            retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
 
             retroSpeakerView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: 12),
             retroSpeakerView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
@@ -218,11 +218,9 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             retroScreenView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 12),
             retroScreenView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -12),
 
-            retroClickWheelView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 28),
+            retroClickWheelView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 16),
             retroClickWheelView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
-            retroClickWheelView.widthAnchor.constraint(equalToConstant: 140),
-            retroClickWheelView.heightAnchor.constraint(equalToConstant: 140),
-            retroClickWheelView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -32),
+            retroClickWheelView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -16),
 
             retroClickWheelCenterView.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
             retroClickWheelCenterView.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
@@ -255,6 +253,21 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             retroClickWheelSortButton.heightAnchor.constraint(equalToConstant: 32),
 
         ])
+
+        let screenMinHeight = retroScreenView.heightAnchor.constraint(greaterThanOrEqualToConstant: 200)
+        screenMinHeight.priority = .defaultLow
+        screenMinHeight.isActive = true
+
+        let wheelPreferredSize = retroClickWheelView.heightAnchor.constraint(equalToConstant: 130)
+        wheelPreferredSize.priority = .defaultHigh
+        wheelPreferredSize.isActive = true
+        let wheelMaxHeight = retroClickWheelView.heightAnchor.constraint(lessThanOrEqualToConstant: 140)
+        wheelMaxHeight.priority = .required
+        wheelMaxHeight.isActive = true
+        let wheelMinHeight = retroClickWheelView.heightAnchor.constraint(greaterThanOrEqualToConstant: 110)
+        wheelMinHeight.priority = .defaultLow
+        wheelMinHeight.isActive = true
+        retroClickWheelView.widthAnchor.constraint(equalTo: retroClickWheelView.heightAnchor).isActive = true
         retroClickWheelBackButton.addTarget(self, action: #selector(closeSelf), for: .touchUpInside)
         retroClickWheelAddButton.addTarget(self, action: #selector(addFolder), for: .touchUpInside)
         retroClickWheelSortButton.addTarget(self, action: #selector(openSortMenu), for: .touchUpInside)
