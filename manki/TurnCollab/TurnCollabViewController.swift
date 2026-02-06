@@ -9,6 +9,7 @@ final class TurnCollabViewController: UIViewController {
     private let hostButton = UIButton(type: .system)
     private let joinButton = UIButton(type: .system)
     private let startButton = UIButton(type: .system)
+    private let sharePlayInfoLabel = UILabel()
     private let peersTable = UITableView(frame: .zero, style: .insetGrouped)
     private let connectedLabel = UILabel()
     private let turnLabel = UILabel()
@@ -45,12 +46,12 @@ final class TurnCollabViewController: UIViewController {
         wordField.font = AppFont.jp(size: 14)
 
         hostButton.translatesAutoresizingMaskIntoConstraints = false
-        hostButton.setTitle("ホスト作成", for: .normal)
+        hostButton.setTitle("SharePlay開始", for: .normal)
         hostButton.titleLabel?.font = AppFont.jp(size: 15, weight: .bold)
         hostButton.addTarget(self, action: #selector(hostTapped), for: .touchUpInside)
 
         joinButton.translatesAutoresizingMaskIntoConstraints = false
-        joinButton.setTitle("参加", for: .normal)
+        joinButton.setTitle("参加待機", for: .normal)
         joinButton.titleLabel?.font = AppFont.jp(size: 15, weight: .bold)
         joinButton.addTarget(self, action: #selector(joinTapped), for: .touchUpInside)
 
@@ -62,6 +63,13 @@ final class TurnCollabViewController: UIViewController {
         peersTable.translatesAutoresizingMaskIntoConstraints = false
         peersTable.dataSource = self
         peersTable.delegate = self
+        peersTable.allowsSelection = false
+
+        sharePlayInfoLabel.translatesAutoresizingMaskIntoConstraints = false
+        sharePlayInfoLabel.numberOfLines = 0
+        sharePlayInfoLabel.font = AppFont.jp(size: 12)
+        sharePlayInfoLabel.textColor = .secondaryLabel
+        sharePlayInfoLabel.text = "SharePlay中の参加者に同期されます。ホストは「SharePlay開始」、参加者は「参加待機」を押してください。"
 
         connectedLabel.translatesAutoresizingMaskIntoConstraints = false
         connectedLabel.numberOfLines = 0
@@ -99,6 +107,7 @@ final class TurnCollabViewController: UIViewController {
 
         view.addSubview(wordField)
         view.addSubview(buttonStack)
+        view.addSubview(sharePlayInfoLabel)
         view.addSubview(peersTable)
         view.addSubview(connectedLabel)
         view.addSubview(turnLabel)
@@ -114,7 +123,11 @@ final class TurnCollabViewController: UIViewController {
             buttonStack.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             buttonStack.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
 
-            peersTable.topAnchor.constraint(equalTo: buttonStack.bottomAnchor, constant: 12),
+            sharePlayInfoLabel.topAnchor.constraint(equalTo: buttonStack.bottomAnchor, constant: 8),
+            sharePlayInfoLabel.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
+            sharePlayInfoLabel.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
+
+            peersTable.topAnchor.constraint(equalTo: sharePlayInfoLabel.bottomAnchor, constant: 8),
             peersTable.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             peersTable.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             peersTable.heightAnchor.constraint(lessThanOrEqualToConstant: 160),
@@ -147,18 +160,22 @@ final class TurnCollabViewController: UIViewController {
     }
 
     private func bindViewModel() {
-        viewModel.$availablePeers
+        viewModel.$participantLabels
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.peersTable.reloadData()
             }
             .store(in: &cancellables)
 
-        viewModel.$connectedPeers
+        viewModel.$participantLabels
             .receive(on: RunLoop.main)
-            .sink { [weak self] peers in
-                let names = peers.map { $0.displayName }.joined(separator: ", ")
-                self?.connectedLabel.text = "接続中: \(names)"
+            .sink { [weak self] labels in
+                if labels.isEmpty {
+                    self?.connectedLabel.text = "SharePlay未接続"
+                } else {
+                    let names = labels.joined(separator: ", ")
+                    self?.connectedLabel.text = "参加者: \(names)"
+                }
             }
             .store(in: &cancellables)
 
@@ -217,19 +234,13 @@ final class TurnCollabViewController: UIViewController {
 
 extension TurnCollabViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.availablePeers.count
+        return viewModel.participantLabels.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "peerCell") ?? UITableViewCell(style: .default, reuseIdentifier: "peerCell")
-        cell.textLabel?.text = viewModel.availablePeers[indexPath.row].displayName
+        cell.textLabel?.text = viewModel.participantLabels[indexPath.row]
         cell.textLabel?.font = AppFont.jp(size: 14)
         return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let peer = viewModel.availablePeers[indexPath.row]
-        viewModel.invite(peer)
     }
 }

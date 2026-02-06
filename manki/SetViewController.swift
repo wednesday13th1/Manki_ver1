@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import MultipeerConnectivity
 
 private func needsWordIDMigration(from data: Data) -> Bool {
     guard let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
@@ -80,7 +79,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var wordMenuContainer: UIView?
     private var wordMenuTitleLabel: UILabel?
     private var wordMenuButtons: [UIButton] = []
-    private let shareManager = MPCShareManager.shared
+    private let shareManager = SetSharePlayManager.shared
 
     init(folderID: String?, showsAll: Bool = false) {
         self.folderID = folderID
@@ -679,10 +678,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             showAlert(title: "共有できるセットがありません", message: "先にセットを作成してください。")
             return
         }
-        let sheet = UIAlertController(title: "共有するセット", message: nil, preferredStyle: .actionSheet)
+        let sheet = UIAlertController(title: "共有するセット",
+                                      message: "SharePlay中の参加者に送信されます。",
+                                      preferredStyle: .actionSheet)
         sets.forEach { set in
             sheet.addAction(UIAlertAction(title: set.name, style: .default) { [weak self] _ in
-                self?.shareSet(set)
+                self?.sendSetToGroup(set)
             })
         }
         sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
@@ -691,31 +692,13 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         present(sheet, animated: true)
     }
 
-    private func shareSet(_ set: SavedSet) {
-        let peers = shareManager.availablePeers()
-        guard !peers.isEmpty else {
-            showAlert(title: "近くの端末が見つかりません", message: "相手がアプリを開いているか確認してください。")
-            return
-        }
-        let sheet = UIAlertController(title: "送信先を選択", message: nil, preferredStyle: .actionSheet)
-        peers.forEach { peer in
-            sheet.addAction(UIAlertAction(title: peer.displayName, style: .default) { [weak self] _ in
-                self?.sendSet(set, to: peer)
-            })
-        }
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        sheet.popoverPresentationController?.sourceView = retroWordButton
-        sheet.popoverPresentationController?.sourceRect = retroWordButton.bounds
-        present(sheet, animated: true)
-    }
-
-    private func sendSet(_ set: SavedSet, to peer: MCPeerID) {
+    private func sendSetToGroup(_ set: SavedSet) {
         let data = buildShareData(for: set)
         guard !data.isEmpty else {
             showAlert(title: "共有エラー", message: "データの作成に失敗しました。")
             return
         }
-        shareManager.send(data, to: peer)
+        shareManager.send(data)
     }
 
     private func buildShareData(for set: SavedSet) -> Data {
@@ -745,9 +728,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     private func setupShareManager() {
-        shareManager.onReceiveData = { [weak self] data, peer in
+        shareManager.onReceiveData = { [weak self] data in
             DispatchQueue.main.async {
-                self?.handleReceivedShare(data: data, from: peer)
+                self?.handleReceivedShare(data: data)
             }
         }
         shareManager.onStatus = { [weak self] text in
@@ -763,7 +746,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
     }
 
-    private func handleReceivedShare(data: Data, from peer: MCPeerID) {
+    private func handleReceivedShare(data: Data) {
         guard let payload = try? JSONDecoder().decode(SharedWordSet.self, from: data) else {
             showAlert(title: "受信エラー", message: "データの読み込みに失敗しました。")
             return

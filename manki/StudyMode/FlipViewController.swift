@@ -7,6 +7,7 @@
 
 //
 import UIKit
+import AVFoundation
 
 class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
 
@@ -87,6 +88,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     private var emojiMap: [String: String] = [:]
     private var emojiTask: URLSessionDataTask?
     private var themeObserver: NSObjectProtocol?
+    private let speechSynthesizer = AVSpeechSynthesizer()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -126,6 +128,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         super.viewWillDisappear(animated)
         dismissTimeUpModal()
         setNavigationLocked(false)
+        speechSynthesizer.stopSpeaking(at: .immediate)
         recordFlipSessionIfNeeded()
     }
 
@@ -751,6 +754,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         applyStickerDecorations()
         loadComicImage(for: word)
         setCardSide(isFront: true, animated: false)
+        speakEnglish(word.english)
     }
 
     private func updateCardFonts(frontText: String, backText: String) {
@@ -792,6 +796,18 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             toView.isHidden = false
         }
         isFlipped = !isFront
+    }
+
+    private func speakEnglish(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if speechSynthesizer.isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+        let utterance = AVSpeechUtterance(string: trimmed)
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.5
+        speechSynthesizer.speak(utterance)
     }
 
     @objc private func flipCard() {

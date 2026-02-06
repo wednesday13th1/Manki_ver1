@@ -13,6 +13,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let previewImageView = UIImageView()
+    private let filterControl = UISegmentedControl(items: ["モノクロ", "セピア"])
     private let captureButton = UIButton(type: .system)
     private let saveButton = UIButton(type: .system)
     private let collectionButton = UIButton(type: .system)
@@ -20,8 +21,14 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     private let emojiButton = UIButton(type: .system)
     private let hintLabel = UILabel()
     private var baseStickerImage: UIImage?
+    private var originalImage: UIImage?
     private var selectedEmoji: String?
     private var pendingStickerImage: UIImage?
+    private enum FilterMode: Int {
+        case noir = 0
+        case sepia = 1
+    }
+    private var filterMode: FilterMode = .noir
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -73,6 +80,10 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         previewImageView.clipsToBounds = true
         previewImageView.layer.cornerRadius = 16
 
+        filterControl.translatesAutoresizingMaskIntoConstraints = false
+        filterControl.selectedSegmentIndex = 0
+        filterControl.addTarget(self, action: #selector(filterChanged), for: .valueChanged)
+
         captureButton.translatesAutoresizingMaskIntoConstraints = false
         captureButton.setTitle("カメラ", for: .normal)
         captureButton.titleLabel?.font = AppFont.jp(size: 16, weight: .regular)
@@ -109,6 +120,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         scrollView.addSubview(contentView)
         contentView.addSubview(hintLabel)
         contentView.addSubview(previewImageView)
+        contentView.addSubview(filterControl)
         contentView.addSubview(buttonStack)
 
         NSLayoutConstraint.activate([
@@ -132,7 +144,11 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
             previewImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             previewImageView.heightAnchor.constraint(equalTo: previewImageView.widthAnchor),
 
-            buttonStack.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: 20),
+            filterControl.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: 12),
+            filterControl.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
+            filterControl.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
+
+            buttonStack.topAnchor.constraint(equalTo: filterControl.bottomAnchor, constant: 16),
             buttonStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             buttonStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             buttonStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
@@ -140,24 +156,41 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     }
 
     @objc private func captureTapped() {
+        let sheet = UIAlertController(title: "画像を選択", message: nil, preferredStyle: .actionSheet)
+
         #if targetEnvironment(simulator)
-        presentPhotoPicker()
-        return
+        sheet.addAction(UIAlertAction(title: "フォトライブラリ", style: .default) { [weak self] _ in
+            self?.presentPhotoPicker()
+        })
         #else
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            let picker = UIImagePickerController()
-            picker.sourceType = .camera
-            picker.allowsEditing = true
-            picker.delegate = self
-            present(picker, animated: true)
-            return
+            sheet.addAction(UIAlertAction(title: "カメラ", style: .default) { [weak self] _ in
+                self?.presentCamera()
+            })
         }
-
-        presentPhotoPicker()
-        return
+        sheet.addAction(UIAlertAction(title: "フォトライブラリ", style: .default) { [weak self] _ in
+            self?.presentPhotoPicker()
+        })
         #endif
 
-        showAlert(title: "写真が選べません", message: "この端末ではカメラも写真ライブラリも利用できません。")
+        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = captureButton
+            popover.sourceRect = captureButton.bounds
+        }
+        present(sheet, animated: true)
+    }
+
+    private func presentCamera() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            presentPhotoPicker()
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.allowsEditing = true
+        picker.delegate = self
+        present(picker, animated: true)
     }
 
     @objc private func saveTapped() {
@@ -190,7 +223,8 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         let drawVC = StiDrawViewController()
         drawVC.onSave = { [weak self] image in
             guard let self else { return }
-            baseStickerImage = makeStickerImage(from: image)
+            originalImage = image
+            baseStickerImage = makeStickerImage(from: applyFilterIfNeeded(to: image))
             selectedEmoji = nil
             updatePreview()
         }
@@ -222,7 +256,8 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
                                didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         let pickedImage = (info[.editedImage] ?? info[.originalImage]) as? UIImage
         if let pickedImage {
-            baseStickerImage = makeStickerImage(from: pickedImage)
+            originalImage = pickedImage
+            baseStickerImage = makeStickerImage(from: applyFilterIfNeeded(to: pickedImage))
             selectedEmoji = nil
             updatePreview()
         } else {
@@ -254,7 +289,9 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
             DispatchQueue.main.async {
                 if let image = object as? UIImage {
-                    self?.baseStickerImage = self?.makeStickerImage(from: image)
+                    self?.originalImage = image
+                    let filtered = self?.applyFilterIfNeeded(to: image) ?? image
+                    self?.baseStickerImage = self?.makeStickerImage(from: filtered)
                     self?.selectedEmoji = nil
                     self?.updatePreview()
                 } else {
@@ -282,20 +319,50 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
 
     private func updatePreview() {
         let updatedImage: UIImage?
-        if let baseStickerImage {
+        if let originalImage {
+            let filtered = applyFilterIfNeeded(to: originalImage)
+            let base = makeStickerImage(from: filtered)
             if let emoji = selectedEmoji {
-                updatedImage = applyEmoji(emoji, to: baseStickerImage)
+                updatedImage = applyEmoji(emoji, to: base)
             } else {
-                updatedImage = baseStickerImage
+                updatedImage = base
             }
         } else if let emoji = selectedEmoji {
             updatedImage = makeEmojiSticker(emoji)
         } else {
             updatedImage = nil
         }
+        baseStickerImage = updatedImage
         pendingStickerImage = updatedImage
         previewImageView.image = updatedImage
         saveButton.isEnabled = (updatedImage != nil)
+    }
+
+    @objc private func filterChanged() {
+        filterMode = FilterMode(rawValue: filterControl.selectedSegmentIndex) ?? .none
+        updatePreview()
+    }
+
+    private func applyFilterIfNeeded(to image: UIImage) -> UIImage {
+        switch filterMode {
+        case .noir:
+            return applyFilter(name: "CIPhotoEffectNoir", to: image)
+        case .sepia:
+            return applyFilter(name: "CISepiaTone", to: image, intensity: 0.85)
+        }
+    }
+
+    private func applyFilter(name: String, to image: UIImage, intensity: CGFloat? = nil) -> UIImage {
+        guard let ciImage = CIImage(image: image) else { return image }
+        guard let filter = CIFilter(name: name) else { return image }
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        if let intensity {
+            filter.setValue(intensity, forKey: kCIInputIntensityKey)
+        }
+        guard let output = filter.outputImage else { return image }
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(output, from: output.extent) else { return image }
+        return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
     }
 
     private func applyEmoji(_ emoji: String, to image: UIImage) -> UIImage {

@@ -1,18 +1,17 @@
 import Foundation
-import MultipeerConnectivity
+import UIKit
+import GroupActivities
 import Combine
 
 @MainActor
 final class TurnRoomViewModel: ObservableObject {
     @Published var roomState: TurnRoomState = .idle
     @Published var lobbyPlayers: [TurnPlayer] = []
-    @Published var availablePeers: [MCPeerID] = []
-    @Published var connectedPeers: [MCPeerID] = []
+    @Published var participantLabels: [String] = []
     @Published var currentTurn: TurnStart?
     @Published var replayItems: [TurnReplayItem] = []
     @Published var statusText: String = ""
 
-    private let peerManager: TurnPeerManager
     private let selfID: String
     private var sessionID: String = UUID().uuidString
     private var isHost: Bool = false
@@ -21,20 +20,21 @@ final class TurnRoomViewModel: ObservableObject {
     private var seenMessageIDs: Set<String> = []
     private var turnTimerTask: Task<Void, Never>?
 
+    private var groupSession: GroupSession<TurnCollabActivity>?
+    private var messenger: GroupSessionMessenger?
+    private var sessionTask: Task<Void, Never>?
+    private var receiveTask: Task<Void, Never>?
+    private var stateCancellable: AnyCancellable?
+    private var participantsCancellable: AnyCancellable?
+
     init(displayName: String = UIDevice.current.name) {
-        self.peerManager = TurnPeerManager(displayName: displayName)
-        self.selfID = peerManager.peerID.displayName
-        self.peerManager.shouldAcceptInvitation = { [weak self] _ in
-            guard let self else { return false }
-            return self.roomState == .lobby || self.roomState == .idle
-        }
-        peerManager.delegate = self
+        self.selfID = displayName
+        startListeningForSessionsIfNeeded()
     }
 
     func hostRoom(word: String, turnDurationSec: Int = 60) {
         isHost = true
         sessionID = UUID().uuidString
-        peerManager.startHosting()
         let host = TurnPlayer(id: selfID, name: selfID, isHost: true)
         lobbyPlayers = [host]
         roomContext = TurnRoomContext(
@@ -46,18 +46,18 @@ final class TurnRoomViewModel: ObservableObject {
         )
         hostController = HostTurnController(room: roomContext!)
         roomState = .lobby
-        statusText = "ホストとして待機中"
+        statusText = "SharePlay開始中"
+
+        Task { [weak self] in
+            await self?.activateSharePlayIfNeeded()
+        }
     }
 
     func joinRoom() {
         isHost = false
-        peerManager.startBrowsing()
         roomState = .lobby
-        statusText = "近くのホストを検索中"
-    }
-
-    func invite(_ peer: MCPeerID) {
-        peerManager.invite(peer)
+        statusText = "SharePlay参加待ち"
+        startListeningForSessionsIfNeeded()
     }
 
     func startGame() {
@@ -142,18 +142,84 @@ final class TurnRoomViewModel: ObservableObject {
     }
 
     private func broadcast<T: Codable>(_ payload: T, type: TurnMessageType) async {
-        guard !peerManager.session.connectedPeers.isEmpty else { return }
+        guard let messenger else {
+            statusText = "SharePlay未接続"
+            return
+        }
         do {
             let data = try TurnMessageEnvelope.encode(type: type, sessionID: sessionID, senderID: selfID, payload: payload)
-            try peerManager.send(data, to: peerManager.session.connectedPeers)
+            try await messenger.send(data)
         } catch {
             statusText = "送信エラー"
         }
     }
-}
 
-extension TurnRoomViewModel: TurnPeerManagerDelegate {
-    func peerManager(_ manager: TurnPeerManager, didReceive data: Data, from peer: MCPeerID) {
+    private func startListeningForSessionsIfNeeded() {
+        guard sessionTask == nil else { return }
+        sessionTask = Task { [weak self] in
+            for await session in TurnCollabActivity.sessions() {
+                await self?.configureSession(session)
+            }
+        }
+    }
+
+    private func configureSession(_ session: GroupSession<TurnCollabActivity>) {
+        groupSession = session
+        messenger = GroupSessionMessenger(session: session)
+        seenMessageIDs.removeAll()
+
+        stateCancellable = session.$state
+            .sink { [weak self] state in
+                guard let self else { return }
+                if state == .invalidated {
+                    self.resetSession()
+                }
+            }
+
+        participantsCancellable = session.$activeParticipants
+            .sink { [weak self] participants in
+                self?.updateParticipants(participants)
+            }
+
+        receiveTask?.cancel()
+        receiveTask = Task { [weak self] in
+            guard let self, let messenger = self.messenger else { return }
+            for await (data, _) in messenger.messages(of: Data.self) {
+                await self.handleIncoming(data)
+            }
+        }
+
+        session.join()
+        statusText = "SharePlay参加"
+    }
+
+    private func resetSession() {
+        groupSession = nil
+        messenger = nil
+        participantsCancellable = nil
+        stateCancellable = nil
+        participantLabels = []
+        statusText = "SharePlay終了"
+        roomState = .idle
+        turnTimerTask?.cancel()
+    }
+
+    private func updateParticipants(_ participants: Set<GroupSession.Participant>) {
+        var labels: [String] = []
+        if messenger != nil {
+            labels.append("自分")
+        }
+        let others = Array(participants)
+        if !others.isEmpty {
+            let extra = others.enumerated().map { index, _ in
+                "参加者 \(index + 1)"
+            }
+            labels.append(contentsOf: extra)
+        }
+        participantLabels = labels
+    }
+
+    private func handleIncoming(_ data: Data) async {
         do {
             let envelope = try TurnMessageEnvelope.decode(data)
             guard !seenMessageIDs.contains(envelope.messageID) else { return }
@@ -189,35 +255,23 @@ extension TurnRoomViewModel: TurnPeerManagerDelegate {
         }
     }
 
-    func peerManager(_ manager: TurnPeerManager, didChangeConnectedPeers peers: [MCPeerID]) {
-        connectedPeers = peers
-        if isHost {
-            let host = TurnPlayer(id: selfID, name: selfID, isHost: true)
-            let others = peers.map { TurnPlayer(id: $0.displayName, name: $0.displayName, isHost: false) }
-            lobbyPlayers = [host] + others
-            if var context = roomContext {
-                context = TurnRoomContext(sessionID: context.sessionID,
-                                          hostID: context.hostID,
-                                          players: lobbyPlayers,
-                                          word: context.word,
-                                          turnDurationSec: context.turnDurationSec)
-                roomContext = context
-                hostController = HostTurnController(room: context)
+    private func activateSharePlayIfNeeded() async {
+        guard groupSession == nil else { return }
+        let activity = TurnCollabActivity()
+        let activation = await activity.prepareForActivation()
+        switch activation {
+        case .activationPreferred:
+            do {
+                try await activity.activate()
+            } catch {
+                statusText = "SharePlay開始エラー"
             }
-            if roomState == .lobby, let context = roomContext {
-                Task {
-                    let lobby = TurnLobbyState(sessionID: context.sessionID,
-                                               players: lobbyPlayers,
-                                               word: context.word,
-                                               turnDurationSec: context.turnDurationSec,
-                                               totalTurns: lobbyPlayers.count)
-                    await broadcast(lobby, type: .lobbyState)
-                }
-            }
+        case .activationDisabled:
+            statusText = "SharePlayを開始できません"
+        case .cancelled:
+            statusText = "SharePlayキャンセル"
+        @unknown default:
+            statusText = "SharePlay不明な状態"
         }
-    }
-
-    func peerManager(_ manager: TurnPeerManager, didFind peers: [MCPeerID]) {
-        availablePeers = peers
     }
 }
