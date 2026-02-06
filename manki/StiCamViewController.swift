@@ -354,7 +354,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     }
 
     @objc private func filterChanged() {
-        filterMode = FilterMode(rawValue: filterControl.selectedSegmentIndex) ?? .none
+        filterMode = FilterMode(rawValue: filterControl.selectedSegmentIndex) ?? .noir
         updatePreview()
     }
 

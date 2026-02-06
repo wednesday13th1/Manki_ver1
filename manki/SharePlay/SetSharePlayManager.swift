@@ -46,7 +46,7 @@ final class SetSharePlayManager {
         guard sessionTask == nil else { return }
         sessionTask = Task { [weak self] in
             for await session in SetShareActivity.sessions() {
-                await self?.configureSession(session)
+                self?.configureSession(session)
             }
         }
     }
@@ -58,7 +58,7 @@ final class SetSharePlayManager {
         stateCancellable = session.$state
             .sink { [weak self] state in
                 guard let self else { return }
-                if state == .invalidated {
+                if case .invalidated = state {
                     self.onStatus?("SharePlay終了")
                     self.groupSession = nil
                     self.messenger = nil
@@ -88,7 +88,7 @@ final class SetSharePlayManager {
         switch activation {
         case .activationPreferred:
             do {
-                try await activity.activate()
+                _ = try await activity.activate()
                 onStatus?("SharePlay開始")
             } catch {
                 onError?("SharePlay開始エラー: \(error.localizedDescription)")

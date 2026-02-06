@@ -61,8 +61,8 @@ final class ImportRowCell: UITableViewCell {
 
             meaningLabel.leadingAnchor.constraint(equalTo: divider.trailingAnchor, constant: 8),
             meaningLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            meaningLabel.topAnchor.constraint(equalTo: termLabel.topAnchor),
-            meaningLabel.bottomAnchor.constraint(equalTo: termLabel.bottomAnchor)
+            meaningLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            meaningLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
     }
 

@@ -27,8 +27,8 @@ final class TurnRoomViewModel: ObservableObject {
     private var stateCancellable: AnyCancellable?
     private var participantsCancellable: AnyCancellable?
 
-    init(displayName: String = UIDevice.current.name) {
-        self.selfID = displayName
+    init(displayName: String? = nil) {
+        self.selfID = displayName ?? UIDevice.current.name
         startListeningForSessionsIfNeeded()
     }
 
@@ -158,7 +158,7 @@ final class TurnRoomViewModel: ObservableObject {
         guard sessionTask == nil else { return }
         sessionTask = Task { [weak self] in
             for await session in TurnCollabActivity.sessions() {
-                await self?.configureSession(session)
+                self?.configureSession(session)
             }
         }
     }
@@ -171,7 +171,7 @@ final class TurnRoomViewModel: ObservableObject {
         stateCancellable = session.$state
             .sink { [weak self] state in
                 guard let self else { return }
-                if state == .invalidated {
+                if case .invalidated = state {
                     self.resetSession()
                 }
             }
@@ -204,7 +204,7 @@ final class TurnRoomViewModel: ObservableObject {
         turnTimerTask?.cancel()
     }
 
-    private func updateParticipants(_ participants: Set<GroupSession.Participant>) {
+    private func updateParticipants<P: Hashable>(_ participants: Set<P>) {
         var labels: [String] = []
         if messenger != nil {
             labels.append("自分")
@@ -262,7 +262,7 @@ final class TurnRoomViewModel: ObservableObject {
         switch activation {
         case .activationPreferred:
             do {
-                try await activity.activate()
+                _ = try await activity.activate()
             } catch {
                 statusText = "SharePlay開始エラー"
             }

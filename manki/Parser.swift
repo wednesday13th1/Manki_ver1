@@ -140,7 +140,7 @@ struct ImportParser {
 
     private static func isJapaneseLike(_ text: String) -> Bool {
         // ひらがな/カタカナ/漢字を含むか
-        return text.range(of: "[\u3040-\u30ff\u4e00-\u9faf]", options: .regularExpression) != nil
+        return text.range(of: "[\\u{3040}-\\u{30FF}\\u{4E00}-\\u{9FAF}]", options: .regularExpression) != nil
     }
 
     private static func isHeaderLike(_ text: String) -> Bool {
@@ -150,10 +150,10 @@ struct ImportParser {
         if headerWords.contains(where: { upper.hasPrefix($0) }) {
             return true
         }
-        if text.range(of: "^\d+$", options: .regularExpression) != nil {
+        if text.range(of: "^\\d+$", options: .regularExpression) != nil {
             return true
         }
-        if text.range(of: "^\d+\s*/\s*\d+$", options: .regularExpression) != nil {
+        if text.range(of: "^\\d+\\s*/\\s*\\d+$", options: .regularExpression) != nil {
             return true
         }
         return false
