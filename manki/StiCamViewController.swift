@@ -24,6 +24,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     private var originalImage: UIImage?
     private var selectedEmoji: String?
     private var pendingStickerImage: UIImage?
+    private var themeObserver: NSObjectProtocol?
     private enum FilterMode: Int {
         case noir = 0
         case sepia = 1
@@ -40,6 +41,20 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         configureNavigation()
         configureTitleFont()
         configureUI()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     private func configureNavigation() {
@@ -427,5 +442,24 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+
+        hintLabel.textColor = palette.text
+        previewImageView.backgroundColor = palette.surfaceAlt
+
+        ThemeManager.stylePrimaryButton(captureButton)
+        ThemeManager.styleSecondaryButton(drawButton)
+        ThemeManager.styleSecondaryButton(emojiButton)
+        ThemeManager.stylePrimaryButton(saveButton)
+        ThemeManager.styleSecondaryButton(collectionButton)
+
+        filterControl.selectedSegmentTintColor = palette.accent
+        filterControl.setTitleTextAttributes([.foregroundColor: palette.text], for: .selected)
+        filterControl.setTitleTextAttributes([.foregroundColor: palette.mutedText], for: .normal)
     }
 }

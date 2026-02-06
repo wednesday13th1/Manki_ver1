@@ -6,14 +6,16 @@
 //
 
 import UIKit
+import PhotosUI
 
-final class AddViewController: UIViewController {
+final class AddViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
 
     @IBOutlet private var englishTextField: UITextField!
     @IBOutlet private var japaneseTextField: UITextField!
 
     private let generateImageButton = UIButton(type: .system)
     private let importButton = UIButton(type: .system)
+    private let ocrImportButton = UIButton(type: .system)
     private let previewImageView = UIImageView()
 
     private struct AIWord: Codable {
@@ -37,6 +39,7 @@ final class AddViewController: UIViewController {
     private var importOverlay: UIControl?
     private var importContainer: UIView?
     private var importTextView: UITextView?
+    private var themeObserver: NSObjectProtocol?
 
     private enum PendingImageSource {
         case generated
@@ -51,8 +54,23 @@ final class AddViewController: UIViewController {
         japaneseTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         configurePreviewImageView()
         configureImportButton()
+        configureOCRImportButton()
         applyPixelFonts()
         applyPixelNavigationFonts()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     @objc private func textFieldEdited() {
@@ -238,6 +256,21 @@ final class AddViewController: UIViewController {
         ])
     }
 
+    private func configureOCRImportButton() {
+        ocrImportButton.translatesAutoresizingMaskIntoConstraints = false
+        ocrImportButton.setTitle("カメラ/写真からインポート", for: .normal)
+        ocrImportButton.addTarget(self, action: #selector(openOCRImportChooser), for: .touchUpInside)
+        view.addSubview(ocrImportButton)
+
+        NSLayoutConstraint.activate([
+            ocrImportButton.topAnchor.constraint(equalTo: importButton.bottomAnchor, constant: 10),
+            ocrImportButton.leadingAnchor.constraint(equalTo: importButton.leadingAnchor),
+            ocrImportButton.trailingAnchor.constraint(equalTo: importButton.trailingAnchor),
+            ocrImportButton.heightAnchor.constraint(equalToConstant: 44),
+            ocrImportButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+        ])
+    }
+
     private func applyPixelFonts() {
         applyPixelFontRecursively(to: view)
     }
@@ -269,6 +302,14 @@ final class AddViewController: UIViewController {
         let barFont = AppFont.jp(size: 16)
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.font: barFont], for: .normal)
         navigationItem.rightBarButtonItem?.setTitleTextAttributes([.font: barFont], for: .highlighted)
+    }
+
+    private func applyTheme() {
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        ThemeManager.stylePrimaryButton(generateImageButton)
+        ThemeManager.styleSecondaryButton(importButton)
+        ThemeManager.styleSecondaryButton(ocrImportButton)
     }
 
     @objc private func openImportModal() {
@@ -426,6 +467,110 @@ final class AddViewController: UIViewController {
         saveSavedWords()
         dismissImportModal()
         showAlert(title: "インポート完了", message: "追加 \(added)件 / 上書き \(updated)件")
+    }
+
+    @objc private func openOCRImportChooser() {
+        let sheet = UIAlertController(title: "インポート方法", message: nil, preferredStyle: .actionSheet)
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            sheet.addAction(UIAlertAction(title: "カメラで撮影", style: .default) { [weak self] _ in
+                self?.presentCameraForOCR()
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "写真を選ぶ", style: .default) { [weak self] _ in
+            self?.presentPhotoPickerForOCR()
+        })
+        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = ocrImportButton
+            popover.sourceRect = ocrImportButton.bounds
+        }
+        present(sheet, animated: true)
+    }
+
+    private func presentCameraForOCR() {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.allowsEditing = true
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    private func presentPhotoPickerForOCR() {
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.selectionLimit = 1
+        configuration.filter = .images
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    private func pushOCRProcessing(with image: UIImage) {
+        let ocrVC = OCRProcessingViewController(image: image)
+        ocrVC.onConfirmRows = { [weak self] rows in
+            self?.handleImportedRows(rows)
+        }
+        navigationController?.pushViewController(ocrVC, animated: true)
+    }
+
+    private func handleImportedRows(_ rows: [ImportRow]) {
+        let sheet = UIAlertController(title: "重複の扱い",
+                                      message: "同じ英単語が既にある場合の処理を選んでください。",
+                                      preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "上書き", style: .default) { [weak self] _ in
+            self?.saveImportedRows(rows, policy: .overwrite)
+        })
+        sheet.addAction(UIAlertAction(title: "スキップ", style: .default) { [weak self] _ in
+            self?.saveImportedRows(rows, policy: .skip)
+        })
+        sheet.addAction(UIAlertAction(title: "両方残す", style: .default) { [weak self] _ in
+            self?.saveImportedRows(rows, policy: .keepBoth)
+        })
+        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = ocrImportButton
+            popover.sourceRect = ocrImportButton.bounds
+        }
+        present(sheet, animated: true)
+    }
+
+    private func saveImportedRows(_ rows: [ImportRow], policy: DuplicatePolicy) {
+        let storage = JsonVocabStorage()
+        let result = ImportSaver.save(rows: rows, storage: storage, duplicatePolicy: policy)
+        savedWords = storage.loadAll()
+        showAlert(title: "保存完了", message: "追加 \(result.added)件 / スキップ \(result.skipped)件")
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        let picked = (info[.editedImage] ?? info[.originalImage]) as? UIImage
+        picker.dismiss(animated: true)
+        guard let picked else {
+            showAlert(title: "取得エラー", message: "画像を取得できませんでした。")
+            return
+        }
+        pushOCRProcessing(with: picked)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let provider = results.first?.itemProvider else { return }
+        guard provider.canLoadObject(ofClass: UIImage.self) else {
+            showAlert(title: "取得エラー", message: "画像を読み込めませんでした。")
+            return
+        }
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+            DispatchQueue.main.async {
+                if let image = object as? UIImage {
+                    self?.pushOCRProcessing(with: image)
+                } else {
+                    self?.showAlert(title: "取得エラー", message: error?.localizedDescription ?? "画像を取得できませんでした。")
+                }
+            }
+        }
     }
 
     private func parseImportText(_ raw: String) -> [(String, String)] {

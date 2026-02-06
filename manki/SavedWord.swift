@@ -11,6 +11,7 @@ struct SavedWord: Codable {
     let id: String
     let english: String
     let japanese: String
+    let exampleSentence: String?
     let illustrationScenario: String?
     let illustrationImageFileName: String?
     var isFavorite: Bool
@@ -20,6 +21,7 @@ struct SavedWord: Codable {
         case id
         case english
         case japanese
+        case exampleSentence
         case illustrationScenario
         case illustrationImageFileName
         case isFavorite
@@ -28,6 +30,7 @@ struct SavedWord: Codable {
 
     init(english: String,
          japanese: String,
+         exampleSentence: String? = nil,
          illustrationScenario: String?,
          illustrationImageFileName: String?,
          isFavorite: Bool = false,
@@ -36,6 +39,7 @@ struct SavedWord: Codable {
         self.id = id
         self.english = english
         self.japanese = japanese
+        self.exampleSentence = exampleSentence
         self.illustrationScenario = illustrationScenario
         self.illustrationImageFileName = illustrationImageFileName
         self.isFavorite = isFavorite
@@ -46,6 +50,7 @@ struct SavedWord: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         english = try container.decode(String.self, forKey: .english)
         japanese = try container.decode(String.self, forKey: .japanese)
+        exampleSentence = try container.decodeIfPresent(String.self, forKey: .exampleSentence)
         illustrationScenario = try container.decodeIfPresent(String.self, forKey: .illustrationScenario)
         illustrationImageFileName = try container.decodeIfPresent(String.self, forKey: .illustrationImageFileName)
         id = (try? container.decode(String.self, forKey: .id)) ?? UUID().uuidString
@@ -58,6 +63,7 @@ struct SavedWord: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(english, forKey: .english)
         try container.encode(japanese, forKey: .japanese)
+        try container.encodeIfPresent(exampleSentence, forKey: .exampleSentence)
         try container.encodeIfPresent(illustrationScenario, forKey: .illustrationScenario)
         try container.encodeIfPresent(illustrationImageFileName, forKey: .illustrationImageFileName)
         try container.encode(isFavorite, forKey: .isFavorite)

@@ -17,6 +17,7 @@ class ListTableViewCell: UITableViewCell {
     
     @IBOutlet var englishLabel: UILabel!
     @IBOutlet var japaneseLabel: UILabel!
+    private let exampleLabel = UILabel()
     private let notebookBackgroundView = NotebookBackgroundView()
     private let favoriteButton = UIButton(type: .system)
     private let importanceButton = UIButton(type: .system)
@@ -40,6 +41,9 @@ class ListTableViewCell: UITableViewCell {
         englishLabel.lineBreakMode = .byWordWrapping
         japaneseLabel.numberOfLines = 0
         japaneseLabel.lineBreakMode = .byWordWrapping
+        exampleLabel.numberOfLines = 0
+        exampleLabel.lineBreakMode = .byWordWrapping
+        exampleLabel.textColor = .secondaryLabel
         englishLabel.isUserInteractionEnabled = true
         japaneseLabel.isUserInteractionEnabled = true
         let labelConstraints = contentView.constraints.filter { constraint in
@@ -59,6 +63,7 @@ class ListTableViewCell: UITableViewCell {
 
         englishLabel.translatesAutoresizingMaskIntoConstraints = false
         japaneseLabel.translatesAutoresizingMaskIntoConstraints = false
+        exampleLabel.translatesAutoresizingMaskIntoConstraints = false
         favoriteButton.translatesAutoresizingMaskIntoConstraints = false
         importanceButton.translatesAutoresizingMaskIntoConstraints = false
         notebookBackgroundView.translatesAutoresizingMaskIntoConstraints = false
@@ -77,7 +82,13 @@ class ListTableViewCell: UITableViewCell {
             importanceButton.titleLabel?.font = AppFont.en(size: currentSize)
         }
 
-        let rowStack = UIStackView(arrangedSubviews: [englishLabel, japaneseLabel, favoriteButton, importanceButton])
+        let textStack = UIStackView(arrangedSubviews: [englishLabel, japaneseLabel, exampleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 4
+        textStack.alignment = .fill
+        textStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let rowStack = UIStackView(arrangedSubviews: [textStack, favoriteButton, importanceButton])
         rowStack.axis = .horizontal
         rowStack.spacing = 10
         rowStack.alignment = .center
@@ -87,6 +98,7 @@ class ListTableViewCell: UITableViewCell {
 
         englishLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         japaneseLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        exampleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         favoriteButton.setContentHuggingPriority(.required, for: .horizontal)
         importanceButton.setContentHuggingPriority(.required, for: .horizontal)
 
@@ -147,6 +159,10 @@ class ListTableViewCell: UITableViewCell {
         japaneseLabel.text = word.japanese
         englishLabel.font = AppFont.en(size: englishLabel.font.pointSize)
         japaneseLabel.font = AppFont.jp(size: japaneseLabel.font.pointSize)
+        exampleLabel.font = AppFont.jp(size: 12)
+        let example = word.exampleSentence?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        exampleLabel.text = example.isEmpty ? "" : "例文: \(example)"
+        exampleLabel.isHidden = example.isEmpty
         applyHiddenMode(hiddenMode, isRevealed: isRevealed)
         isFavorite = word.isFavorite
         currentLevel = max(1, min(5, word.importanceLevel))

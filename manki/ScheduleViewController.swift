@@ -14,6 +14,7 @@ final class ScheduleViewController: UIViewController {
 
     private let countdownLabel = UILabel()
     private let monthLabel = UILabel()
+    private let backButton = UIButton(type: .system)
     private let prevMonthButton = UIButton(type: .system)
     private let nextMonthButton = UIButton(type: .system)
     private let weekStack = UIStackView()
@@ -92,6 +93,11 @@ final class ScheduleViewController: UIViewController {
             view.addSubview(countdownLabel)
         }
 
+        backButton.setTitle("戻る", for: .normal)
+        backButton.addTarget(self, action: #selector(closeSelf), for: .touchUpInside)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(backButton)
+
         prevMonthButton.setTitle("＜", for: .normal)
         prevMonthButton.addTarget(self, action: #selector(showPrevMonth), for: .touchUpInside)
         prevMonthButton.translatesAutoresizingMaskIntoConstraints = false
@@ -152,6 +158,9 @@ final class ScheduleViewController: UIViewController {
         view.addSubview(emptyLabel)
 
         var constraints: [NSLayoutConstraint] = [
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+
             monthHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             monthHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             monthHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
@@ -298,6 +307,14 @@ final class ScheduleViewController: UIViewController {
         calendarCollectionView.reloadData()
     }
 
+    @objc private func closeSelf() {
+        if let nav = navigationController, nav.viewControllers.first != self {
+            nav.popViewController(animated: true)
+        } else {
+            dismiss(animated: true)
+        }
+    }
+
     private func scheduleFileURL() -> URL {
         let documents = FileManager.default.urls(for: .documentDirectory,
                                                  in: .userDomainMask).first!
@@ -341,6 +358,15 @@ final class ScheduleViewController: UIViewController {
 
         let typeSegment = UISegmentedControl(items: ["予定", "小テスト"])
         typeSegment.selectedSegmentIndex = 0
+
+        let quizTitleField = UITextField()
+        quizTitleField.borderStyle = .roundedRect
+        quizTitleField.placeholder = "小テスト名 (例: Unit 3)"
+
+        let quizRangeField = UITextField()
+        quizRangeField.borderStyle = .roundedRect
+        quizRangeField.placeholder = "範囲 (例: p.20-35)"
+
         let colorStack = UIStackView()
         colorStack.axis = .horizontal
         colorStack.alignment = .center
@@ -373,6 +399,8 @@ final class ScheduleViewController: UIViewController {
         }
 
         stack.addArrangedSubview(typeSegment)
+        stack.addArrangedSubview(quizTitleField)
+        stack.addArrangedSubview(quizRangeField)
         stack.addArrangedSubview(colorStack)
         stack.addArrangedSubview(datePicker)
         contentVC.view.addSubview(stack)
@@ -390,11 +418,15 @@ final class ScheduleViewController: UIViewController {
             let title = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let finalTitle = (title?.isEmpty ?? true) ? "予定" : title!
             let isQuiz = typeSegment.selectedSegmentIndex == 1
+            let quizTitle = quizTitleField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let quizRange = quizRangeField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let newItem = ScheduleItem(id: UUID().uuidString,
                                        title: finalTitle,
                                        dateISO: self.isoString(from: datePicker.date),
                                        isQuiz: isQuiz,
-                                       colorIndex: self.selectedColorIndex)
+                                       colorIndex: self.selectedColorIndex,
+                                       quizTitle: (quizTitle?.isEmpty ?? true) ? nil : quizTitle,
+                                       quizRange: (quizRange?.isEmpty ?? true) ? nil : quizRange)
             var updated = self.loadItems()
             updated.append(newItem)
             self.saveItems(updated)
@@ -435,7 +467,13 @@ extension ScheduleViewController: UITableViewDataSource, UITableViewDelegate {
         let item = items[indexPath.row]
         cell.textLabel?.text = item.title
         let dateText = formatDate(item.dateValue)
-        cell.detailTextLabel?.text = item.isQuiz ? "\(dateText)  小テスト" : dateText
+        if item.isQuiz {
+            let quizTitle = item.quizTitle?.isEmpty == false ? "  \(item.quizTitle!)" : ""
+            let quizRange = item.quizRange?.isEmpty == false ? "  範囲: \(item.quizRange!)" : ""
+            cell.detailTextLabel?.text = "\(dateText)  小テスト\(quizTitle)\(quizRange)"
+        } else {
+            cell.detailTextLabel?.text = dateText
+        }
         cell.selectionStyle = .none
         cell.textLabel?.font = AppFont.jp(size: 18, weight: .bold)
         cell.detailTextLabel?.font = AppFont.jp(size: 14)
@@ -529,6 +567,13 @@ private extension ScheduleViewController {
         prevMonthButton.titleLabel?.font = AppFont.en(size: 20, weight: .bold)
         nextMonthButton.titleLabel?.font = AppFont.en(size: 20, weight: .bold)
 
+        backButton.setTitleColor(palette.text, for: .normal)
+        backButton.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        backButton.layer.borderWidth = 1
+        backButton.layer.borderColor = palette.border.cgColor
+        backButton.layer.cornerRadius = 10
+        backButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
+
         ThemeManager.stylePrimaryButton(addButton)
         addButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
 
@@ -550,17 +595,27 @@ private struct ScheduleItem: Codable {
     let dateISO: String
     let isQuiz: Bool
     let colorIndex: Int
+    let quizTitle: String?
+    let quizRange: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, dateISO, isQuiz, colorIndex
+        case id, title, dateISO, isQuiz, colorIndex, quizTitle, quizRange
     }
 
-    init(id: String, title: String, dateISO: String, isQuiz: Bool, colorIndex: Int) {
+    init(id: String,
+         title: String,
+         dateISO: String,
+         isQuiz: Bool,
+         colorIndex: Int,
+         quizTitle: String? = nil,
+         quizRange: String? = nil) {
         self.id = id
         self.title = title
         self.dateISO = dateISO
         self.isQuiz = isQuiz
         self.colorIndex = colorIndex
+        self.quizTitle = quizTitle
+        self.quizRange = quizRange
     }
 
     init(from decoder: Decoder) throws {
@@ -570,6 +625,8 @@ private struct ScheduleItem: Codable {
         dateISO = try container.decode(String.self, forKey: .dateISO)
         isQuiz = try container.decode(Bool.self, forKey: .isQuiz)
         colorIndex = try container.decodeIfPresent(Int.self, forKey: .colorIndex) ?? 0
+        quizTitle = try container.decodeIfPresent(String.self, forKey: .quizTitle)
+        quizRange = try container.decodeIfPresent(String.self, forKey: .quizRange)
     }
 
     var dateValue: Date {
@@ -595,6 +652,16 @@ private extension ScheduleViewController {
 
         let typeSegment = UISegmentedControl(items: ["予定", "小テスト"])
         typeSegment.selectedSegmentIndex = item.isQuiz ? 1 : 0
+
+        let quizTitleField = UITextField()
+        quizTitleField.borderStyle = .roundedRect
+        quizTitleField.placeholder = "小テスト名 (例: Unit 3)"
+        quizTitleField.text = item.quizTitle
+
+        let quizRangeField = UITextField()
+        quizRangeField.borderStyle = .roundedRect
+        quizRangeField.placeholder = "範囲 (例: p.20-35)"
+        quizRangeField.text = item.quizRange
 
         let colorStack = UIStackView()
         colorStack.axis = .horizontal
@@ -630,6 +697,8 @@ private extension ScheduleViewController {
         }
 
         stack.addArrangedSubview(typeSegment)
+        stack.addArrangedSubview(quizTitleField)
+        stack.addArrangedSubview(quizRangeField)
         stack.addArrangedSubview(colorStack)
         stack.addArrangedSubview(datePicker)
         contentVC.view.addSubview(stack)
@@ -647,11 +716,15 @@ private extension ScheduleViewController {
             guard let self else { return }
             let title = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let finalTitle = (title?.isEmpty ?? true) ? item.title : title!
+            let quizTitle = quizTitleField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let quizRange = quizRangeField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let updatedItem = ScheduleItem(id: item.id,
                                            title: finalTitle,
                                            dateISO: self.isoString(from: datePicker.date),
                                            isQuiz: typeSegment.selectedSegmentIndex == 1,
-                                           colorIndex: self.selectedColorIndex)
+                                           colorIndex: self.selectedColorIndex,
+                                           quizTitle: (quizTitle?.isEmpty ?? true) ? nil : quizTitle,
+                                           quizRange: (quizRange?.isEmpty ?? true) ? nil : quizRange)
             var updated = self.loadItems()
             if let idx = updated.firstIndex(where: { $0.id == item.id }) {
                 updated[idx] = updatedItem
