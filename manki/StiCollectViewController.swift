@@ -117,18 +117,16 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
             return
         }
 
-        let alert = UIAlertController(title: "ステッカー",
-                                      message: "このステッカーを削除しますか？",
-                                      preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "削除", style: .destructive) { [weak self] _ in
-            self?.deleteSticker(at: indexPath)
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = collectionView
-            popover.sourceRect = collectionView.layoutAttributesForItem(at: indexPath)?.frame ?? collectionView.bounds
-        }
-        present(alert, animated: true)
+        presentUnifiedModal(
+            title: "ステッカー",
+            message: "このステッカーを削除しますか？",
+            actions: [
+                UnifiedModalAction(title: "削除", style: .destructive) { [weak self] in
+                    self?.deleteSticker(at: indexPath)
+                },
+                UnifiedModalAction(title: "キャンセル", style: .cancel)
+            ]
+        )
     }
 
     func collectionView(_ collectionView: UICollectionView,

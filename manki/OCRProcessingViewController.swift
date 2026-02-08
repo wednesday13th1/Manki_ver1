@@ -108,11 +108,15 @@ final class OCRProcessingViewController: UIViewController {
 
     private func showError(_ message: String) {
         spinner.stopAnimating()
-        let alert = UIAlertController(title: "OCRエラー", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
-        })
-        present(alert, animated: true)
+        presentUnifiedModal(
+            title: "OCRエラー",
+            message: message,
+            actions: [
+                UnifiedModalAction(title: "OK") { [weak self] in
+                    self?.navigationController?.popViewController(animated: true)
+                }
+            ]
+        )
     }
 }
 

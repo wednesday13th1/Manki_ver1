@@ -364,21 +364,26 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     }
 
     @objc private func addFolder() {
-        let alert = UIAlertController(title: "フォルダー追加", message: nil, preferredStyle: .alert)
-        alert.addTextField { field in
-            field.placeholder = "フォルダー名"
-        }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let self else { return }
-            let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            guard !name.isEmpty else { return }
-            var folders = FolderStore.loadFolders()
-            folders.append(SavedFolder(name: name))
-            FolderStore.saveFolders(folders)
-            self.reloadData()
-        })
-        present(alert, animated: true)
+        let nameField = UITextField()
+        nameField.borderStyle = .roundedRect
+        nameField.placeholder = "フォルダー名"
+        presentUnifiedModal(
+            title: "フォルダー追加",
+            message: nil,
+            contentView: nameField,
+            actions: [
+                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                UnifiedModalAction(title: "保存") { [weak self] in
+                    guard let self else { return }
+                    let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    guard !name.isEmpty else { return }
+                    var folders = FolderStore.loadFolders()
+                    folders.append(SavedFolder(name: name))
+                    FolderStore.saveFolders(folders)
+                    self.reloadData()
+                }
+            ]
+        )
     }
 
     @objc private func openWordList() {
@@ -467,24 +472,29 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     private func renameFolder(at indexPath: IndexPath) {
         let folder = displayedFolders()[indexPath.row]
-        let alert = UIAlertController(title: "名前変更", message: nil, preferredStyle: .alert)
-        alert.addTextField { field in
-            field.text = folder.name
-            field.placeholder = "フォルダー名"
-        }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let self else { return }
-            let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            guard !name.isEmpty else { return }
-            var folders = FolderStore.loadFolders()
-            if let index = folders.firstIndex(where: { $0.id == folder.id }) {
-                folders[index].name = name
-                FolderStore.saveFolders(folders)
-                self.reloadData()
-            }
-        })
-        present(alert, animated: true)
+        let nameField = UITextField()
+        nameField.borderStyle = .roundedRect
+        nameField.text = folder.name
+        nameField.placeholder = "フォルダー名"
+        presentUnifiedModal(
+            title: "名前変更",
+            message: nil,
+            contentView: nameField,
+            actions: [
+                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                UnifiedModalAction(title: "保存") { [weak self] in
+                    guard let self else { return }
+                    let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    guard !name.isEmpty else { return }
+                    var folders = FolderStore.loadFolders()
+                    if let index = folders.firstIndex(where: { $0.id == folder.id }) {
+                        folders[index].name = name
+                        FolderStore.saveFolders(folders)
+                        self.reloadData()
+                    }
+                }
+            ]
+        )
     }
 
     private func deleteFolder(at indexPath: IndexPath) {
@@ -505,20 +515,19 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     }
 
     @objc private func openSortMenu() {
-        let alert = UIAlertController(title: "並び替え", message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "作成順", style: .default) { [weak self] _ in
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "名前 A→Z", style: .default) { [weak self] _ in
-            self?.applyFilterAndReload(sortByNameAsc: true)
-        })
-        alert.addAction(UIAlertAction(title: "名前 Z→A", style: .default) { [weak self] _ in
-            self?.applyFilterAndReload(sortByNameAsc: false)
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.popoverPresentationController?.sourceView = retroClickWheelView
-        alert.popoverPresentationController?.sourceRect = retroClickWheelView.bounds
-        present(alert, animated: true)
+        let actions: [UnifiedModalAction] = [
+            UnifiedModalAction(title: "作成順") { [weak self] in
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "名前 A→Z") { [weak self] in
+                self?.applyFilterAndReload(sortByNameAsc: true)
+            },
+            UnifiedModalAction(title: "名前 Z→A") { [weak self] in
+                self?.applyFilterAndReload(sortByNameAsc: false)
+            },
+            UnifiedModalAction(title: "キャンセル", style: .cancel)
+        ]
+        presentUnifiedModal(title: "並び替え", message: nil, actions: actions)
     }
 
     private func displayedFolders() -> [SavedFolder] {

@@ -171,29 +171,23 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     }
 
     @objc private func captureTapped() {
-        let sheet = UIAlertController(title: "画像を選択", message: nil, preferredStyle: .actionSheet)
-
+        var actions: [UnifiedModalAction] = []
         #if targetEnvironment(simulator)
-        sheet.addAction(UIAlertAction(title: "フォトライブラリ", style: .default) { [weak self] _ in
+        actions.append(UnifiedModalAction(title: "フォトライブラリ") { [weak self] in
             self?.presentPhotoPicker()
         })
         #else
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            sheet.addAction(UIAlertAction(title: "カメラ", style: .default) { [weak self] _ in
+            actions.append(UnifiedModalAction(title: "カメラ") { [weak self] in
                 self?.presentCamera()
             })
         }
-        sheet.addAction(UIAlertAction(title: "フォトライブラリ", style: .default) { [weak self] _ in
+        actions.append(UnifiedModalAction(title: "フォトライブラリ") { [weak self] in
             self?.presentPhotoPicker()
         })
         #endif
-
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = captureButton
-            popover.sourceRect = captureButton.bounds
-        }
-        present(sheet, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "画像を選択", message: nil, actions: actions)
     }
 
     private func presentCamera() {
@@ -247,24 +241,29 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     }
 
     @objc private func emojiTapped() {
-        let alert = UIAlertController(title: "絵文字を追加", message: "使いたい絵文字を1つ入力してください。", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "😀"
-            textField.textAlignment = .center
-        }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "追加", style: .default) { [weak self] _ in
-            guard let self else { return }
-            let text = alert.textFields?.first?.text ?? ""
-            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let firstCharacter = trimmed.first else {
-                self.showAlert(title: "入力エラー", message: "絵文字を入力してください。")
-                return
-            }
-            self.selectedEmoji = String(firstCharacter)
-            self.updatePreview()
-        })
-        present(alert, animated: true)
+        let emojiField = UITextField()
+        emojiField.borderStyle = .roundedRect
+        emojiField.placeholder = "😀"
+        emojiField.textAlignment = .center
+        presentUnifiedModal(
+            title: "絵文字を追加",
+            message: "使いたい絵文字を1つ入力してください。",
+            contentView: emojiField,
+            actions: [
+                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                UnifiedModalAction(title: "追加") { [weak self] in
+                    guard let self else { return }
+                    let text = emojiField.text ?? ""
+                    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let firstCharacter = trimmed.first else {
+                        self.showAlert(title: "入力エラー", message: "絵文字を入力してください。")
+                        return
+                    }
+                    self.selectedEmoji = String(firstCharacter)
+                    self.updatePreview()
+                }
+            ]
+        )
     }
 
     func imagePickerController(_ picker: UIImagePickerController,
@@ -439,9 +438,9 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     }
 
     private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        presentUnifiedModal(title: title,
+                            message: message,
+                            actions: [UnifiedModalAction(title: "OK")])
     }
 
     private func applyTheme() {

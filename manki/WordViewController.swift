@@ -50,7 +50,11 @@ class WordViewController: UIViewController {
             return
         }
         guard let listVC = storyboard?.instantiateViewController(withIdentifier: "ListTableViewController") else {
-            showAlert(title: "遷移エラー", message: "一覧画面を開けませんでした。")
+            presentUnifiedModal(
+                title: "遷移エラー",
+                message: "一覧画面を開けませんでした。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
             return
         }
         navigationController?.pushViewController(listVC, animated: true)
@@ -58,16 +62,14 @@ class WordViewController: UIViewController {
 
     @objc private func openFlip() {
         guard let flipVC = storyboard?.instantiateViewController(withIdentifier: "FlipViewController") else {
-            showAlert(title: "遷移エラー", message: "フリップ画面を開けませんでした。")
+            presentUnifiedModal(
+                title: "遷移エラー",
+                message: "フリップ画面を開けませんでした。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
             return
         }
         navigationController?.pushViewController(flipVC, animated: true)
-    }
-
-    private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
     }
 
 }

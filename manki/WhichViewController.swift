@@ -145,9 +145,10 @@ class WhichViewController: UIViewController {
 
         let startButton = makeMenuButton(title: "テスト開始", action: #selector(handleTestStart))
         let resultButton = makeMenuButton(title: "結果を見る", action: #selector(handleTestResults))
+        let weakButton = makeMenuButton(title: "苦手単語", action: #selector(handleWeakWords))
         let cancelButton = makeMenuButton(title: "キャンセル", action: #selector(dismissTestMenuModal))
 
-        [startButton, resultButton, cancelButton].forEach { button in
+        [startButton, resultButton, weakButton, cancelButton].forEach { button in
             stack.addArrangedSubview(button)
             let preferredHeight = button.heightAnchor.constraint(equalToConstant: 40)
             preferredHeight.priority = .defaultHigh
@@ -187,7 +188,7 @@ class WhichViewController: UIViewController {
         testMenuOverlay = overlay
         testMenuContainer = container
         testMenuTitleLabel = titleLabel
-        testMenuButtons = [startButton, resultButton, cancelButton]
+        testMenuButtons = [startButton, resultButton, weakButton, cancelButton]
         updateTestMenuTheme()
 
         overlay.alpha = 0
@@ -227,6 +228,30 @@ class WhichViewController: UIViewController {
         navigationController?.pushViewController(controller, animated: true)
     }
 
+    @objc private func handleWeakWords() {
+        dismissTestMenuModal()
+        let weakIDs = loadWeakWordIDs()
+        guard !weakIDs.isEmpty else {
+            presentUnifiedModal(
+                title: "苦手単語",
+                message: "苦手単語がありません。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
+            return
+        }
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let listVC = storyboard.instantiateViewController(withIdentifier: "ListTableViewController")
+                as? ListTableViewController else {
+            return
+        }
+        listVC.title = "苦手単語"
+        listVC.startEditing = false
+        listVC.hideTestAndAdd = true
+        listVC.showHideButton = true
+        listVC.filterWordIDs = weakIDs
+        navigationController?.pushViewController(listVC, animated: true)
+    }
+
     private func makeMenuButton(title: String, action: Selector) -> UIButton {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -256,5 +281,76 @@ class WhichViewController: UIViewController {
             button.layer.borderColor = palette.border.cgColor
             button.setTitleColor(palette.text, for: .normal)
         }
+    }
+
+    private func resultsFileURL() -> URL {
+        let documents = FileManager.default.urls(for: .documentDirectory,
+                                                 in: .userDomainMask).first!
+        return documents.appendingPathComponent("results.json")
+    }
+
+    private func loadWeakWordIDs() -> Set<String> {
+        let url = resultsFileURL()
+        guard let data = try? Data(contentsOf: url),
+              let decoded = try? JSONDecoder().decode(WeakResultsDatabase.self, from: data) else {
+            return []
+        }
+        var weakIDs: Set<String> = []
+        for session in decoded.sessions {
+            if session.reason == "flip" || session.modeLabel == "フリップ" {
+                continue
+            }
+            for question in session.questions {
+                guard let wordId = question.wordId, !wordId.isEmpty else { continue }
+                if question.type == "flip" { continue }
+                if question.correct == false {
+                    weakIDs.insert(wordId)
+                }
+            }
+        }
+        return weakIDs
+    }
+
+}
+
+private struct WeakResultsDatabase: Codable {
+    let sessions: [WeakSessionResult]
+}
+
+private struct WeakSessionResult: Codable {
+    let reason: String?
+    let modeLabel: String?
+    let questions: [WeakSessionQuestion]
+
+    enum CodingKeys: String, CodingKey {
+        case reason
+        case modeLabel
+        case questions
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        reason = try container.decodeIfPresent(String.self, forKey: .reason)
+        modeLabel = try container.decodeIfPresent(String.self, forKey: .modeLabel)
+        questions = try container.decodeIfPresent([WeakSessionQuestion].self, forKey: .questions) ?? []
+    }
+}
+
+private struct WeakSessionQuestion: Codable {
+    let type: String?
+    let wordId: String?
+    let correct: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case type
+        case wordId
+        case correct
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        type = try container.decodeIfPresent(String.self, forKey: .type)
+        wordId = try container.decodeIfPresent(String.self, forKey: .wordId)
+        correct = try container.decodeIfPresent(Bool.self, forKey: .correct) ?? false
     }
 }

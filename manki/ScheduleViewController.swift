@@ -345,16 +345,14 @@ final class ScheduleViewController: UIViewController {
     }
 
     @objc private func addSchedule() {
-        let alert = UIAlertController(title: "スケジュール追加", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "タイトル (例: 小テスト)"
-        }
-
-        let contentVC = UIViewController()
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleField = UITextField()
+        titleField.borderStyle = .roundedRect
+        titleField.placeholder = "タイトル (例: 小テスト)"
 
         let typeSegment = UISegmentedControl(items: ["予定", "小テスト"])
         typeSegment.selectedSegmentIndex = 0
@@ -397,25 +395,18 @@ final class ScheduleViewController: UIViewController {
         if #available(iOS 13.4, *) {
             datePicker.preferredDatePickerStyle = .wheels
         }
+        datePicker.heightAnchor.constraint(equalToConstant: 120).isActive = true
 
+        stack.addArrangedSubview(titleField)
         stack.addArrangedSubview(typeSegment)
         stack.addArrangedSubview(quizTitleField)
         stack.addArrangedSubview(quizRangeField)
         stack.addArrangedSubview(colorStack)
         stack.addArrangedSubview(datePicker)
-        contentVC.view.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: contentVC.view.topAnchor, constant: 8),
-            stack.leadingAnchor.constraint(equalTo: contentVC.view.leadingAnchor, constant: 8),
-            stack.trailingAnchor.constraint(equalTo: contentVC.view.trailingAnchor, constant: -8),
-            stack.bottomAnchor.constraint(equalTo: contentVC.view.bottomAnchor, constant: -8),
-        ])
-        contentVC.preferredContentSize = CGSize(width: 250, height: 230)
-        alert.setValue(contentVC, forKey: "contentViewController")
 
-        let addAction = UIAlertAction(title: "追加", style: .default) { [weak self] _ in
+        let addAction = UnifiedModalAction(title: "追加") { [weak self] in
             guard let self else { return }
-            let title = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let title = titleField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let finalTitle = (title?.isEmpty ?? true) ? "予定" : title!
             let isQuiz = typeSegment.selectedSegmentIndex == 1
             let quizTitle = quizTitleField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -432,10 +423,11 @@ final class ScheduleViewController: UIViewController {
             self.saveItems(updated)
             self.reloadItems()
         }
-        let cancelAction = UIAlertAction(title: "キャンセル", style: .cancel)
-        alert.addAction(cancelAction)
-        alert.addAction(addAction)
-        present(alert, animated: true)
+        let cancelAction = UnifiedModalAction(title: "キャンセル", style: .cancel)
+        presentUnifiedModal(title: "スケジュール追加",
+                            message: nil,
+                            contentView: stack,
+                            actions: [cancelAction, addAction])
     }
 
     private func isoString(from date: Date) -> String {
@@ -638,17 +630,15 @@ private struct ScheduleItem: Codable {
 
 private extension ScheduleViewController {
     func presentEdit(for item: ScheduleItem) {
-        let alert = UIAlertController(title: "スケジュール編集", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = item.title
-            textField.placeholder = "タイトル"
-        }
-
-        let contentVC = UIViewController()
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleField = UITextField()
+        titleField.borderStyle = .roundedRect
+        titleField.text = item.title
+        titleField.placeholder = "タイトル"
 
         let typeSegment = UISegmentedControl(items: ["予定", "小テスト"])
         typeSegment.selectedSegmentIndex = item.isQuiz ? 1 : 0
@@ -695,26 +685,18 @@ private extension ScheduleViewController {
         if #available(iOS 13.4, *) {
             datePicker.preferredDatePickerStyle = .wheels
         }
+        datePicker.heightAnchor.constraint(equalToConstant: 120).isActive = true
 
+        stack.addArrangedSubview(titleField)
         stack.addArrangedSubview(typeSegment)
         stack.addArrangedSubview(quizTitleField)
         stack.addArrangedSubview(quizRangeField)
         stack.addArrangedSubview(colorStack)
         stack.addArrangedSubview(datePicker)
-        contentVC.view.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: contentVC.view.topAnchor, constant: 8),
-            stack.leadingAnchor.constraint(equalTo: contentVC.view.leadingAnchor, constant: 8),
-            stack.trailingAnchor.constraint(equalTo: contentVC.view.trailingAnchor, constant: -8),
-            stack.bottomAnchor.constraint(equalTo: contentVC.view.bottomAnchor, constant: -8),
-        ])
-        contentVC.preferredContentSize = CGSize(width: 250, height: 230)
-        alert.setValue(contentVC, forKey: "contentViewController")
 
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self] _ in
+        let saveAction = UnifiedModalAction(title: "保存") { [weak self] in
             guard let self else { return }
-            let title = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let title = titleField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let finalTitle = (title?.isEmpty ?? true) ? item.title : title!
             let quizTitle = quizTitleField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
             let quizRange = quizRangeField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -731,9 +713,15 @@ private extension ScheduleViewController {
                 self.saveItems(updated)
                 self.reloadItems()
             }
-        })
+        }
 
-        present(alert, animated: true)
+        presentUnifiedModal(title: "スケジュール編集",
+                            message: nil,
+                            contentView: stack,
+                            actions: [
+                                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                                saveAction
+                            ])
     }
 }
 

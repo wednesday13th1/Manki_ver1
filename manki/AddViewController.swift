@@ -190,11 +190,11 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
     }
 
     private func showAlert(title: String, message: String, onOK: (() -> Void)? = nil) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-            onOK?()
-        })
-        present(alert, animated: true)
+        presentUnifiedModal(
+            title: title,
+            message: message,
+            actions: [UnifiedModalAction(title: "OK", handler: onOK)]
+        )
     }
 
     private func configurePreviewImageView() {
@@ -470,21 +470,17 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
     }
 
     @objc private func openOCRImportChooser() {
-        let sheet = UIAlertController(title: "インポート方法", message: nil, preferredStyle: .actionSheet)
+        var actions: [UnifiedModalAction] = []
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            sheet.addAction(UIAlertAction(title: "カメラで撮影", style: .default) { [weak self] _ in
+            actions.append(UnifiedModalAction(title: "カメラで撮影") { [weak self] in
                 self?.presentCameraForOCR()
             })
         }
-        sheet.addAction(UIAlertAction(title: "写真を選ぶ", style: .default) { [weak self] _ in
+        actions.append(UnifiedModalAction(title: "写真を選ぶ") { [weak self] in
             self?.presentPhotoPickerForOCR()
         })
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = ocrImportButton
-            popover.sourceRect = ocrImportButton.bounds
-        }
-        present(sheet, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "インポート方法", message: nil, actions: actions)
     }
 
     private func presentCameraForOCR() {
@@ -513,24 +509,21 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
     }
 
     private func handleImportedRows(_ rows: [ImportRow]) {
-        let sheet = UIAlertController(title: "重複の扱い",
-                                      message: "同じ英単語が既にある場合の処理を選んでください。",
-                                      preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "上書き", style: .default) { [weak self] _ in
-            self?.saveImportedRows(rows, policy: .overwrite)
-        })
-        sheet.addAction(UIAlertAction(title: "スキップ", style: .default) { [weak self] _ in
-            self?.saveImportedRows(rows, policy: .skip)
-        })
-        sheet.addAction(UIAlertAction(title: "両方残す", style: .default) { [weak self] _ in
-            self?.saveImportedRows(rows, policy: .keepBoth)
-        })
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = ocrImportButton
-            popover.sourceRect = ocrImportButton.bounds
-        }
-        present(sheet, animated: true)
+        let actions: [UnifiedModalAction] = [
+            UnifiedModalAction(title: "上書き") { [weak self] in
+                self?.saveImportedRows(rows, policy: .overwrite)
+            },
+            UnifiedModalAction(title: "スキップ") { [weak self] in
+                self?.saveImportedRows(rows, policy: .skip)
+            },
+            UnifiedModalAction(title: "両方残す") { [weak self] in
+                self?.saveImportedRows(rows, policy: .keepBoth)
+            },
+            UnifiedModalAction(title: "キャンセル", style: .cancel)
+        ]
+        presentUnifiedModal(title: "重複の扱い",
+                            message: "同じ英単語が既にある場合の処理を選んでください。",
+                            actions: actions)
     }
 
     private func saveImportedRows(_ rows: [ImportRow], policy: DuplicatePolicy) {

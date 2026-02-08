@@ -16,6 +16,7 @@ class ListTableViewController: UITableViewController {
     var startEditing = false
     var hideTestAndAdd = false
     var showHideButton = false
+    var filterWordIDs: Set<String>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -86,6 +87,9 @@ class ListTableViewController: UITableViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         wordArray = loadSavedWords()
+        if let filterWordIDs {
+            wordArray = wordArray.filter { filterWordIDs.contains($0.id) }
+        }
         tableView.reloadData()
         if hideTestAndAdd {
             navigationItem.rightBarButtonItems = nil
@@ -167,22 +171,25 @@ class ListTableViewController: UITableViewController {
             return
         }
 
-        let alert = UIAlertController(title: "隠す項目", message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "英語を隠す", style: .default) { [weak self] _ in
-            self?.hiddenMode = .english
-            self?.revealedWordIDs.removeAll()
-            self?.updateHiddenButtonTitle()
-            self?.tableView.reloadData()
-        })
-        alert.addAction(UIAlertAction(title: "日本語を隠す", style: .default) { [weak self] _ in
-            self?.hiddenMode = .japanese
-            self?.revealedWordIDs.removeAll()
-            self?.updateHiddenButtonTitle()
-            self?.tableView.reloadData()
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel, handler: nil))
-        alert.popoverPresentationController?.barButtonItem = hideButton
-        present(alert, animated: true, completion: nil)
+        presentUnifiedModal(
+            title: "隠す項目",
+            message: nil,
+            actions: [
+                UnifiedModalAction(title: "英語を隠す") { [weak self] in
+                    self?.hiddenMode = .english
+                    self?.revealedWordIDs.removeAll()
+                    self?.updateHiddenButtonTitle()
+                    self?.tableView.reloadData()
+                },
+                UnifiedModalAction(title: "日本語を隠す") { [weak self] in
+                    self?.hiddenMode = .japanese
+                    self?.revealedWordIDs.removeAll()
+                    self?.updateHiddenButtonTitle()
+                    self?.tableView.reloadData()
+                },
+                UnifiedModalAction(title: "キャンセル", style: .cancel)
+            ]
+        )
     }
 
     @objc private func openTest() {
@@ -228,9 +235,8 @@ class ListTableViewController: UITableViewController {
     }
 
     private func presentImportancePicker(for word: SavedWord) {
-        let alert = UIAlertController(title: "重要度", message: nil, preferredStyle: .actionSheet)
-        for level in 1...5 {
-            alert.addAction(UIAlertAction(title: "Lv\(level)", style: .default) { [weak self] _ in
+        var actions: [UnifiedModalAction] = (1...5).map { level in
+            UnifiedModalAction(title: "Lv\(level)") { [weak self] in
                 self?.updateWord(id: word.id, importanceLevel: level)
                 if let index = self?.wordArray.firstIndex(where: { $0.id == word.id }) {
                     self?.wordArray[index].importanceLevel = level
@@ -239,16 +245,10 @@ class ListTableViewController: UITableViewController {
                    let cell = self?.tableView.cellForRow(at: indexPath) as? ListTableViewCell {
                     cell.updateImportance(level: level)
                 }
-            })
+            }
         }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = alert.popoverPresentationController,
-           let indexPath = indexPathForWord(id: word.id),
-           let cell = tableView.cellForRow(at: indexPath) {
-            popover.sourceView = cell
-            popover.sourceRect = cell.bounds
-        }
-        present(alert, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "重要度", message: nil, actions: actions)
     }
 
     private func indexPathForWord(id: String) -> IndexPath? {

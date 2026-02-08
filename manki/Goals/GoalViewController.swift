@@ -271,9 +271,11 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         GoalStore.setGoal(minutes: clamped, period: selectedPeriod)
         updateSaveButtonTitle()
         updateLuckyVisibility()
-        let alert = UIAlertController(title: "保存しました", message: "目標 \(clamped)分", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        presentUnifiedModal(
+            title: "保存しました",
+            message: "目標 \(clamped)分",
+            actions: [UnifiedModalAction(title: "OK")]
+        )
     }
 
     @objc private func openLucky() {

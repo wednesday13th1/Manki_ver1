@@ -678,18 +678,15 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             showAlert(title: "共有できるセットがありません", message: "先にセットを作成してください。")
             return
         }
-        let sheet = UIAlertController(title: "共有するセット",
-                                      message: "SharePlay中の参加者に送信されます。",
-                                      preferredStyle: .actionSheet)
-        sets.forEach { set in
-            sheet.addAction(UIAlertAction(title: set.name, style: .default) { [weak self] _ in
+        var actions = sets.map { set in
+            UnifiedModalAction(title: set.name) { [weak self] in
                 self?.sendSetToGroup(set)
-            })
+            }
         }
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        sheet.popoverPresentationController?.sourceView = retroWordButton
-        sheet.popoverPresentationController?.sourceRect = retroWordButton.bounds
-        present(sheet, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "共有するセット",
+                            message: "SharePlay中の参加者に送信されます。",
+                            actions: actions)
     }
 
     private func sendSetToGroup(_ set: SavedSet) {
@@ -710,16 +707,19 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        if let presented = presentedViewController as? UIAlertController {
-            presented.dismiss(animated: false) { [weak self] in
-                self?.present(alert, animated: true)
+        let presentBlock = { [weak self] in
+            self?.presentUnifiedModal(title: title,
+                                      message: message,
+                                      actions: [UnifiedModalAction(title: "OK")])
+        }
+        if let presented = presentedViewController as? UnifiedModalViewController {
+            presented.dismiss(animated: false) {
+                presentBlock()
             }
             return
         }
         guard presentedViewController == nil else { return }
-        present(alert, animated: true)
+        presentBlock()
     }
 
     private struct SharedWordSet: Codable {
@@ -1161,35 +1161,30 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     @objc private func openSortMenu() {
-        let alert = UIAlertController(title: "並び替え", message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "作成順", style: .default) { [weak self] _ in
-            self?.sortOption = .created
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "名前 A→Z", style: .default) { [weak self] _ in
-            self?.sortOption = .nameAsc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "名前 Z→A", style: .default) { [weak self] _ in
-            self?.sortOption = .nameDesc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "単語数 少ない→多い", style: .default) { [weak self] _ in
-            self?.sortOption = .countAsc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "単語数 多い→少ない", style: .default) { [weak self] _ in
-            self?.sortOption = .countDesc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let barButton = navigationItem.rightBarButtonItems?.last {
-            alert.popoverPresentationController?.barButtonItem = barButton
-        } else {
-            alert.popoverPresentationController?.sourceView = retroKeypadView
-            alert.popoverPresentationController?.sourceRect = retroKeypadView.bounds
-        }
-        present(alert, animated: true)
+        let actions: [UnifiedModalAction] = [
+            UnifiedModalAction(title: "作成順") { [weak self] in
+                self?.sortOption = .created
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "名前 A→Z") { [weak self] in
+                self?.sortOption = .nameAsc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "名前 Z→A") { [weak self] in
+                self?.sortOption = .nameDesc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "単語数 少ない→多い") { [weak self] in
+                self?.sortOption = .countAsc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "単語数 多い→少ない") { [weak self] in
+                self?.sortOption = .countDesc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "キャンセル", style: .cancel)
+        ]
+        presentUnifiedModal(title: "並び替え", message: nil, actions: actions)
     }
 
     deinit {
@@ -1227,23 +1222,28 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         let location = gesture.location(in: tableView)
         guard let indexPath = tableView.indexPathForRow(at: location) else { return }
         let set = displayedSets()[indexPath.row]
-        let alert = UIAlertController(title: "名前変更", message: nil, preferredStyle: .alert)
-        alert.addTextField { field in
-            field.text = set.name
-            field.placeholder = "セット名"
-        }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let self else { return }
-            let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            guard !name.isEmpty else { return }
-            if let index = self.sets.firstIndex(where: { $0.id == set.id }) {
-                self.sets[index].name = name
-                SetStore.saveSets(self.sets)
-                self.applyFilterAndReload()
-            }
-        })
-        present(alert, animated: true)
+        let nameField = UITextField()
+        nameField.borderStyle = .roundedRect
+        nameField.text = set.name
+        nameField.placeholder = "セット名"
+        presentUnifiedModal(
+            title: "名前変更",
+            message: nil,
+            contentView: nameField,
+            actions: [
+                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                UnifiedModalAction(title: "保存") { [weak self] in
+                    guard let self else { return }
+                    let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    guard !name.isEmpty else { return }
+                    if let index = self.sets.firstIndex(where: { $0.id == set.id }) {
+                        self.sets[index].name = name
+                        SetStore.saveSets(self.sets)
+                        self.applyFilterAndReload()
+                    }
+                }
+            ]
+        )
     }
 
     private func applyFilterAndReload() {
@@ -1272,19 +1272,18 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private func showMoveSetSheet(for indexPath: IndexPath) {
         let set = displayedSets()[indexPath.row]
         let folders = FolderStore.loadFolders()
-        let sheet = UIAlertController(title: "フォルダー移動", message: nil, preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "未分類", style: .default) { _ in
-            self.moveSet(setID: set.id, to: nil)
+        var actions: [UnifiedModalAction] = [
+            UnifiedModalAction(title: "未分類") { [weak self] in
+                self?.moveSet(setID: set.id, to: nil)
+            }
+        ]
+        actions.append(contentsOf: folders.map { folder in
+            UnifiedModalAction(title: folder.name) { [weak self] in
+                self?.moveSet(setID: set.id, to: folder.id)
+            }
         })
-        folders.forEach { folder in
-            sheet.addAction(UIAlertAction(title: folder.name, style: .default) { _ in
-                self.moveSet(setID: set.id, to: folder.id)
-            })
-        }
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        sheet.popoverPresentationController?.sourceView = tableView
-        sheet.popoverPresentationController?.sourceRect = tableView.rectForRow(at: indexPath)
-        present(sheet, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "フォルダー移動", message: nil, actions: actions)
     }
 
     private func moveSet(setID: String, to folderID: String?) {
@@ -1588,52 +1587,57 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     }
 
     @objc private func renameSet() {
-        let alert = UIAlertController(title: "名前変更", message: nil, preferredStyle: .alert)
-        alert.addTextField { [weak self] field in
-            field.text = self?.setName
-            field.placeholder = "セット名"
-        }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let self else { return }
-            let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            guard !name.isEmpty else { return }
-            var sets = SetStore.loadSets()
-            if let index = sets.firstIndex(where: { $0.id == self.setID }) {
-                sets[index].name = name
-                SetStore.saveSets(sets)
-                self.setName = name
-                self.title = name
-            }
-        })
-        present(alert, animated: true)
+        let nameField = UITextField()
+        nameField.borderStyle = .roundedRect
+        nameField.text = setName
+        nameField.placeholder = "セット名"
+        presentUnifiedModal(
+            title: "名前変更",
+            message: nil,
+            contentView: nameField,
+            actions: [
+                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                UnifiedModalAction(title: "保存") { [weak self] in
+                    guard let self else { return }
+                    let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    guard !name.isEmpty else { return }
+                    var sets = SetStore.loadSets()
+                    if let index = sets.firstIndex(where: { $0.id == self.setID }) {
+                        sets[index].name = name
+                        SetStore.saveSets(sets)
+                        self.setName = name
+                        self.title = name
+                    }
+                }
+            ]
+        )
     }
 
     @objc private func openSortMenu() {
-        let alert = UIAlertController(title: "並び替え", message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "セット順", style: .default) { [weak self] _ in
-            self?.sortOption = .setOrder
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "英語 A→Z", style: .default) { [weak self] _ in
-            self?.sortOption = .englishAsc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "英語 Z→A", style: .default) { [weak self] _ in
-            self?.sortOption = .englishDesc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "日本語 あ→ん", style: .default) { [weak self] _ in
-            self?.sortOption = .japaneseAsc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "日本語 ん→あ", style: .default) { [weak self] _ in
-            self?.sortOption = .japaneseDesc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.first(where: { $0.title == "並び替え" })
-        present(alert, animated: true)
+        let actions: [UnifiedModalAction] = [
+            UnifiedModalAction(title: "セット順") { [weak self] in
+                self?.sortOption = .setOrder
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "英語 A→Z") { [weak self] in
+                self?.sortOption = .englishAsc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "英語 Z→A") { [weak self] in
+                self?.sortOption = .englishDesc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "日本語 あ→ん") { [weak self] in
+                self?.sortOption = .japaneseAsc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "日本語 ん→あ") { [weak self] in
+                self?.sortOption = .japaneseDesc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "キャンセル", style: .cancel)
+        ]
+        presentUnifiedModal(title: "並び替え", message: nil, actions: actions)
     }
 
     private func updateHiddenButtonTitle() {
@@ -1650,22 +1654,25 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
             return
         }
 
-        let alert = UIAlertController(title: "隠す項目", message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "英語を隠す", style: .default) { [weak self] _ in
-            self?.hiddenMode = .english
-            self?.revealedWordIDs.removeAll()
-            self?.updateHiddenButtonTitle()
-            self?.tableView.reloadData()
-        })
-        alert.addAction(UIAlertAction(title: "日本語を隠す", style: .default) { [weak self] _ in
-            self?.hiddenMode = .japanese
-            self?.revealedWordIDs.removeAll()
-            self?.updateHiddenButtonTitle()
-            self?.tableView.reloadData()
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.popoverPresentationController?.barButtonItem = hideButton
-        present(alert, animated: true)
+        presentUnifiedModal(
+            title: "隠す項目",
+            message: nil,
+            actions: [
+                UnifiedModalAction(title: "英語を隠す") { [weak self] in
+                    self?.hiddenMode = .english
+                    self?.revealedWordIDs.removeAll()
+                    self?.updateHiddenButtonTitle()
+                    self?.tableView.reloadData()
+                },
+                UnifiedModalAction(title: "日本語を隠す") { [weak self] in
+                    self?.hiddenMode = .japanese
+                    self?.revealedWordIDs.removeAll()
+                    self?.updateHiddenButtonTitle()
+                    self?.tableView.reloadData()
+                },
+                UnifiedModalAction(title: "キャンセル", style: .cancel)
+            ]
+        )
     }
 
     private func displayedWords() -> [SavedWord] {
@@ -1722,23 +1729,20 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         let sets = SetStore.loadSets()
         let targets = sets.filter { $0.id != setID }
         guard !targets.isEmpty else {
-            let alert = UIAlertController(title: "移動先がありません",
-                                          message: "他のセットを作成してください。",
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            present(alert, animated: true)
+            presentUnifiedModal(
+                title: "移動先がありません",
+                message: "他のセットを作成してください。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
             return
         }
-        let sheet = UIAlertController(title: "移動先を選択", message: nil, preferredStyle: .actionSheet)
-        targets.forEach { target in
-            sheet.addAction(UIAlertAction(title: target.name, style: .default) { [weak self] _ in
+        var actions = targets.map { target in
+            UnifiedModalAction(title: target.name) { [weak self] in
                 self?.moveWord(wordID: word.id, to: target.id)
-            })
+            }
         }
-        sheet.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        sheet.popoverPresentationController?.sourceView = tableView
-        sheet.popoverPresentationController?.sourceRect = tableView.rectForRow(at: indexPath)
-        present(sheet, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "移動先を選択", message: nil, actions: actions)
     }
 
     private func moveWord(wordID: String, to targetSetID: String) {
@@ -1805,24 +1809,17 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     }
 
     private func presentImportancePicker(for word: SavedWord) {
-        let alert = UIAlertController(title: "重要度", message: nil, preferredStyle: .actionSheet)
-        for level in 1...5 {
-            alert.addAction(UIAlertAction(title: "Lv\(level)", style: .default) { [weak self] _ in
+        var actions: [UnifiedModalAction] = (1...5).map { level in
+            UnifiedModalAction(title: "Lv\(level)") { [weak self] in
                 self?.updateWord(id: word.id, importanceLevel: level)
                 if let indexPath = self?.indexPathForWord(id: word.id),
                    let cell = self?.tableView.cellForRow(at: indexPath) as? ListTableViewCell {
                     cell.updateImportance(level: level)
                 }
-            })
+            }
         }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        if let popover = alert.popoverPresentationController,
-           let indexPath = indexPathForWord(id: word.id),
-           let cell = tableView.cellForRow(at: indexPath) {
-            popover.sourceView = cell
-            popover.sourceRect = cell.bounds
-        }
-        present(alert, animated: true)
+        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
+        presentUnifiedModal(title: "重要度", message: nil, actions: actions)
     }
 
     private func toggleReveal(for id: String) {
@@ -1993,9 +1990,9 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
     }
 
     private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        presentUnifiedModal(title: title,
+                            message: message,
+                            actions: [UnifiedModalAction(title: "OK")])
     }
 
     private func savedWordsFileURL() -> URL {
@@ -2156,30 +2153,30 @@ final class SetEditWordsViewController: UIViewController, UITableViewDataSource,
     }
 
     @objc private func openSortMenu() {
-        let alert = UIAlertController(title: "並び替え", message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "作成順", style: .default) { [weak self] _ in
-            self?.sortOption = .created
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "英語 A→Z", style: .default) { [weak self] _ in
-            self?.sortOption = .englishAsc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "英語 Z→A", style: .default) { [weak self] _ in
-            self?.sortOption = .englishDesc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "日本語 あ→ん", style: .default) { [weak self] _ in
-            self?.sortOption = .japaneseAsc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "日本語 ん→あ", style: .default) { [weak self] _ in
-            self?.sortOption = .japaneseDesc
-            self?.applyFilterAndReload()
-        })
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.popoverPresentationController?.barButtonItem = navigationItem.leftBarButtonItem
-        present(alert, animated: true)
+        let actions: [UnifiedModalAction] = [
+            UnifiedModalAction(title: "作成順") { [weak self] in
+                self?.sortOption = .created
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "英語 A→Z") { [weak self] in
+                self?.sortOption = .englishAsc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "英語 Z→A") { [weak self] in
+                self?.sortOption = .englishDesc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "日本語 あ→ん") { [weak self] in
+                self?.sortOption = .japaneseAsc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "日本語 ん→あ") { [weak self] in
+                self?.sortOption = .japaneseDesc
+                self?.applyFilterAndReload()
+            },
+            UnifiedModalAction(title: "キャンセル", style: .cancel)
+        ]
+        presentUnifiedModal(title: "並び替え", message: nil, actions: actions)
     }
 
     private func displayedWords() -> [SavedWord] {
@@ -2223,11 +2220,11 @@ final class SetEditWordsViewController: UIViewController, UITableViewDataSource,
 
     @objc private func saveChanges() {
         guard !selectedWordIDs.isEmpty else {
-            let alert = UIAlertController(title: "選択エラー",
-                                          message: "単語を1つ以上選択してください。",
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            present(alert, animated: true)
+            presentUnifiedModal(
+                title: "選択エラー",
+                message: "単語を1つ以上選択してください。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
             return
         }
         var sets = SetStore.loadSets()

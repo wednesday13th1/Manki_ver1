@@ -332,8 +332,11 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         let selectedDirection = directionSegmented.selectedSegmentIndex
         let maxChoices = maxUniqueChoiceCount(for: selectedDirection, words: filteredWords)
         if numChoicesInput > maxChoices {
-            showPixelAlert(title: "選択肢数が多すぎます",
-                           message: "現在の単語数/重複の関係で最大 \(maxChoices) 個までです。")
+            presentUnifiedModal(
+                title: "選択肢数が多すぎます",
+                message: "現在の単語数/重複の関係で最大 \(maxChoices) 個までです。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
             return
         }
         sessionModeLabel = modeLabel(for: selectedMode)
@@ -668,28 +671,11 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     }
 
     private func showAlert(title: String, message: String, onOK: (() -> Void)? = nil) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-            onOK?()
-        })
-        present(alert, animated: true)
-    }
-
-    private func showPixelAlert(title: String, message: String, onOK: (() -> Void)? = nil) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .alert)
-        let titleAttr = NSAttributedString(string: title, attributes: [
-            .font: AppFont.jp(size: 16, weight: .regular)
-        ])
-        let messageAttr = NSAttributedString(string: message, attributes: [
-            .font: AppFont.jp(size: 14, weight: .regular)
-        ])
-        alert.setValue(titleAttr, forKey: "attributedTitle")
-        alert.setValue(messageAttr, forKey: "attributedMessage")
-        let ok = UIAlertAction(title: "OK", style: .default) { _ in
-            onOK?()
-        }
-        alert.addAction(ok)
-        present(alert, animated: true)
+        presentUnifiedModal(
+            title: title,
+            message: message,
+            actions: [UnifiedModalAction(title: "OK", handler: onOK)]
+        )
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

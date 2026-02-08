@@ -99,11 +99,11 @@ final class ImportPreviewViewController: UIViewController {
         // 確定行のみを返す
         let rows = session.rows.filter { $0.isResolved }
         guard !rows.isEmpty else {
-            let alert = UIAlertController(title: "未確定",
-                                          message: "確定できる行がありません。編集してから確定してください。",
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            present(alert, animated: true)
+            presentUnifiedModal(
+                title: "未確定",
+                message: "確定できる行がありません。編集してから確定してください。",
+                actions: [UnifiedModalAction(title: "OK")]
+            )
             return
         }
         onConfirm?(rows)
@@ -125,26 +125,31 @@ final class ImportPreviewViewController: UIViewController {
 
     private func editValue(for row: ImportRow, isTerm: Bool) {
         let title = isTerm ? "英単語" : "日本語"
-        let alert = UIAlertController(title: title, message: "値を編集してください", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = isTerm ? row.term : row.meaning
-            textField.clearButtonMode = .whileEditing
-        }
-        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-            guard let self else { return }
-            let text = alert.textFields?.first?.text ?? ""
-            var updated = row
-            if isTerm {
-                updated.term = text
-            } else {
-                updated.meaning = text
-            }
-            updated.status = updated.isResolved ? .confirmed : .unclassified
-            self.updateRow(updated)
-            self.tableView.reloadData()
-        })
-        present(alert, animated: true)
+        let field = UITextField()
+        field.borderStyle = .roundedRect
+        field.text = isTerm ? row.term : row.meaning
+        field.clearButtonMode = .whileEditing
+        presentUnifiedModal(
+            title: title,
+            message: "値を編集してください",
+            contentView: field,
+            actions: [
+                UnifiedModalAction(title: "キャンセル", style: .cancel),
+                UnifiedModalAction(title: "OK") { [weak self] in
+                    guard let self else { return }
+                    let text = field.text ?? ""
+                    var updated = row
+                    if isTerm {
+                        updated.term = text
+                    } else {
+                        updated.meaning = text
+                    }
+                    updated.status = updated.isResolved ? .confirmed : .unclassified
+                    self.updateRow(updated)
+                    self.tableView.reloadData()
+                }
+            ]
+        )
     }
 }
 
