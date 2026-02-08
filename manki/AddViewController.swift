@@ -6,16 +6,14 @@
 //
 
 import UIKit
-import PhotosUI
 
-final class AddViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
+final class AddViewController: UIViewController {
 
     @IBOutlet private var englishTextField: UITextField!
     @IBOutlet private var japaneseTextField: UITextField!
 
     private let generateImageButton = UIButton(type: .system)
     private let importButton = UIButton(type: .system)
-    private let ocrImportButton = UIButton(type: .system)
     private let previewImageView = UIImageView()
 
     private struct AIWord: Codable {
@@ -54,7 +52,6 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
         japaneseTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         configurePreviewImageView()
         configureImportButton()
-        configureOCRImportButton()
         applyPixelFonts()
         applyPixelNavigationFonts()
         applyTheme()
@@ -256,21 +253,6 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
         ])
     }
 
-    private func configureOCRImportButton() {
-        ocrImportButton.translatesAutoresizingMaskIntoConstraints = false
-        ocrImportButton.setTitle("カメラ/写真からインポート", for: .normal)
-        ocrImportButton.addTarget(self, action: #selector(openOCRImportChooser), for: .touchUpInside)
-        view.addSubview(ocrImportButton)
-
-        NSLayoutConstraint.activate([
-            ocrImportButton.topAnchor.constraint(equalTo: importButton.bottomAnchor, constant: 10),
-            ocrImportButton.leadingAnchor.constraint(equalTo: importButton.leadingAnchor),
-            ocrImportButton.trailingAnchor.constraint(equalTo: importButton.trailingAnchor),
-            ocrImportButton.heightAnchor.constraint(equalToConstant: 44),
-            ocrImportButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-        ])
-    }
-
     private func applyPixelFonts() {
         applyPixelFontRecursively(to: view)
     }
@@ -309,7 +291,6 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
         ThemeManager.applyNavigationAppearance(to: navigationController)
         ThemeManager.stylePrimaryButton(generateImageButton)
         ThemeManager.styleSecondaryButton(importButton)
-        ThemeManager.styleSecondaryButton(ocrImportButton)
     }
 
     @objc private func openImportModal() {
@@ -469,45 +450,6 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
         showAlert(title: "インポート完了", message: "追加 \(added)件 / 上書き \(updated)件")
     }
 
-    @objc private func openOCRImportChooser() {
-        var actions: [UnifiedModalAction] = []
-        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            actions.append(UnifiedModalAction(title: "カメラで撮影") { [weak self] in
-                self?.presentCameraForOCR()
-            })
-        }
-        actions.append(UnifiedModalAction(title: "写真を選ぶ") { [weak self] in
-            self?.presentPhotoPickerForOCR()
-        })
-        actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
-        presentUnifiedModal(title: "インポート方法", message: nil, actions: actions)
-    }
-
-    private func presentCameraForOCR() {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.allowsEditing = true
-        picker.delegate = self
-        present(picker, animated: true)
-    }
-
-    private func presentPhotoPickerForOCR() {
-        var configuration = PHPickerConfiguration(photoLibrary: .shared())
-        configuration.selectionLimit = 1
-        configuration.filter = .images
-        let picker = PHPickerViewController(configuration: configuration)
-        picker.delegate = self
-        present(picker, animated: true)
-    }
-
-    private func pushOCRProcessing(with image: UIImage) {
-        let ocrVC = OCRProcessingViewController(image: image)
-        ocrVC.onConfirmRows = { [weak self] rows in
-            self?.handleImportedRows(rows)
-        }
-        navigationController?.pushViewController(ocrVC, animated: true)
-    }
-
     private func handleImportedRows(_ rows: [ImportRow]) {
         let actions: [UnifiedModalAction] = [
             UnifiedModalAction(title: "上書き") { [weak self] in
@@ -531,39 +473,6 @@ final class AddViewController: UIViewController, UIImagePickerControllerDelegate
         let result = ImportSaver.save(rows: rows, storage: storage, duplicatePolicy: policy)
         savedWords = storage.loadAll()
         showAlert(title: "保存完了", message: "追加 \(result.added)件 / スキップ \(result.skipped)件")
-    }
-
-    func imagePickerController(_ picker: UIImagePickerController,
-                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        let picked = (info[.editedImage] ?? info[.originalImage]) as? UIImage
-        picker.dismiss(animated: true)
-        guard let picked else {
-            showAlert(title: "取得エラー", message: "画像を取得できませんでした。")
-            return
-        }
-        pushOCRProcessing(with: picked)
-    }
-
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true)
-    }
-
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        picker.dismiss(animated: true)
-        guard let provider = results.first?.itemProvider else { return }
-        guard provider.canLoadObject(ofClass: UIImage.self) else {
-            showAlert(title: "取得エラー", message: "画像を読み込めませんでした。")
-            return
-        }
-        provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
-            DispatchQueue.main.async {
-                if let image = object as? UIImage {
-                    self?.pushOCRProcessing(with: image)
-                } else {
-                    self?.showAlert(title: "取得エラー", message: error?.localizedDescription ?? "画像を取得できませんでした。")
-                }
-            }
-        }
     }
 
     private func parseImportText(_ raw: String) -> [(String, String)] {
