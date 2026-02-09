@@ -217,12 +217,12 @@ final class AddViewController: UIViewController {
         view.addSubview(previewImageView)
 
         NSLayoutConstraint.activate([
-            generateImageButton.topAnchor.constraint(equalTo: englishTextField.bottomAnchor, constant: 24),
-            generateImageButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            generateImageButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            generateImageButton.topAnchor.constraint(equalTo: englishTextField.bottomAnchor, constant: AppSpacing.s(24)),
+            generateImageButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(28)),
+            generateImageButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(28)),
             generateImageButton.heightAnchor.constraint(equalToConstant: 44),
 
-            previewImageView.topAnchor.constraint(equalTo: generateImageButton.bottomAnchor, constant: 12),
+            previewImageView.topAnchor.constraint(equalTo: generateImageButton.bottomAnchor, constant: AppSpacing.s(12)),
             previewImageView.leadingAnchor.constraint(equalTo: generateImageButton.leadingAnchor),
             previewImageView.trailingAnchor.constraint(equalTo: generateImageButton.trailingAnchor),
         ])
@@ -245,11 +245,11 @@ final class AddViewController: UIViewController {
         view.addSubview(importButton)
 
         NSLayoutConstraint.activate([
-            importButton.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: 14),
+            importButton.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: AppSpacing.s(14)),
             importButton.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
             importButton.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
             importButton.heightAnchor.constraint(equalToConstant: 44),
-            importButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            importButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
     }
 
@@ -331,7 +331,7 @@ final class AddViewController: UIViewController {
         let buttonStack = UIStackView(arrangedSubviews: [importButton, cancelButton])
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .vertical
-        buttonStack.spacing = 8
+        buttonStack.spacing = AppSpacing.s(8)
 
         container.addSubview(titleLabel)
         container.addSubview(textView)
@@ -348,22 +348,22 @@ final class AddViewController: UIViewController {
             container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             container.widthAnchor.constraint(equalToConstant: 300),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
 
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(16)),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            textView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-            textView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            textView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            textView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            textView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            textView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
             textView.heightAnchor.constraint(equalToConstant: 180),
 
-            buttonStack.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: 12),
-            buttonStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            buttonStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            buttonStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            buttonStack.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: AppSpacing.s(12)),
+            buttonStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            buttonStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
+            buttonStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         let palette = ThemeManager.palette()

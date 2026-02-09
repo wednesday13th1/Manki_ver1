@@ -104,7 +104,7 @@ final class StiDrawViewController: UIViewController {
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .horizontal
         buttonStack.distribution = .fillEqually
-        buttonStack.spacing = 12
+        buttonStack.spacing = AppSpacing.s(12)
 
         view.addSubview(canvasView)
         view.addSubview(colorStack)
@@ -112,22 +112,22 @@ final class StiDrawViewController: UIViewController {
         view.addSubview(buttonStack)
 
         NSLayoutConstraint.activate([
-            canvasView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            canvasView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            canvasView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            canvasView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(20)),
+            canvasView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            canvasView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
             canvasView.heightAnchor.constraint(equalTo: canvasView.widthAnchor),
 
-            colorStack.topAnchor.constraint(equalTo: canvasView.bottomAnchor, constant: 12),
-            colorStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            colorStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            colorStack.topAnchor.constraint(equalTo: canvasView.bottomAnchor, constant: AppSpacing.s(12)),
+            colorStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            colorStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
 
-            sizeSlider.topAnchor.constraint(equalTo: colorStack.bottomAnchor, constant: 10),
-            sizeSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            sizeSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            sizeSlider.topAnchor.constraint(equalTo: colorStack.bottomAnchor, constant: AppSpacing.s(10)),
+            sizeSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            sizeSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
 
-            buttonStack.topAnchor.constraint(equalTo: sizeSlider.bottomAnchor, constant: 12),
-            buttonStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            buttonStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            buttonStack.topAnchor.constraint(equalTo: sizeSlider.bottomAnchor, constant: AppSpacing.s(12)),
+            buttonStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            buttonStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
             buttonStack.heightAnchor.constraint(equalToConstant: 44)
         ])
     }

@@ -82,7 +82,7 @@ class ModeViewController: UIViewController {
         ])
         stack.axis = .vertical
         stack.alignment = .fill
-        stack.spacing = 14
+        stack.spacing = AppSpacing.s(14)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
@@ -95,8 +95,8 @@ class ModeViewController: UIViewController {
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             centerY,
-            stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),
             stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7)
         ])
     }

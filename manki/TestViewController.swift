@@ -95,19 +95,19 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         ])
 
         contentStack.axis = .vertical
-        contentStack.spacing = 16
+        contentStack.spacing = AppSpacing.s(16)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
         NSLayoutConstraint.activate([
-            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 20),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 20),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -20),
-            contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -20),
-            contentStack.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -40),
+            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: AppSpacing.s(20)),
+            contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: AppSpacing.s(20)),
+            contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -AppSpacing.s(20)),
+            contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -AppSpacing.s(20)),
+            contentStack.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -AppSpacing.s(40)),
         ])
 
         settingsStack.axis = .vertical
-        settingsStack.spacing = 16
+        settingsStack.spacing = AppSpacing.s(16)
         contentStack.addArrangedSubview(settingsStack)
 
         let settingTitle = UILabel()
@@ -129,7 +129,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         let timeStack = UIStackView()
         timeStack.axis = .vertical
-        timeStack.spacing = 6
+        timeStack.spacing = AppSpacing.s(6)
         let timeLabelTitle = UILabel()
         timeLabelTitle.text = "時間 0=時間制限無し"
         timeLabelTitle.font = AppFont.jp(size: 16, weight: .regular)
@@ -142,7 +142,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         let countStack = UIStackView()
         countStack.axis = .vertical
-        countStack.spacing = 6
+        countStack.spacing = AppSpacing.s(6)
         let numQuestionsTitle = UILabel()
         numQuestionsTitle.text = "問題数 (空 or 0で全問)"
         numQuestionsTitle.font = AppFont.jp(size: 16, weight: .regular)
@@ -155,7 +155,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         let choicesStackSetting = UIStackView()
         choicesStackSetting.axis = .vertical
-        choicesStackSetting.spacing = 6
+        choicesStackSetting.spacing = AppSpacing.s(6)
         let numChoicesTitle = UILabel()
         numChoicesTitle.text = "選択肢数 (2以上)"
         numChoicesTitle.font = AppFont.jp(size: 16, weight: .regular)
@@ -186,7 +186,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         contentStack.addArrangedSubview(answerTextField)
 
         choicesStack.axis = .vertical
-        choicesStack.spacing = 12
+        choicesStack.spacing = AppSpacing.s(12)
         contentStack.addArrangedSubview(choicesStack)
 
         submitButton.setTitle("回答する", for: .normal)
@@ -204,7 +204,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         let favoriteRow = UIStackView()
         favoriteRow.axis = .horizontal
         favoriteRow.alignment = .center
-        favoriteRow.spacing = 8
+        favoriteRow.spacing = AppSpacing.s(8)
 
         favoriteFilterButton.addTarget(self, action: #selector(toggleFavoriteFilter), for: .touchUpInside)
         favoriteFilterButton.tintColor = .systemYellow
@@ -222,7 +222,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         settingsStack.addArrangedSubview(levelTitle)
 
         levelsStack.axis = .horizontal
-        levelsStack.spacing = 8
+        levelsStack.spacing = AppSpacing.s(8)
         levelsStack.distribution = .fillEqually
         settingsStack.addArrangedSubview(levelsStack)
 

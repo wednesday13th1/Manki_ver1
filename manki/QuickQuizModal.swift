@@ -94,10 +94,10 @@ final class QuickQuizModal {
                 overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
                 container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                container.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
+                container.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -AppSpacing.s(20)),
                 container.widthAnchor.constraint(equalToConstant: 260),
-                container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-                container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+                container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+                container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
             ])
         }
         overlay.alpha = 0
@@ -133,7 +133,7 @@ final class QuickQuizModal {
 
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 8
+        stack.spacing = AppSpacing.s(8)
 
         data.choices.forEach { choice in
             let button = makeChoiceButton(title: choice)
@@ -156,22 +156,22 @@ final class QuickQuizModal {
         overlay.addSubview(container)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(16)),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            questionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
-            questionLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            questionLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            questionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(10)),
+            questionLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            questionLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            resultLabel.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: 6),
-            resultLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            resultLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            resultLabel.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: AppSpacing.s(6)),
+            resultLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            resultLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            stack.topAnchor.constraint(equalTo: resultLabel.bottomAnchor, constant: 10),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: resultLabel.bottomAnchor, constant: AppSpacing.s(10)),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         applyTheme()

@@ -96,13 +96,13 @@ final class TurnCollabViewController: UIViewController {
 
         let buttonStack = UIStackView(arrangedSubviews: [hostButton, joinButton, startButton])
         buttonStack.axis = .horizontal
-        buttonStack.spacing = 12
+        buttonStack.spacing = AppSpacing.s(12)
         buttonStack.distribution = .fillEqually
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
 
         let inputStack = UIStackView(arrangedSubviews: [inputField, submitButton])
         inputStack.axis = .horizontal
-        inputStack.spacing = 8
+        inputStack.spacing = AppSpacing.s(8)
         inputStack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(wordField)
@@ -115,38 +115,38 @@ final class TurnCollabViewController: UIViewController {
         view.addSubview(statusLabel)
 
         NSLayoutConstraint.activate([
-            wordField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            wordField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            wordField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            wordField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            wordField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            wordField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            buttonStack.topAnchor.constraint(equalTo: wordField.bottomAnchor, constant: 12),
+            buttonStack.topAnchor.constraint(equalTo: wordField.bottomAnchor, constant: AppSpacing.s(12)),
             buttonStack.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             buttonStack.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
 
-            sharePlayInfoLabel.topAnchor.constraint(equalTo: buttonStack.bottomAnchor, constant: 8),
+            sharePlayInfoLabel.topAnchor.constraint(equalTo: buttonStack.bottomAnchor, constant: AppSpacing.s(8)),
             sharePlayInfoLabel.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             sharePlayInfoLabel.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
 
-            peersTable.topAnchor.constraint(equalTo: sharePlayInfoLabel.bottomAnchor, constant: 8),
+            peersTable.topAnchor.constraint(equalTo: sharePlayInfoLabel.bottomAnchor, constant: AppSpacing.s(8)),
             peersTable.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             peersTable.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             peersTable.heightAnchor.constraint(lessThanOrEqualToConstant: 160),
 
-            connectedLabel.topAnchor.constraint(equalTo: peersTable.bottomAnchor, constant: 8),
+            connectedLabel.topAnchor.constraint(equalTo: peersTable.bottomAnchor, constant: AppSpacing.s(8)),
             connectedLabel.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             connectedLabel.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
 
-            turnLabel.topAnchor.constraint(equalTo: connectedLabel.bottomAnchor, constant: 8),
+            turnLabel.topAnchor.constraint(equalTo: connectedLabel.bottomAnchor, constant: AppSpacing.s(8)),
             turnLabel.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             turnLabel.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
 
-            inputStack.topAnchor.constraint(equalTo: turnLabel.bottomAnchor, constant: 8),
+            inputStack.topAnchor.constraint(equalTo: turnLabel.bottomAnchor, constant: AppSpacing.s(8)),
             inputStack.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             inputStack.trailingAnchor.constraint(equalTo: wordField.trailingAnchor),
 
             submitButton.widthAnchor.constraint(equalToConstant: 70),
 
-            statusLabel.topAnchor.constraint(equalTo: inputStack.bottomAnchor, constant: 8),
+            statusLabel.topAnchor.constraint(equalTo: inputStack.bottomAnchor, constant: AppSpacing.s(8)),
             statusLabel.leadingAnchor.constraint(equalTo: wordField.leadingAnchor),
             statusLabel.trailingAnchor.constraint(equalTo: wordField.trailingAnchor)
         ])

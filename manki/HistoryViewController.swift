@@ -58,22 +58,22 @@ final class HistoryViewController: UIViewController {
         view.addSubview(historyCard)
 
         NSLayoutConstraint.activate([
-            rangeSegmented.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            rangeSegmented.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
             rangeSegmented.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            historyCard.topAnchor.constraint(equalTo: rangeSegmented.bottomAnchor, constant: 12),
-            historyCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            historyCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            historyCard.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16),
+            historyCard.topAnchor.constraint(equalTo: rangeSegmented.bottomAnchor, constant: AppSpacing.s(12)),
+            historyCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            historyCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
+            historyCard.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppSpacing.s(16)),
 
-            historyTitleLabel.topAnchor.constraint(equalTo: historyCard.topAnchor, constant: 12),
-            historyTitleLabel.leadingAnchor.constraint(equalTo: historyCard.leadingAnchor, constant: 16),
-            historyTitleLabel.trailingAnchor.constraint(equalTo: historyCard.trailingAnchor, constant: -16),
+            historyTitleLabel.topAnchor.constraint(equalTo: historyCard.topAnchor, constant: AppSpacing.s(12)),
+            historyTitleLabel.leadingAnchor.constraint(equalTo: historyCard.leadingAnchor, constant: AppSpacing.s(16)),
+            historyTitleLabel.trailingAnchor.constraint(equalTo: historyCard.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            textView.topAnchor.constraint(equalTo: historyTitleLabel.bottomAnchor, constant: 8),
-            textView.leadingAnchor.constraint(equalTo: historyCard.leadingAnchor, constant: 12),
-            textView.trailingAnchor.constraint(equalTo: historyCard.trailingAnchor, constant: -12),
-            textView.bottomAnchor.constraint(equalTo: historyCard.bottomAnchor, constant: -12),
+            textView.topAnchor.constraint(equalTo: historyTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            textView.leadingAnchor.constraint(equalTo: historyCard.leadingAnchor, constant: AppSpacing.s(12)),
+            textView.trailingAnchor.constraint(equalTo: historyCard.trailingAnchor, constant: -AppSpacing.s(12)),
+            textView.bottomAnchor.constraint(equalTo: historyCard.bottomAnchor, constant: -AppSpacing.s(12)),
         ])
     }
 

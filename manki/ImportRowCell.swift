@@ -49,20 +49,20 @@ final class ImportRowCell: UITableViewCell {
         meaningLabel.addGestureRecognizer(meaningTap)
 
         NSLayoutConstraint.activate([
-            termLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            termLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            termLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            termLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(16)),
+            termLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(12)),
+            termLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppSpacing.s(12)),
             termLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.45),
 
-            divider.leadingAnchor.constraint(equalTo: termLabel.trailingAnchor, constant: 8),
+            divider.leadingAnchor.constraint(equalTo: termLabel.trailingAnchor, constant: AppSpacing.s(8)),
             divider.widthAnchor.constraint(equalToConstant: 1),
-            divider.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
-            divider.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
+            divider.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(10)),
+            divider.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppSpacing.s(10)),
 
-            meaningLabel.leadingAnchor.constraint(equalTo: divider.trailingAnchor, constant: 8),
-            meaningLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            meaningLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            meaningLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
+            meaningLabel.leadingAnchor.constraint(equalTo: divider.trailingAnchor, constant: AppSpacing.s(8)),
+            meaningLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(16)),
+            meaningLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(12)),
+            meaningLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppSpacing.s(12))
         ])
     }
 

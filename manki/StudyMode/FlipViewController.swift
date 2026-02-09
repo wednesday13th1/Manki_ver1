@@ -134,7 +134,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
 
     private func configureUI() {
         timerStack.axis = .vertical
-        timerStack.spacing = 8
+        timerStack.spacing = AppSpacing.s(8)
         timerStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(timerStack)
 
@@ -162,13 +162,13 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         view.addSubview(cardContainer)
 
         NSLayoutConstraint.activate([
-            timerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            timerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            timerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            timerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
+            timerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            timerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
             cardContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            cardContainer.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            cardContainer.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
-            cardContainer.topAnchor.constraint(greaterThanOrEqualTo: timerStack.bottomAnchor, constant: 12),
+            cardContainer.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            cardContainer.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
+            cardContainer.topAnchor.constraint(greaterThanOrEqualTo: timerStack.bottomAnchor, constant: AppSpacing.s(12)),
         ])
 
         let cardPreferredWidth = cardContainer.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.78)
@@ -184,7 +184,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         let cardMinHeight = cardContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 180)
         cardMinHeight.priority = .defaultLow
         cardMinHeight.isActive = true
-        let cardTopPreferred = cardContainer.topAnchor.constraint(equalTo: timerStack.bottomAnchor, constant: 16)
+        let cardTopPreferred = cardContainer.topAnchor.constraint(equalTo: timerStack.bottomAnchor, constant: AppSpacing.s(16))
         cardTopPreferred.priority = .defaultHigh
         cardTopPreferred.isActive = true
 
@@ -237,7 +237,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         errorLabel.textAlignment = .center
 
         backStack.axis = .vertical
-        backStack.spacing = 10
+        backStack.spacing = AppSpacing.s(10)
         backStack.translatesAutoresizingMaskIntoConstraints = false
         backScreen.translatesAutoresizingMaskIntoConstraints = false
         backScreen.layer.cornerRadius = 14
@@ -252,21 +252,21 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         fallbackPlaceholderView.addSubview(emojiLabel)
 
         NSLayoutConstraint.activate([
-            frontScreen.leadingAnchor.constraint(equalTo: frontView.leadingAnchor, constant: 14),
-            frontScreen.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -14),
-            frontScreen.topAnchor.constraint(equalTo: frontView.topAnchor, constant: 14),
+            frontScreen.leadingAnchor.constraint(equalTo: frontView.leadingAnchor, constant: AppSpacing.s(14)),
+            frontScreen.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -AppSpacing.s(14)),
+            frontScreen.topAnchor.constraint(equalTo: frontView.topAnchor, constant: AppSpacing.s(14)),
             frontScreen.heightAnchor.constraint(equalTo: frontView.heightAnchor, multiplier: 0.48),
-            frontLabel.leadingAnchor.constraint(equalTo: frontScreen.leadingAnchor, constant: 12),
-            frontLabel.trailingAnchor.constraint(equalTo: frontScreen.trailingAnchor, constant: -12),
+            frontLabel.leadingAnchor.constraint(equalTo: frontScreen.leadingAnchor, constant: AppSpacing.s(12)),
+            frontLabel.trailingAnchor.constraint(equalTo: frontScreen.trailingAnchor, constant: -AppSpacing.s(12)),
             frontLabel.centerYAnchor.constraint(equalTo: frontScreen.centerYAnchor),
-            backScreen.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: 14),
-            backScreen.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -14),
-            backScreen.topAnchor.constraint(equalTo: backView.topAnchor, constant: 14),
+            backScreen.leadingAnchor.constraint(equalTo: backView.leadingAnchor, constant: AppSpacing.s(14)),
+            backScreen.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -AppSpacing.s(14)),
+            backScreen.topAnchor.constraint(equalTo: backView.topAnchor, constant: AppSpacing.s(14)),
             backScreen.heightAnchor.constraint(equalTo: backView.heightAnchor, multiplier: 0.6),
-            backStack.leadingAnchor.constraint(equalTo: backScreen.leadingAnchor, constant: 12),
-            backStack.trailingAnchor.constraint(equalTo: backScreen.trailingAnchor, constant: -12),
-            backStack.topAnchor.constraint(equalTo: backScreen.topAnchor, constant: 12),
-            backStack.bottomAnchor.constraint(equalTo: backScreen.bottomAnchor, constant: -12),
+            backStack.leadingAnchor.constraint(equalTo: backScreen.leadingAnchor, constant: AppSpacing.s(12)),
+            backStack.trailingAnchor.constraint(equalTo: backScreen.trailingAnchor, constant: -AppSpacing.s(12)),
+            backStack.topAnchor.constraint(equalTo: backScreen.topAnchor, constant: AppSpacing.s(12)),
+            backStack.bottomAnchor.constraint(equalTo: backScreen.bottomAnchor, constant: -AppSpacing.s(12)),
             fallbackPlaceholderView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.6),
             backImageView.heightAnchor.constraint(equalTo: backScreen.heightAnchor, multiplier: 0.6),
         ])
@@ -288,10 +288,10 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         frontView.addSubview(frontStickerContainer)
         backView.addSubview(backStickerContainer)
         NSLayoutConstraint.activate([
-            frontStickerContainer.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -16),
-            frontStickerContainer.bottomAnchor.constraint(equalTo: frontView.bottomAnchor, constant: -16),
-            backStickerContainer.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -16),
-            backStickerContainer.bottomAnchor.constraint(equalTo: backView.bottomAnchor, constant: -16),
+            frontStickerContainer.trailingAnchor.constraint(equalTo: frontView.trailingAnchor, constant: -AppSpacing.s(16)),
+            frontStickerContainer.bottomAnchor.constraint(equalTo: frontView.bottomAnchor, constant: -AppSpacing.s(16)),
+            backStickerContainer.trailingAnchor.constraint(equalTo: backView.trailingAnchor, constant: -AppSpacing.s(16)),
+            backStickerContainer.bottomAnchor.constraint(equalTo: backView.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
         frontStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
         backStickerContainer.transform = CGAffineTransform(rotationAngle: -0.08)
@@ -309,7 +309,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         view.addSubview(buttonPanel)
 
         buttonStack.axis = .horizontal
-        buttonStack.spacing = 16
+        buttonStack.spacing = AppSpacing.s(16)
         buttonStack.distribution = .fillEqually
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonPanel.addSubview(buttonStack)
@@ -323,14 +323,14 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         buttonStack.addArrangedSubview(nextButton)
 
         NSLayoutConstraint.activate([
-            buttonPanel.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 28),
+            buttonPanel.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: AppSpacing.s(28)),
             buttonPanel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             buttonPanel.widthAnchor.constraint(equalTo: cardContainer.widthAnchor),
-            buttonPanel.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            buttonStack.leadingAnchor.constraint(equalTo: buttonPanel.leadingAnchor, constant: 16),
-            buttonStack.trailingAnchor.constraint(equalTo: buttonPanel.trailingAnchor, constant: -16),
-            buttonStack.topAnchor.constraint(equalTo: buttonPanel.topAnchor, constant: 10),
-            buttonStack.bottomAnchor.constraint(equalTo: buttonPanel.bottomAnchor, constant: -10),
+            buttonPanel.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),
+            buttonStack.leadingAnchor.constraint(equalTo: buttonPanel.leadingAnchor, constant: AppSpacing.s(16)),
+            buttonStack.trailingAnchor.constraint(equalTo: buttonPanel.trailingAnchor, constant: -AppSpacing.s(16)),
+            buttonStack.topAnchor.constraint(equalTo: buttonPanel.topAnchor, constant: AppSpacing.s(10)),
+            buttonStack.bottomAnchor.constraint(equalTo: buttonPanel.bottomAnchor, constant: -AppSpacing.s(10)),
         ])
 
         let buttonPreferredHeight = buttonPanel.heightAnchor.constraint(equalTo: cardContainer.heightAnchor, multiplier: 0.22)
@@ -352,7 +352,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         let stack = UIStackView(arrangedSubviews: [label, icon])
         stack.axis = .horizontal
         stack.alignment = .center
-        stack.spacing = 6
+        stack.spacing = AppSpacing.s(6)
         stack.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(stack)
 
@@ -368,10 +368,10 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         NSLayoutConstraint.activate([
             container.widthAnchor.constraint(equalToConstant: 110),
             container.heightAnchor.constraint(equalToConstant: 36),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
-            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -6),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(10)),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(10)),
+            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(6)),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(6)),
             icon.widthAnchor.constraint(equalToConstant: 16),
             icon.heightAnchor.constraint(equalToConstant: 16),
         ])
@@ -400,15 +400,15 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             cardSide.bringSubviewToFront(decor)
         }
 
-        let bottomLeftBottom = bottomLeft.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12)
-        let bottomRightBottom = bottomRight.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -12)
-        let bottomCenterBottom = bottomCenter.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -14)
+        let bottomLeftBottom = bottomLeft.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -AppSpacing.s(12))
+        let bottomRightBottom = bottomRight.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -AppSpacing.s(12))
+        let bottomCenterBottom = bottomCenter.bottomAnchor.constraint(equalTo: cardSide.bottomAnchor, constant: -AppSpacing.s(14))
         NSLayoutConstraint.activate([
             bottomLeftBottom,
-            bottomLeft.leadingAnchor.constraint(equalTo: cardSide.leadingAnchor, constant: 12),
+            bottomLeft.leadingAnchor.constraint(equalTo: cardSide.leadingAnchor, constant: AppSpacing.s(12)),
 
             bottomRightBottom,
-            bottomRight.trailingAnchor.constraint(equalTo: cardSide.trailingAnchor, constant: -12),
+            bottomRight.trailingAnchor.constraint(equalTo: cardSide.trailingAnchor, constant: -AppSpacing.s(12)),
 
             bottomCenter.centerXAnchor.constraint(equalTo: cardSide.centerXAnchor),
             bottomCenterBottom,
@@ -1026,7 +1026,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 8
+        stack.spacing = AppSpacing.s(8)
 
         let backButton = makeTimeUpButton(title: "戻る", action: #selector(handleTimeUpBack))
         let continueButton = makeTimeUpButton(title: "続ける", action: #selector(handleTimeUpContinue))
@@ -1051,21 +1051,21 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             container.widthAnchor.constraint(equalToConstant: 260),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
 
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(16)),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            messageLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            messageLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            messageLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            messageLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            stack.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 12),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         timeUpOverlay = overlay

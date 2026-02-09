@@ -61,7 +61,7 @@ final class TimeViewController: UIViewController {
 
         let statsStack = UIStackView(arrangedSubviews: [totalStack, streakStack, wordsStack])
         statsStack.axis = .vertical
-        statsStack.spacing = 12
+        statsStack.spacing = AppSpacing.s(12)
         statsStack.translatesAutoresizingMaskIntoConstraints = false
 
         summaryCard.addSubview(summaryTitleLabel)
@@ -71,21 +71,21 @@ final class TimeViewController: UIViewController {
         view.addSubview(summaryCard)
 
         NSLayoutConstraint.activate([
-            rangeSegmented.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            rangeSegmented.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
             rangeSegmented.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            summaryCard.topAnchor.constraint(equalTo: rangeSegmented.bottomAnchor, constant: 12),
-            summaryCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            summaryCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            summaryCard.topAnchor.constraint(equalTo: rangeSegmented.bottomAnchor, constant: AppSpacing.s(12)),
+            summaryCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            summaryCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            summaryTitleLabel.topAnchor.constraint(equalTo: summaryCard.topAnchor, constant: 12),
-            summaryTitleLabel.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor, constant: 16),
-            summaryTitleLabel.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -16),
+            summaryTitleLabel.topAnchor.constraint(equalTo: summaryCard.topAnchor, constant: AppSpacing.s(12)),
+            summaryTitleLabel.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor, constant: AppSpacing.s(16)),
+            summaryTitleLabel.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            statsStack.topAnchor.constraint(equalTo: summaryTitleLabel.bottomAnchor, constant: 12),
-            statsStack.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor, constant: 16),
-            statsStack.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -16),
-            statsStack.bottomAnchor.constraint(equalTo: summaryCard.bottomAnchor, constant: -16),
+            statsStack.topAnchor.constraint(equalTo: summaryTitleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            statsStack.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor, constant: AppSpacing.s(16)),
+            statsStack.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -AppSpacing.s(16)),
+            statsStack.bottomAnchor.constraint(equalTo: summaryCard.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
     }
 

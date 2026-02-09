@@ -84,13 +84,13 @@ class ListTableViewCell: UITableViewCell {
 
         let textStack = UIStackView(arrangedSubviews: [englishLabel, japaneseLabel, exampleLabel])
         textStack.axis = .vertical
-        textStack.spacing = 4
+        textStack.spacing = AppSpacing.s(4)
         textStack.alignment = .fill
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
         let rowStack = UIStackView(arrangedSubviews: [textStack, favoriteButton, importanceButton])
         rowStack.axis = .horizontal
-        rowStack.spacing = 10
+        rowStack.spacing = AppSpacing.s(10)
         rowStack.alignment = .center
         rowStack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(notebookBackgroundView)
@@ -107,15 +107,15 @@ class ListTableViewCell: UITableViewCell {
             favoriteButton.heightAnchor.constraint(equalToConstant: 28),
             importanceButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 56),
 
-            notebookBackgroundView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
-            notebookBackgroundView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            notebookBackgroundView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            notebookBackgroundView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
+            notebookBackgroundView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(8)),
+            notebookBackgroundView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(8)),
+            notebookBackgroundView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(6)),
+            notebookBackgroundView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppSpacing.s(6)),
 
-            rowStack.leadingAnchor.constraint(equalTo: notebookBackgroundView.leadingAnchor, constant: 36),
-            rowStack.trailingAnchor.constraint(equalTo: notebookBackgroundView.trailingAnchor, constant: -12),
-            rowStack.topAnchor.constraint(equalTo: notebookBackgroundView.topAnchor, constant: 10),
-            rowStack.bottomAnchor.constraint(equalTo: notebookBackgroundView.bottomAnchor, constant: -10),
+            rowStack.leadingAnchor.constraint(equalTo: notebookBackgroundView.leadingAnchor, constant: AppSpacing.s(36)),
+            rowStack.trailingAnchor.constraint(equalTo: notebookBackgroundView.trailingAnchor, constant: -AppSpacing.s(12)),
+            rowStack.topAnchor.constraint(equalTo: notebookBackgroundView.topAnchor, constant: AppSpacing.s(10)),
+            rowStack.bottomAnchor.constraint(equalTo: notebookBackgroundView.bottomAnchor, constant: -AppSpacing.s(10)),
         ])
     }
 

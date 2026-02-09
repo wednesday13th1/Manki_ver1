@@ -108,7 +108,7 @@ final class UnifiedModalViewController: UIViewController {
         let contentStack = UIStackView()
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.axis = .vertical
-        contentStack.spacing = 10
+        contentStack.spacing = AppSpacing.s(10)
 
         if let title = modalTitle, !title.isEmpty {
             contentStack.addArrangedSubview(titleLabel)
@@ -123,7 +123,7 @@ final class UnifiedModalViewController: UIViewController {
 
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .vertical
-        buttonStack.spacing = 8
+        buttonStack.spacing = AppSpacing.s(8)
 
         for (index, action) in actions.enumerated() {
             let button = makeButton(for: action, index: index)
@@ -152,17 +152,17 @@ final class UnifiedModalViewController: UIViewController {
             container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             container.widthAnchor.constraint(lessThanOrEqualToConstant: maxWidth),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
 
-            contentStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            contentStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            contentStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            contentStack.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(16)),
+            contentStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            contentStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            buttonStack.topAnchor.constraint(equalTo: contentStack.bottomAnchor, constant: 12),
-            buttonStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            buttonStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            buttonStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            buttonStack.topAnchor.constraint(equalTo: contentStack.bottomAnchor, constant: AppSpacing.s(12)),
+            buttonStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            buttonStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
+            buttonStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         overlay.alpha = 0

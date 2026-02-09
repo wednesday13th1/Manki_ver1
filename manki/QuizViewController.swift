@@ -23,15 +23,15 @@ final class QuizViewController: UIViewController {
 
     private func configureUI() {
         contentStack.axis = .vertical
-        contentStack.spacing = 16
+        contentStack.spacing = AppSpacing.s(16)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
             contentStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             contentStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            contentStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            contentStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
         ])
 
         let titleLabel = UILabel()

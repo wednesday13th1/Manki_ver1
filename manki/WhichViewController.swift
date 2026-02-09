@@ -54,7 +54,7 @@ class WhichViewController: UIViewController {
         let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, testButton, flipButton, redSheetButton])
         stack.axis = .vertical
         stack.alignment = .fill
-        stack.spacing = 14
+        stack.spacing = AppSpacing.s(14)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
@@ -63,8 +63,8 @@ class WhichViewController: UIViewController {
         NSLayoutConstraint.activate([
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             centerY,
-            stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),
             stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7)
         ])
     }
@@ -141,7 +141,7 @@ class WhichViewController: UIViewController {
         let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 8
+        stack.spacing = AppSpacing.s(8)
 
         let startButton = makeMenuButton(title: "テスト開始", action: #selector(handleTestStart))
         let resultButton = makeMenuButton(title: "結果を見る", action: #selector(handleTestResults))
@@ -172,17 +172,17 @@ class WhichViewController: UIViewController {
             container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             container.widthAnchor.constraint(equalToConstant: 260),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
 
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(16)),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         testMenuOverlay = overlay

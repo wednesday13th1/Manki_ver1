@@ -23,15 +23,15 @@ class WordViewController: UIViewController {
 
     private func configureUI() {
         stackView.axis = .vertical
-        stackView.spacing = 16
+        stackView.spacing = AppSpacing.s(16)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stackView)
 
         NSLayoutConstraint.activate([
             stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            stackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
         ])
 
         listButton.setTitle("一覧へ", for: .normal)

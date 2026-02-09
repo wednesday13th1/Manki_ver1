@@ -104,7 +104,7 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
             valueLabel
         ])
         stack.axis = .vertical
-        stack.spacing = 16
+        stack.spacing = AppSpacing.s(16)
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -112,21 +112,21 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         view.addSubview(saveButton)
         view.addSubview(luckyButton)
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            saveButton.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 16),
-            luckyButton.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: 12),
-            luckyButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
+            saveButton.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: AppSpacing.s(16)),
+            luckyButton.topAnchor.constraint(equalTo: saveButton.bottomAnchor, constant: AppSpacing.s(12)),
+            luckyButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16))
         ])
         saveButton.translatesAutoresizingMaskIntoConstraints = false
-        saveButtonLeading = saveButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40)
-        saveButtonTrailing = saveButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
+        saveButtonLeading = saveButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: AppSpacing.s(40))
+        saveButtonTrailing = saveButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -AppSpacing.s(40))
         saveButtonLeading?.isActive = true
         saveButtonTrailing?.isActive = true
         luckyButton.translatesAutoresizingMaskIntoConstraints = false
-        luckyButtonLeading = luckyButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40)
-        luckyButtonTrailing = luckyButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
+        luckyButtonLeading = luckyButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: AppSpacing.s(40))
+        luckyButtonTrailing = luckyButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -AppSpacing.s(40))
         luckyButtonLeading?.isActive = true
         luckyButtonTrailing?.isActive = true
 

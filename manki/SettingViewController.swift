@@ -46,7 +46,7 @@ class SettingViewController: UIViewController {
         themeTitleLabel.textAlignment = .left
 
         themeStack.axis = .horizontal
-        themeStack.spacing = 12
+        themeStack.spacing = AppSpacing.s(12)
         themeStack.alignment = .center
         themeStack.distribution = .fillEqually
         themeStack.translatesAutoresizingMaskIntoConstraints = false
@@ -67,7 +67,7 @@ class SettingViewController: UIViewController {
 
         let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, cardView])
         stack.axis = .vertical
-        stack.spacing = 12
+        stack.spacing = AppSpacing.s(12)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
@@ -76,19 +76,19 @@ class SettingViewController: UIViewController {
         themeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
             cardView.heightAnchor.constraint(equalToConstant: 140),
 
-            themeTitleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 12),
-            themeTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
-            themeTitleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            themeTitleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: AppSpacing.s(12)),
+            themeTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            themeTitleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            themeStack.topAnchor.constraint(equalTo: themeTitleLabel.bottomAnchor, constant: 12),
-            themeStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
-            themeStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            themeStack.topAnchor.constraint(equalTo: themeTitleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            themeStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            themeStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
             themeStack.heightAnchor.constraint(equalToConstant: 36),
         ])
     }

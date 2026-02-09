@@ -129,7 +129,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         let buttonStack = UIStackView(arrangedSubviews: [captureButton, drawButton, emojiButton, saveButton, collectionButton])
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .vertical
-        buttonStack.spacing = 12
+        buttonStack.spacing = AppSpacing.s(12)
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -150,23 +150,23 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
 
-            hintLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            hintLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            hintLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            hintLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(20)),
+            hintLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(20)),
+            hintLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(20)),
 
-            previewImageView.topAnchor.constraint(equalTo: hintLabel.bottomAnchor, constant: 16),
-            previewImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            previewImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            previewImageView.topAnchor.constraint(equalTo: hintLabel.bottomAnchor, constant: AppSpacing.s(16)),
+            previewImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(24)),
+            previewImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(24)),
             previewImageView.heightAnchor.constraint(equalTo: previewImageView.widthAnchor),
 
-            filterControl.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: 12),
+            filterControl.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: AppSpacing.s(12)),
             filterControl.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
             filterControl.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
 
-            buttonStack.topAnchor.constraint(equalTo: filterControl.bottomAnchor, constant: 16),
-            buttonStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            buttonStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            buttonStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
+            buttonStack.topAnchor.constraint(equalTo: filterControl.bottomAnchor, constant: AppSpacing.s(16)),
+            buttonStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(24)),
+            buttonStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(24)),
+            buttonStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppSpacing.s(24))
         ])
     }
 

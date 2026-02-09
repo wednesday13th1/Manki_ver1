@@ -67,23 +67,23 @@ final class GoalAchievedViewController: UIViewController {
 
             container.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
             container.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: overlay.leadingAnchor, constant: 24),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: overlay.trailingAnchor, constant: -24),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: overlay.leadingAnchor, constant: AppSpacing.s(24)),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: overlay.trailingAnchor, constant: -AppSpacing.s(24)),
             container.widthAnchor.constraint(lessThanOrEqualToConstant: 320),
 
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(20)),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(20)),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(20)),
 
-            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
-            messageLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            messageLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(10)),
+            messageLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(20)),
+            messageLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(20)),
 
-            closeButton.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 16),
-            closeButton.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 24),
-            closeButton.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -24),
+            closeButton.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: AppSpacing.s(16)),
+            closeButton.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(24)),
+            closeButton.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(24)),
             closeButton.heightAnchor.constraint(equalToConstant: 44),
-            closeButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
+            closeButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(20)),
         ])
     }
 

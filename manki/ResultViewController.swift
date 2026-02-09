@@ -45,13 +45,13 @@ final class ResultViewController: UIViewController {
         view.addSubview(textView)
 
         NSLayoutConstraint.activate([
-            filterControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            filterControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            filterControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            textView.topAnchor.constraint(equalTo: filterControl.bottomAnchor, constant: 12),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            textView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -12),
+            filterControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
+            filterControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(12)),
+            filterControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(12)),
+            textView.topAnchor.constraint(equalTo: filterControl.bottomAnchor, constant: AppSpacing.s(12)),
+            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(12)),
+            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(12)),
+            textView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppSpacing.s(12)),
         ])
     }
 

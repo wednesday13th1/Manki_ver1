@@ -33,9 +33,12 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
 
     private func configureCollectionView() {
         let layout = StickerAlbumLayout()
-        layout.minimumLineSpacing = 16
-        layout.minimumInteritemSpacing = 12
-        layout.sectionInset = UIEdgeInsets(top: 12, left: 8, bottom: 24, right: 8)
+        layout.minimumLineSpacing = AppSpacing.s(16)
+        layout.minimumInteritemSpacing = AppSpacing.s(12)
+        layout.sectionInset = UIEdgeInsets(top: AppSpacing.s(12),
+                                           left: AppSpacing.s(8),
+                                           bottom: AppSpacing.s(24),
+                                           right: AppSpacing.s(8))
         layout.headerReferenceSize = CGSize(width: view.bounds.width, height: 140)
 
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -52,9 +55,9 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
         view.addSubview(collectionView)
 
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
@@ -132,10 +135,13 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let columns: CGFloat = collectionView.bounds.width < 360 ? 2 : 3
-        let totalSpacing: CGFloat = (columns - 1) * 12
-        let width = (collectionView.bounds.width - totalSpacing) / columns
-        let height = width + 38
+        let columns: CGFloat = 3
+        let layout = collectionViewLayout as? UICollectionViewFlowLayout
+        let insets = layout?.sectionInset ?? .zero
+        let spacing = layout?.minimumInteritemSpacing ?? 0
+        let totalSpacing: CGFloat = (columns - 1) * spacing + insets.left + insets.right
+        let width = floor((collectionView.bounds.width - totalSpacing) / columns)
+        let height = width + AppSpacing.s(38)
         return CGSize(width: width, height: height)
     }
 
@@ -273,20 +279,20 @@ private final class StickerCell: UICollectionViewCell {
         contentView.addSubview(wordLabel)
 
         NSLayoutConstraint.activate([
-            tapeView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            tapeView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
-            tapeView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            tapeView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(6)),
+            tapeView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(10)),
+            tapeView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(24)),
             tapeView.heightAnchor.constraint(equalToConstant: 16),
 
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppSpacing.s(8)),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(8)),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(8)),
             imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor),
 
-            wordLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 6),
-            wordLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 6),
-            wordLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -6),
-            wordLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
+            wordLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: AppSpacing.s(6)),
+            wordLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(6)),
+            wordLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(6)),
+            wordLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppSpacing.s(6))
         ])
 
         layer.shadowColor = UIColor.black.cgColor
@@ -494,13 +500,13 @@ private final class StickerAlbumHeaderView: UICollectionReusableView {
         addSubview(tagLabel)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
+            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: AppSpacing.s(16)),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: AppSpacing.s(18)),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(6)),
             subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
 
-            tagLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 8),
+            tagLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
             tagLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor)
         ])
     }

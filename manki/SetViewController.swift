@@ -212,16 +212,16 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.addGestureRecognizer(tapGesture)
 
         NSLayoutConstraint.activate([
-            searchContainer.topAnchor.constraint(equalTo: retroScreenView.topAnchor, constant: 12),
-            searchContainer.leadingAnchor.constraint(equalTo: retroScreenView.leadingAnchor, constant: 12),
-            searchContainer.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor, constant: -12),
+            searchContainer.topAnchor.constraint(equalTo: retroScreenView.topAnchor, constant: AppSpacing.s(12)),
+            searchContainer.leadingAnchor.constraint(equalTo: retroScreenView.leadingAnchor, constant: AppSpacing.s(12)),
+            searchContainer.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor, constant: -AppSpacing.s(12)),
 
-            searchController.searchBar.topAnchor.constraint(equalTo: searchContainer.topAnchor, constant: 6),
-            searchController.searchBar.leadingAnchor.constraint(equalTo: searchContainer.leadingAnchor, constant: 6),
-            searchController.searchBar.trailingAnchor.constraint(equalTo: searchContainer.trailingAnchor, constant: -6),
-            searchController.searchBar.bottomAnchor.constraint(equalTo: searchContainer.bottomAnchor, constant: -6),
+            searchController.searchBar.topAnchor.constraint(equalTo: searchContainer.topAnchor, constant: AppSpacing.s(6)),
+            searchController.searchBar.leadingAnchor.constraint(equalTo: searchContainer.leadingAnchor, constant: AppSpacing.s(6)),
+            searchController.searchBar.trailingAnchor.constraint(equalTo: searchContainer.trailingAnchor, constant: -AppSpacing.s(6)),
+            searchController.searchBar.bottomAnchor.constraint(equalTo: searchContainer.bottomAnchor, constant: -AppSpacing.s(6)),
 
-            tableView.topAnchor.constraint(equalTo: searchContainer.bottomAnchor, constant: 8),
+            tableView.topAnchor.constraint(equalTo: searchContainer.bottomAnchor, constant: AppSpacing.s(8)),
             tableView.leadingAnchor.constraint(equalTo: retroScreenView.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor),
@@ -277,8 +277,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         NSLayoutConstraint.activate([
             emptyLabel.centerXAnchor.constraint(equalTo: retroScreenView.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: retroScreenView.centerYAnchor),
-            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: retroScreenView.leadingAnchor, constant: 20),
-            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: retroScreenView.trailingAnchor, constant: -20),
+            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: retroScreenView.leadingAnchor, constant: AppSpacing.s(20)),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: retroScreenView.trailingAnchor, constant: -AppSpacing.s(20)),
         ])
     }
 
@@ -366,15 +366,15 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelWordButton.translatesAutoresizingMaskIntoConstraints = false
 
         retroKeypadGrid.axis = .vertical
-        retroKeypadGrid.spacing = 10
+        retroKeypadGrid.spacing = AppSpacing.s(10)
         retroKeypadGrid.distribution = .fillEqually
 
         retroKeypadRowTop.axis = .horizontal
-        retroKeypadRowTop.spacing = 12
+        retroKeypadRowTop.spacing = AppSpacing.s(12)
         retroKeypadRowTop.distribution = .fill
 
         retroKeypadRowBottom.axis = .horizontal
-        retroKeypadRowBottom.spacing = 12
+        retroKeypadRowBottom.spacing = AppSpacing.s(12)
         retroKeypadRowBottom.distribution = .fillEqually
 
         retroKeyButtons = [retroFolderButton, retroWordButton, retroSortButton, retroAddButton]
@@ -434,49 +434,49 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
         retroShellBottomConstraint = {
             if #available(iOS 15.0, *) {
-                return retroShellView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -16)
+                return retroShellView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -AppSpacing.s(16))
             }
-            return retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            return retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16))
         }()
 
-        keypadTopConstraint = retroKeypadView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: 12)
-        clickWheelTopConstraint = retroClickWheelView.topAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: 16)
-        clickWheelBottomConstraint = retroClickWheelView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -16)
-        screenBottomConstraint = retroScreenView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -16)
+        keypadTopConstraint = retroKeypadView.topAnchor.constraint(equalTo: retroScreenView.bottomAnchor, constant: AppSpacing.s(12))
+        clickWheelTopConstraint = retroClickWheelView.topAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: AppSpacing.s(16))
+        clickWheelBottomConstraint = retroClickWheelView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -AppSpacing.s(16))
+        screenBottomConstraint = retroScreenView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -AppSpacing.s(16))
 
         NSLayoutConstraint.activate([
-            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(28)),
+            retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(28)),
             retroShellBottomConstraint!,
 
-            retroSpeakerView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: 12),
+            retroSpeakerView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: AppSpacing.s(12)),
             retroSpeakerView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
             retroSpeakerView.widthAnchor.constraint(equalToConstant: 72),
             retroSpeakerView.heightAnchor.constraint(equalToConstant: 6),
 
-            retroAntennaView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 44),
-            retroAntennaView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: -60),
+            retroAntennaView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: AppSpacing.s(44)),
+            retroAntennaView.topAnchor.constraint(equalTo: retroShellView.topAnchor, constant: -AppSpacing.s(60)),
             retroAntennaView.widthAnchor.constraint(equalToConstant: 20),
             retroAntennaView.heightAnchor.constraint(equalToConstant: 85),
 
             retroAntennaTipView.centerXAnchor.constraint(equalTo: retroAntennaView.centerXAnchor),
-            retroAntennaTipView.bottomAnchor.constraint(equalTo: retroAntennaView.topAnchor, constant: 4),
+            retroAntennaTipView.bottomAnchor.constraint(equalTo: retroAntennaView.topAnchor, constant: AppSpacing.s(4)),
             retroAntennaTipView.widthAnchor.constraint(equalToConstant: 24),
             retroAntennaTipView.heightAnchor.constraint(equalToConstant: 24),
 
             retroBadgeLabel.centerYAnchor.constraint(equalTo: retroSpeakerView.centerYAnchor),
-            retroBadgeLabel.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -16),
+            retroBadgeLabel.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -AppSpacing.s(16)),
             retroBadgeLabel.widthAnchor.constraint(equalToConstant: 44),
             retroBadgeLabel.heightAnchor.constraint(equalToConstant: 20),
 
-            retroScreenView.topAnchor.constraint(equalTo: retroSpeakerView.bottomAnchor, constant: 4),
-            retroScreenView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 12),
-            retroScreenView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -12),
+            retroScreenView.topAnchor.constraint(equalTo: retroSpeakerView.bottomAnchor, constant: AppSpacing.s(4)),
+            retroScreenView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: AppSpacing.s(12)),
+            retroScreenView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -AppSpacing.s(12)),
 
             keypadTopConstraint!,
-            retroKeypadView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: 16),
-            retroKeypadView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -16),
+            retroKeypadView.leadingAnchor.constraint(equalTo: retroShellView.leadingAnchor, constant: AppSpacing.s(16)),
+            retroKeypadView.trailingAnchor.constraint(equalTo: retroShellView.trailingAnchor, constant: -AppSpacing.s(16)),
 
             clickWheelTopConstraint!,
             retroClickWheelView.centerXAnchor.constraint(equalTo: retroShellView.centerXAnchor),
@@ -488,29 +488,29 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             retroClickWheelCenterView.heightAnchor.constraint(equalToConstant: 48),
 
             retroClickWheelVerticalDivider.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
-            retroClickWheelVerticalDivider.topAnchor.constraint(equalTo: retroClickWheelView.topAnchor, constant: 18),
-            retroClickWheelVerticalDivider.bottomAnchor.constraint(equalTo: retroClickWheelView.bottomAnchor, constant: -18),
+            retroClickWheelVerticalDivider.topAnchor.constraint(equalTo: retroClickWheelView.topAnchor, constant: AppSpacing.s(18)),
+            retroClickWheelVerticalDivider.bottomAnchor.constraint(equalTo: retroClickWheelView.bottomAnchor, constant: -AppSpacing.s(18)),
             retroClickWheelVerticalDivider.widthAnchor.constraint(equalToConstant: 2),
 
             retroClickWheelHorizontalDivider.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
-            retroClickWheelHorizontalDivider.leadingAnchor.constraint(equalTo: retroClickWheelView.leadingAnchor, constant: 18),
-            retroClickWheelHorizontalDivider.trailingAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -18),
+            retroClickWheelHorizontalDivider.leadingAnchor.constraint(equalTo: retroClickWheelView.leadingAnchor, constant: AppSpacing.s(18)),
+            retroClickWheelHorizontalDivider.trailingAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -AppSpacing.s(18)),
             retroClickWheelHorizontalDivider.heightAnchor.constraint(equalToConstant: 2),
 
             retroClickWheelFolderButton.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
-            retroClickWheelFolderButton.centerXAnchor.constraint(equalTo: retroClickWheelView.leadingAnchor, constant: 35),
+            retroClickWheelFolderButton.centerXAnchor.constraint(equalTo: retroClickWheelView.leadingAnchor, constant: AppSpacing.s(35)),
             retroClickWheelFolderButton.widthAnchor.constraint(equalToConstant: 50),
             retroClickWheelFolderButton.heightAnchor.constraint(equalToConstant: 32),
 
             retroClickWheelWordButton.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor),
-            retroClickWheelWordButton.centerXAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -35),
+            retroClickWheelWordButton.centerXAnchor.constraint(equalTo: retroClickWheelView.trailingAnchor, constant: -AppSpacing.s(35)),
             retroClickWheelWordButton.widthAnchor.constraint(equalToConstant: 50),
             retroClickWheelWordButton.heightAnchor.constraint(equalToConstant: 32),
 
-            retroKeypadGrid.topAnchor.constraint(equalTo: retroKeypadView.topAnchor, constant: 6),
-            retroKeypadGrid.leadingAnchor.constraint(equalTo: retroKeypadView.leadingAnchor, constant: 12),
-            retroKeypadGrid.trailingAnchor.constraint(equalTo: retroKeypadView.trailingAnchor, constant: -12),
-            retroKeypadGrid.bottomAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: -6),
+            retroKeypadGrid.topAnchor.constraint(equalTo: retroKeypadView.topAnchor, constant: AppSpacing.s(6)),
+            retroKeypadGrid.leadingAnchor.constraint(equalTo: retroKeypadView.leadingAnchor, constant: AppSpacing.s(12)),
+            retroKeypadGrid.trailingAnchor.constraint(equalTo: retroKeypadView.trailingAnchor, constant: -AppSpacing.s(12)),
+            retroKeypadGrid.bottomAnchor.constraint(equalTo: retroKeypadView.bottomAnchor, constant: -AppSpacing.s(6)),
 
         ])
 
@@ -563,7 +563,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         themeTitleLabel.textAlignment = .left
 
         themeStack.axis = .horizontal
-        themeStack.spacing = 12
+        themeStack.spacing = AppSpacing.s(12)
         themeStack.alignment = .center
         themeStack.distribution = .fillEqually
         themeStack.translatesAutoresizingMaskIntoConstraints = false
@@ -583,13 +583,13 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         themeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            themeTitleLabel.topAnchor.constraint(equalTo: themeHeader.topAnchor, constant: 12),
-            themeTitleLabel.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: 20),
-            themeTitleLabel.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -20),
+            themeTitleLabel.topAnchor.constraint(equalTo: themeHeader.topAnchor, constant: AppSpacing.s(12)),
+            themeTitleLabel.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: AppSpacing.s(20)),
+            themeTitleLabel.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -AppSpacing.s(20)),
 
-            themeStack.topAnchor.constraint(equalTo: themeTitleLabel.bottomAnchor, constant: 12),
-            themeStack.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: 20),
-            themeStack.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -20),
+            themeStack.topAnchor.constraint(equalTo: themeTitleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            themeStack.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: AppSpacing.s(20)),
+            themeStack.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -AppSpacing.s(20)),
             themeStack.heightAnchor.constraint(equalToConstant: 36),
         ])
 
@@ -977,7 +977,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 8
+        stack.spacing = AppSpacing.s(8)
 
         let listButton = makeWordMenuButton(title: "単語一覧", action: #selector(handleWordMenuList))
         let addButton = makeWordMenuButton(title: "単語追加", action: #selector(handleWordMenuAdd))
@@ -1003,17 +1003,17 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             container.centerXAnchor.constraint(equalTo: retroClickWheelView.centerXAnchor),
             container.centerYAnchor.constraint(equalTo: retroClickWheelView.centerYAnchor, constant: -110),
             container.widthAnchor.constraint(equalToConstant: 240),
-            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
-            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
 
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: AppSpacing.s(16)),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         wordMenuOverlay = overlay
@@ -1136,10 +1136,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             container.translatesAutoresizingMaskIntoConstraints = false
             cell.contentView.insertSubview(container, at: 0)
             NSLayoutConstraint.activate([
-                container.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 12),
-                container.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -12),
-                container.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 6),
-                container.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -6),
+                container.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: AppSpacing.s(12)),
+                container.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -AppSpacing.s(12)),
+                container.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: AppSpacing.s(6)),
+                container.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -AppSpacing.s(6)),
             ])
         }
 
@@ -1401,7 +1401,7 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
 
     private func configureButtons() {
         buttonStack.axis = .horizontal
-        buttonStack.spacing = 16
+        buttonStack.spacing = AppSpacing.s(16)
         buttonStack.distribution = .fillEqually
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -1415,9 +1415,9 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         view.addSubview(buttonStack)
 
         NSLayoutConstraint.activate([
-            buttonStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            buttonStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            buttonStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            buttonStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
+            buttonStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            buttonStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
         ])
     }
 
@@ -1452,7 +1452,7 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         view.addSubview(tableView)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: buttonStack.bottomAnchor, constant: 12),
+            tableView.topAnchor.constraint(equalTo: buttonStack.bottomAnchor, constant: AppSpacing.s(12)),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -1490,8 +1490,8 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         NSLayoutConstraint.activate([
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
         ])
     }
 
@@ -1893,9 +1893,9 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
         view.addSubview(nameTextField)
 
         NSLayoutConstraint.activate([
-            nameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            nameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            nameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            nameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
+            nameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            nameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
             nameTextField.heightAnchor.constraint(equalToConstant: 40),
         ])
     }
@@ -1912,7 +1912,7 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
         view.addSubview(tableView)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: 12),
+            tableView.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: AppSpacing.s(12)),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -1929,8 +1929,8 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
         NSLayoutConstraint.activate([
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
         ])
     }
 
@@ -2112,8 +2112,8 @@ final class SetEditWordsViewController: UIViewController, UITableViewDataSource,
         NSLayoutConstraint.activate([
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            emptyLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
         ])
     }
 

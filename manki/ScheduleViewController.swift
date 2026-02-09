@@ -158,35 +158,35 @@ final class ScheduleViewController: UIViewController {
         view.addSubview(emptyLabel)
 
         var constraints: [NSLayoutConstraint] = [
-            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(8)),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
 
-            monthHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            monthHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            monthHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            monthHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
+            monthHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            monthHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            weekStack.topAnchor.constraint(equalTo: monthHeader.bottomAnchor, constant: 6),
-            weekStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            weekStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            weekStack.topAnchor.constraint(equalTo: monthHeader.bottomAnchor, constant: AppSpacing.s(6)),
+            weekStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+            weekStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            calendarCollectionView.topAnchor.constraint(equalTo: weekStack.bottomAnchor, constant: 4),
-            calendarCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            calendarCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            calendarCollectionView.topAnchor.constraint(equalTo: weekStack.bottomAnchor, constant: AppSpacing.s(4)),
+            calendarCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(12)),
+            calendarCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(12)),
             calendarCollectionView.heightAnchor.constraint(lessThanOrEqualToConstant: 300),
 
-            addButton.topAnchor.constraint(equalTo: calendarCollectionView.bottomAnchor, constant: 8),
+            addButton.topAnchor.constraint(equalTo: calendarCollectionView.bottomAnchor, constant: AppSpacing.s(8)),
             addButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
         ]
 
         if showCountdown {
             constraints.append(contentsOf: [
-                countdownLabel.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 10),
-                countdownLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-                countdownLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-                tableView.topAnchor.constraint(equalTo: countdownLabel.bottomAnchor, constant: 12),
+                countdownLabel.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: AppSpacing.s(10)),
+                countdownLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
+                countdownLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
+                tableView.topAnchor.constraint(equalTo: countdownLabel.bottomAnchor, constant: AppSpacing.s(12)),
             ])
         } else {
-            constraints.append(tableView.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 12))
+            constraints.append(tableView.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: AppSpacing.s(12)))
         }
 
         constraints.append(contentsOf: [
@@ -196,8 +196,8 @@ final class ScheduleViewController: UIViewController {
 
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            emptyLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            emptyLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
+            emptyLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
         ])
 
         NSLayoutConstraint.activate(constraints)

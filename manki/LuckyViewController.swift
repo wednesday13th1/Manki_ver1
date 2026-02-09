@@ -78,19 +78,19 @@ final class LuckyViewController: UIViewController {
         omikujiCard.addSubview(sealLabel)
 
         NSLayoutConstraint.activate([
-            omikujiTitleLabel.topAnchor.constraint(equalTo: omikujiCard.topAnchor, constant: 16),
-            omikujiTitleLabel.leadingAnchor.constraint(equalTo: omikujiCard.leadingAnchor, constant: 16),
-            omikujiTitleLabel.trailingAnchor.constraint(equalTo: omikujiCard.trailingAnchor, constant: -16),
+            omikujiTitleLabel.topAnchor.constraint(equalTo: omikujiCard.topAnchor, constant: AppSpacing.s(16)),
+            omikujiTitleLabel.leadingAnchor.constraint(equalTo: omikujiCard.leadingAnchor, constant: AppSpacing.s(16)),
+            omikujiTitleLabel.trailingAnchor.constraint(equalTo: omikujiCard.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            messageLabel.topAnchor.constraint(equalTo: omikujiTitleLabel.bottomAnchor, constant: 12),
-            messageLabel.leadingAnchor.constraint(equalTo: omikujiCard.leadingAnchor, constant: 16),
-            messageLabel.trailingAnchor.constraint(equalTo: omikujiCard.trailingAnchor, constant: -16),
+            messageLabel.topAnchor.constraint(equalTo: omikujiTitleLabel.bottomAnchor, constant: AppSpacing.s(12)),
+            messageLabel.leadingAnchor.constraint(equalTo: omikujiCard.leadingAnchor, constant: AppSpacing.s(16)),
+            messageLabel.trailingAnchor.constraint(equalTo: omikujiCard.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            sealLabel.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 16),
+            sealLabel.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: AppSpacing.s(16)),
             sealLabel.centerXAnchor.constraint(equalTo: omikujiCard.centerXAnchor),
             sealLabel.widthAnchor.constraint(equalToConstant: 44),
             sealLabel.heightAnchor.constraint(equalToConstant: 44),
-            sealLabel.bottomAnchor.constraint(equalTo: omikujiCard.bottomAnchor, constant: -16),
+            sealLabel.bottomAnchor.constraint(equalTo: omikujiCard.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
 
         let stack = UIStackView(arrangedSubviews: [
@@ -101,14 +101,14 @@ final class LuckyViewController: UIViewController {
             collectionButton
         ])
         stack.axis = .vertical
-        stack.spacing = 16
+        stack.spacing = AppSpacing.s(16)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(32)),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(32)),
             drawButton.heightAnchor.constraint(equalToConstant: 44),
             collectionButton.heightAnchor.constraint(equalToConstant: 44)
         ])
