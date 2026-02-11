@@ -1406,8 +1406,10 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
 
         flipButton.setTitle("フリップ", for: .normal)
+        flipButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         flipButton.addTarget(self, action: #selector(openFlip), for: .touchUpInside)
         testButton.setTitle("テスト", for: .normal)
+        testButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
         testButton.addTarget(self, action: #selector(openTest), for: .touchUpInside)
 
         buttonStack.addArrangedSubview(flipButton)
