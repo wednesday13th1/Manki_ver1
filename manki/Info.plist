@@ -5,11 +5,11 @@
 	<key>GeminiAPIKey</key>
 	<string>AIzaSyDuSLNEx3ihh4R-tS9kPlgBqxynaBQk4XE</string>
 	<key>NSCameraUsageDescription</key>
-	<string>ステッカー用の写真を撮影するためにカメラを使用します。</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>近くの端末と共有・コラボするためにローカルネットワークを使用します。</string>
+	<string>単語帳の画像から単語を読み取るためにカメラを使用します。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>ステッカー用の写真を選ぶためにフォトライブラリを使用します。</string>
+	<string>単語帳の画像を読み取るために写真へのアクセスが必要です。</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>読み取り用の画像を一時的に保存する場合があります。</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_manki-share._tcp</string>

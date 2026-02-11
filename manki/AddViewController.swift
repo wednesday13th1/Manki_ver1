@@ -6,13 +6,17 @@
 //
 
 import UIKit
+import Vision
+import AVFoundation
+import FoundationModels
 
-final class AddViewController: UIViewController {
+final class AddViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     @IBOutlet private var englishTextField: UITextField!
     @IBOutlet private var japaneseTextField: UITextField!
 
     private let generateImageButton = UIButton(type: .system)
+    private let ocrButton = UIButton(type: .system)
     private let importButton = UIButton(type: .system)
     private let previewImageView = UIImageView()
 
@@ -38,6 +42,8 @@ final class AddViewController: UIViewController {
     private var importContainer: UIView?
     private var importTextView: UITextView?
     private var themeObserver: NSObjectProtocol?
+    private var ocrTask: Task<Void, Never>?
+    private let ocrService = VisionTextRecognitionService()
 
     private enum PendingImageSource {
         case generated
@@ -51,7 +57,7 @@ final class AddViewController: UIViewController {
         englishTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         japaneseTextField.addTarget(self, action: #selector(textFieldEdited), for: .editingChanged)
         configurePreviewImageView()
-        configureImportButton()
+        configureImportButtons()
         applyPixelFonts()
         applyPixelNavigationFonts()
         applyTheme()
@@ -147,6 +153,112 @@ final class AddViewController: UIViewController {
         present(nav, animated: true)
     }
 
+    @objc private func openOCRMenu() {
+        let alert = UIAlertController(title: "画像から追加", message: nil, preferredStyle: .actionSheet)
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            alert.addAction(UIAlertAction(title: "カメラ", style: .default) { [weak self] _ in
+                self?.requestCameraAndPresentPicker()
+            })
+        }
+        alert.addAction(UIAlertAction(title: "写真を選ぶ", style: .default) { [weak self] _ in
+            self?.presentImagePicker(sourceType: .photoLibrary)
+        })
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = ocrButton
+            popover.sourceRect = ocrButton.bounds
+        }
+        present(alert, animated: true)
+    }
+
+    private func requestCameraAndPresentPicker() {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
+        case .authorized:
+            presentImagePicker(sourceType: .camera)
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self?.presentImagePicker(sourceType: .camera)
+                    } else {
+                        self?.showAlert(title: "カメラ許可", message: "カメラへのアクセスが拒否されました。設定から許可してください。")
+                    }
+                }
+            }
+        default:
+            showAlert(title: "カメラ許可", message: "カメラへのアクセスが拒否されています。設定から許可してください。")
+        }
+    }
+
+    private func presentImagePicker(sourceType: UIImagePickerController.SourceType) {
+        guard UIImagePickerController.isSourceTypeAvailable(sourceType) else {
+            showAlert(title: "利用不可", message: "このデバイスでは使用できません。")
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.sourceType = sourceType
+        picker.delegate = self
+        picker.modalPresentationStyle = .fullScreen
+        present(picker, animated: true)
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        picker.dismiss(animated: true)
+        guard let image = info[.originalImage] as? UIImage else { return }
+        startOCR(with: image)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
+
+    private func startOCR(with image: UIImage) {
+        ocrTask?.cancel()
+        setOCRProcessing(true)
+        ocrTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let text = try await ocrService.recognizeText(from: image)
+                await MainActor.run {
+                    self.setOCRProcessing(false)
+                    self.presentOCRPreview(text: text)
+                }
+            } catch {
+                await MainActor.run {
+                    self.setOCRProcessing(false)
+                    self.showAlert(title: "OCRエラー", message: error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func presentOCRPreview(text: String) {
+        let rows = ImportParser.parse(text: text, mode: .auto)
+        guard !rows.isEmpty else {
+            showAlert(title: "OCR結果なし", message: "読み取れる単語がありませんでした。")
+            return
+        }
+        let session = ImportSession(sourceText: text, rows: rows, mode: .auto)
+        let preview = ImportPreviewViewController(session: session)
+        preview.onConfirm = { [weak self] rows in
+            self?.handleImportedRows(rows)
+        }
+        navigationController?.pushViewController(preview, animated: true)
+    }
+
+    private func setOCRProcessing(_ processing: Bool) {
+        ocrButton.isEnabled = !processing
+        importButton.isEnabled = !processing
+        generateImageButton.isEnabled = !processing
+        if processing {
+            ocrButton.setTitle("読み取り中...", for: .normal)
+        } else {
+            ocrButton.setTitle("画像から単語を追加", for: .normal)
+        }
+    }
+
     private func savedWordsFileURL() -> URL {
         let documents = FileManager.default.urls(for: .documentDirectory,
                                                  in: .userDomainMask).first!
@@ -238,14 +350,24 @@ final class AddViewController: UIViewController {
         previewMinHeight.isActive = true
     }
 
-    private func configureImportButton() {
+    private func configureImportButtons() {
+        ocrButton.translatesAutoresizingMaskIntoConstraints = false
+        ocrButton.setTitle("画像から単語を追加", for: .normal)
+        ocrButton.addTarget(self, action: #selector(openOCRMenu), for: .touchUpInside)
+
         importButton.translatesAutoresizingMaskIntoConstraints = false
         importButton.setTitle("Google Sheet/CSVから追加", for: .normal)
         importButton.addTarget(self, action: #selector(openImportModal), for: .touchUpInside)
+        view.addSubview(ocrButton)
         view.addSubview(importButton)
 
         NSLayoutConstraint.activate([
-            importButton.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: AppSpacing.s(14)),
+            ocrButton.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: AppSpacing.s(14)),
+            ocrButton.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
+            ocrButton.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
+            ocrButton.heightAnchor.constraint(equalToConstant: 44),
+
+            importButton.topAnchor.constraint(equalTo: ocrButton.bottomAnchor, constant: AppSpacing.s(10)),
             importButton.leadingAnchor.constraint(equalTo: previewImageView.leadingAnchor),
             importButton.trailingAnchor.constraint(equalTo: previewImageView.trailingAnchor),
             importButton.heightAnchor.constraint(equalToConstant: 44),
@@ -290,6 +412,7 @@ final class AddViewController: UIViewController {
         ThemeManager.applyBackground(to: view)
         ThemeManager.applyNavigationAppearance(to: navigationController)
         ThemeManager.stylePrimaryButton(generateImageButton)
+        ThemeManager.styleSecondaryButton(ocrButton)
         ThemeManager.styleSecondaryButton(importButton)
     }
 
@@ -814,4 +937,95 @@ private struct GeminiErrorResponse: Decodable {
         let message: String?
     }
     let error: ErrorDetail?
+}
+
+// MARK: - OCR (Vision)
+@MainActor
+final class VisionTextRecognitionService {
+    var isProcessing = false
+    var recognizedText = ""
+    var errorMessage: String?
+
+    func recognizeText(from image: UIImage) async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            isProcessing = true
+            errorMessage = nil
+
+            guard let cgImage = image.cgImage else {
+                isProcessing = false
+                continuation.resume(throwing: VisionError.invalidImage)
+                return
+            }
+
+            let request = VNRecognizeTextRequest { request, error in
+                DispatchQueue.main.async {
+                    self.isProcessing = false
+
+                    if let error = error {
+                        self.errorMessage = error.localizedDescription
+                        continuation.resume(throwing: error)
+                        return
+                    }
+
+                    guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                        let error = VisionError.noTextFound
+                        self.errorMessage = error.localizedDescription
+                        continuation.resume(throwing: error)
+                        return
+                    }
+
+                    var recognizedStrings: [String] = []
+                    for observation in observations {
+                        guard let topCandidate = observation.topCandidates(1).first else { continue }
+                        recognizedStrings.append(topCandidate.string)
+                    }
+
+                    let recognizedText = recognizedStrings.joined(separator: "\n")
+                    self.recognizedText = recognizedText
+
+                    if recognizedText.isEmpty {
+                        let error = VisionError.noTextFound
+                        self.errorMessage = error.localizedDescription
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: recognizedText)
+                    }
+                }
+            }
+
+            request.recognitionLevel = .accurate
+            request.usesLanguageCorrection = false
+            request.revision = VNRecognizeTextRequestRevision3
+            request.automaticallyDetectsLanguage = false
+            request.recognitionLanguages = ["ja-JP", "en-US"]
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+            } catch {
+                DispatchQueue.main.async {
+                    self.isProcessing = false
+                    self.errorMessage = error.localizedDescription
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
+
+enum VisionError: LocalizedError {
+    case invalidImage
+    case noTextFound
+    case processingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidImage:
+            return "画像の形式が無効です"
+        case .noTextFound:
+            return "画像内にテキストが見つかりませんでした"
+        case .processingFailed:
+            return "テキスト認識に失敗しました"
+        }
+    }
 }

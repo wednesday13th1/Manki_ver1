@@ -79,7 +79,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var wordMenuContainer: UIView?
     private var wordMenuTitleLabel: UILabel?
     private var wordMenuButtons: [UIButton] = []
-    private let shareManager = SetSharePlayManager.shared
 
     init(folderID: String?, showsAll: Bool = false) {
         self.folderID = folderID
@@ -112,8 +111,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         ) { [weak self] _ in
             self?.applyTheme()
         }
-        setupShareManager()
-
         let addButton = UIBarButtonItem(title: "追加",
                                         style: .plain,
                                         target: self,
@@ -144,7 +141,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         navigationController?.setNavigationBarHidden(false, animated: false)
-        shareManager.stop()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -153,7 +149,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.delegate = self
         tableView.allowsSelection = true
         tableView.allowsSelectionDuringEditing = true
-        shareManager.start()
     }
 
     override func viewDidLayoutSubviews() {
@@ -680,22 +675,36 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
         var actions = sets.map { set in
             UnifiedModalAction(title: set.name) { [weak self] in
-                self?.sendSetToGroup(set)
+                self?.shareSet(set)
             }
         }
         actions.append(UnifiedModalAction(title: "キャンセル", style: .cancel))
         presentUnifiedModal(title: "共有するセット",
-                            message: "SharePlay中の参加者に送信されます。",
+                            message: "AirDropや共有先へ送信します。",
                             actions: actions)
     }
 
-    private func sendSetToGroup(_ set: SavedSet) {
+    private func shareSet(_ set: SavedSet) {
         let data = buildShareData(for: set)
         guard !data.isEmpty else {
             showAlert(title: "共有エラー", message: "データの作成に失敗しました。")
             return
         }
-        shareManager.send(data)
+        let safeName = sanitizeFileName(set.name.isEmpty ? "set" : set.name)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(safeName).manki.json")
+        do {
+            try data.write(to: fileURL, options: .atomic)
+        } catch {
+            showAlert(title: "共有エラー", message: "ファイルの作成に失敗しました。")
+            return
+        }
+        let activity = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+        if let popover = activity.popoverPresentationController {
+            popover.sourceView = retroClickWheelWordButton
+            popover.sourceRect = retroClickWheelWordButton.bounds
+        }
+        present(activity, animated: true)
     }
 
     private func buildShareData(for set: SavedSet) -> Data {
@@ -727,79 +736,11 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         let words: [SavedWord]
     }
 
-    private func setupShareManager() {
-        shareManager.onReceiveData = { [weak self] data in
-            DispatchQueue.main.async {
-                self?.handleReceivedShare(data: data)
-            }
-        }
-        shareManager.onStatus = { [weak self] text in
-            DispatchQueue.main.async {
-                self?.retroBadgeLabel.text = "共有"
-                self?.retroBadgeLabel.accessibilityLabel = text
-            }
-        }
-        shareManager.onError = { [weak self] text in
-            DispatchQueue.main.async {
-                self?.showAlert(title: "共有エラー", message: text)
-            }
-        }
-    }
-
-    private func handleReceivedShare(data: Data) {
-        guard let payload = try? JSONDecoder().decode(SharedWordSet.self, from: data) else {
-            showAlert(title: "受信エラー", message: "データの読み込みに失敗しました。")
-            return
-        }
-        importSharedSet(payload)
-        reloadData()
-        showAlert(title: "受信完了", message: "\(payload.set.name) を追加しました。")
-    }
-
-    private func importSharedSet(_ payload: SharedWordSet) {
-        var savedWords = loadSavedWords()
-        var existingByID: [String: SavedWord] = [:]
-        savedWords.forEach { existingByID[$0.id] = $0 }
-
-        var idMap: [String: String] = [:]
-        for word in payload.words {
-            if let existing = existingByID[word.id] {
-                if existing.english == word.english && existing.japanese == word.japanese {
-                    idMap[word.id] = word.id
-                } else {
-                    let newWord = SavedWord(english: word.english,
-                                            japanese: word.japanese,
-                                            illustrationScenario: word.illustrationScenario,
-                                            illustrationImageFileName: word.illustrationImageFileName,
-                                            isFavorite: word.isFavorite,
-                                            importanceLevel: word.importanceLevel)
-                    savedWords.append(newWord)
-                    idMap[word.id] = newWord.id
-                }
-            } else {
-                savedWords.append(word)
-                idMap[word.id] = word.id
-            }
-        }
-        saveSavedWords(savedWords)
-
-        var sets = SetStore.loadSets()
-        let newName = uniqueSetName(payload.set.name, existing: sets.map { $0.name })
-        let newIDs = payload.set.wordIDs.compactMap { idMap[$0] }
-        let newSet = SavedSet(name: newName,
-                              wordIDs: newIDs,
-                              folderID: payload.set.folderID)
-        sets.append(newSet)
-        SetStore.saveSets(sets)
-    }
-
-    private func uniqueSetName(_ base: String, existing: [String]) -> String {
-        if !existing.contains(base) { return base }
-        var index = 2
-        while existing.contains("\(base) (共有\(index))") {
-            index += 1
-        }
-        return "\(base) (共有\(index))"
+    private func sanitizeFileName(_ name: String) -> String {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_-"))
+        let scalars = name.unicodeScalars.map { allowed.contains($0) ? Character($0) : "-" }
+        let trimmed = String(scalars).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        return trimmed.isEmpty ? "set" : trimmed
     }
 
     private func openWordListForEditing(_ editing: Bool,

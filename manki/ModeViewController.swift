@@ -53,11 +53,6 @@ class ModeViewController: UIViewController {
         action: #selector(goToSticker)
     )
 
-    private lazy var collabButton: UIButton = makeButton(
-        title: "コラボ",
-        action: #selector(goToCollab)
-    )
-
     private func setupUI() {
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         backgroundImageView.contentMode = .scaleAspectFill
@@ -77,7 +72,6 @@ class ModeViewController: UIViewController {
             tabBarButton,
             goalButton,
             stickerButton,
-            collabButton,
             settingButton
         ])
         stack.axis = .vertical
@@ -146,13 +140,6 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
-    @objc private func goToCollab() {
-        let controller = TurnCollabViewController()
-        let nav = UINavigationController(rootViewController: controller)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
-    }
-
     @objc private func goToGoal() {
         let controller = GoalViewController()
         let nav = UINavigationController(rootViewController: controller)
@@ -172,7 +159,6 @@ class ModeViewController: UIViewController {
         ThemeManager.stylePrimaryButton(tabBarButton)
         ThemeManager.stylePrimaryButton(goalButton)
         ThemeManager.stylePrimaryButton(stickerButton)
-        ThemeManager.stylePrimaryButton(collabButton)
         ThemeManager.styleSecondaryButton(settingButton)
     }
 

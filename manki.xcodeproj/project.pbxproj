@@ -383,6 +383,9 @@
 				DEVELOPMENT_TEAM = K835B55P2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = manki/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "ステッカー用の写真を撮影するためにカメラを使用します。";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "近くの端末と共有・コラボするためにローカルネットワークを使用します。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ステッカー用の写真を選ぶためにフォトライブラリを使用します。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -411,6 +414,9 @@
 				DEVELOPMENT_TEAM = K835B55P2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = manki/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "ステッカー用の写真を撮影するためにカメラを使用します。";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "近くの端末と共有・コラボするためにローカルネットワークを使用します。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ステッカー用の写真を選ぶためにフォトライブラリを使用します。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
