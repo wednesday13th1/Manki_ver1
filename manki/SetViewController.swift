@@ -279,6 +279,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     private func configureSearch() {
         searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "セット名で検索"
         searchController.searchBar.sizeToFit()
@@ -1405,6 +1406,7 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
 
     private func configureSearch() {
         searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "単語で検索"
         searchController.searchBar.sizeToFit()
@@ -2010,14 +2012,32 @@ final class SetEditWordsViewController: UIViewController, UITableViewDataSource,
                                                             style: .done,
                                                             target: self,
                                                             action: #selector(saveChanges))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "並び替え",
-                                                           style: .plain,
-                                                           target: self,
-                                                           action: #selector(openSortMenu))
+        let backItem = UIBarButtonItem(title: "戻る",
+                                       style: .plain,
+                                       target: self,
+                                       action: #selector(goBack))
+        let sortItem = UIBarButtonItem(title: "並び替え",
+                                       style: .plain,
+                                       target: self,
+                                       action: #selector(openSortMenu))
+        navigationItem.leftBarButtonItems = [backItem, sortItem]
+        let pixelAttrs: [NSAttributedString.Key: Any] = [
+            .font: AppFont.jp(size: 14, weight: .bold)
+        ]
+        backItem.setTitleTextAttributes(pixelAttrs, for: .normal)
+        backItem.setTitleTextAttributes(pixelAttrs, for: .highlighted)
+        sortItem.setTitleTextAttributes(pixelAttrs, for: .normal)
+        sortItem.setTitleTextAttributes(pixelAttrs, for: .highlighted)
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes(pixelAttrs, for: .normal)
+        navigationItem.rightBarButtonItem?.setTitleTextAttributes(pixelAttrs, for: .highlighted)
         configureTableView()
         configureEmptyLabel()
         configureSearch()
         loadData()
+    }
+
+    @objc private func goBack() {
+        navigationController?.popViewController(animated: true)
     }
 
     private func configureTableView() {
@@ -2040,9 +2060,17 @@ final class SetEditWordsViewController: UIViewController, UITableViewDataSource,
 
     private func configureSearch() {
         searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "単語で検索"
+        searchController.searchBar.sizeToFit()
         tableView.tableHeaderView = searchController.searchBar
+        searchController.searchBar.frame = CGRect(
+            x: 0,
+            y: 0,
+            width: tableView.bounds.width,
+            height: searchController.searchBar.bounds.height
+        )
         definesPresentationContext = true
     }
 
