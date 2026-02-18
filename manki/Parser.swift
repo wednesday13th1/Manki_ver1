@@ -16,10 +16,12 @@ struct ImportParser {
         case .singleLine:
             return parseSingleLine(lines: lines)
         case .auto:
+            let delimiterRows = parseByDelimiter(lines: lines)
+            let alternatingRows = parseByAlternating(lines: lines)
             if looksLikeAlternating(lines: lines) {
-                return parseByAlternating(lines: lines)
+                return alternatingRows
             }
-            return parseByDelimiter(lines: lines)
+            return resolvedCount(in: alternatingRows) > resolvedCount(in: delimiterRows) ? alternatingRows : delimiterRows
         }
     }
 
@@ -66,7 +68,7 @@ struct ImportParser {
             let line = lines[i]
             if i + 1 < lines.count {
                 let next = lines[i + 1]
-                if isEnglishLike(line) || isJapaneseLike(next) {
+                if isEnglishLike(line) && isJapaneseLike(next) {
                     rows.append(ImportRow(term: line,
                                           meaning: next,
                                           confidence: 0.6,
@@ -130,6 +132,14 @@ struct ImportParser {
         return matches >= 2
     }
 
+    private static func resolvedCount(in rows: [ImportRow]) -> Int {
+        rows.reduce(into: 0) { count, row in
+            if row.isResolved {
+                count += 1
+            }
+        }
+    }
+
     private static func isEnglishLike(_ text: String) -> Bool {
         // ASCII比率が高ければ英語っぽいと判定
         let letters = text.filter { $0.isLetter }
@@ -157,5 +167,28 @@ struct ImportParser {
             return true
         }
         return false
+    }
+
+    static func normalizeOCRLine(_ line: String) -> String? {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        // 語番(0963 など)を除去
+        let noIndex = trimmed.replacingOccurrences(of: "^\\d{2,5}\\s*", with: "", options: .regularExpression)
+        let value = noIndex.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return nil }
+
+        // 発音記号のみの行は除外
+        if value.range(of: "^\\[[^\\]]+\\]$", options: .regularExpression) != nil {
+            return nil
+        }
+
+        // 品詞・注記のみの行は除外
+        let lower = value.lowercased()
+        if ["cf.", "cf", "n.", "v.", "adj.", "adv."].contains(lower) {
+            return nil
+        }
+
+        return value
     }
 }

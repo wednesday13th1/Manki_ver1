@@ -82,11 +82,11 @@ final class MainTabBarController: UITabBarController {
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = palette.surface
         let tabTitleAttributes: [NSAttributedString.Key: Any] = [
-            .font: AppFont.jp(size: 10, weight: .bold),
+            .font: AppFont.jp(size: 16, weight: .bold),
             .foregroundColor: palette.mutedText
         ]
         let tabSelectedAttributes: [NSAttributedString.Key: Any] = [
-            .font: AppFont.jp(size: 10, weight: .bold),
+            .font: AppFont.jp(size: 16, weight: .bold),
             .foregroundColor: palette.text
         ]
         [appearance.stackedLayoutAppearance,
@@ -94,9 +94,12 @@ final class MainTabBarController: UITabBarController {
          appearance.compactInlineLayoutAppearance].forEach { itemAppearance in
             itemAppearance.normal.titleTextAttributes = tabTitleAttributes
             itemAppearance.selected.titleTextAttributes = tabSelectedAttributes
+            itemAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -2)
+            itemAppearance.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -2)
         }
         tabBar.standardAppearance = appearance
         tabBar.scrollEdgeAppearance = appearance
+        tabBar.itemPositioning = .centered
         tabBar.tintColor = palette.text
         tabBar.unselectedItemTintColor = palette.mutedText
     }

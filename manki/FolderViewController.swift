@@ -189,7 +189,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         view.addSubview(retroShellView)
 
         NSLayoutConstraint.activate([
-            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(36)),
             retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(28)),
             retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(28)),
             retroShellView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),

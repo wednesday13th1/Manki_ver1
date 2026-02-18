@@ -7,6 +7,81 @@
 
 import UIKit
 
+private final class HeartButton: UIButton {
+    private let fillLayer = CAShapeLayer()
+    private let borderLayer = CAShapeLayer()
+    private var fillColor: UIColor = .systemYellow
+    private var borderColor: UIColor = .black
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        layer.insertSublayer(fillLayer, at: 0)
+        layer.insertSublayer(borderLayer, above: fillLayer)
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        layer.insertSublayer(fillLayer, at: 0)
+        layer.insertSublayer(borderLayer, above: fillLayer)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let rect = bounds.insetBy(dx: 0.4, dy: 0.4)
+        let path = heartBezierPath(in: rect).cgPath
+        fillLayer.frame = bounds
+        fillLayer.path = path
+        fillLayer.fillColor = fillColor.cgColor
+        fillLayer.strokeColor = UIColor.clear.cgColor
+
+        borderLayer.frame = bounds
+        borderLayer.path = path
+        borderLayer.fillColor = UIColor.clear.cgColor
+        borderLayer.strokeColor = borderColor.cgColor
+        borderLayer.lineWidth = 2
+
+        layer.shadowPath = path
+        layer.shadowColor = borderColor.cgColor
+        layer.shadowOpacity = 0.2
+        layer.shadowOffset = CGSize(width: 0, height: 3)
+        layer.shadowRadius = 4
+    }
+
+    func applyHeartStyle(fill: UIColor, border: UIColor, textColor: UIColor) {
+        fillColor = fill
+        borderColor = border
+        setTitleColor(textColor, for: .normal)
+        setNeedsLayout()
+    }
+
+    private func heartBezierPath(in rect: CGRect) -> UIBezierPath {
+        let w = rect.width
+        let h = rect.height
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: rect.minX + w * 0.5, y: rect.minY + h * 0.95))
+        path.addCurve(to: CGPoint(x: rect.minX + w * 0.05, y: rect.minY + h * 0.38),
+                      controlPoint1: CGPoint(x: rect.minX + w * 0.20, y: rect.minY + h * 0.86),
+                      controlPoint2: CGPoint(x: rect.minX + w * 0.05, y: rect.minY + h * 0.60))
+        path.addCurve(to: CGPoint(x: rect.minX + w * 0.28, y: rect.minY + h * 0.10),
+                      controlPoint1: CGPoint(x: rect.minX + w * 0.05, y: rect.minY + h * 0.20),
+                      controlPoint2: CGPoint(x: rect.minX + w * 0.16, y: rect.minY + h * 0.10))
+        path.addCurve(to: CGPoint(x: rect.minX + w * 0.50, y: rect.minY + h * 0.23),
+                      controlPoint1: CGPoint(x: rect.minX + w * 0.37, y: rect.minY + h * 0.10),
+                      controlPoint2: CGPoint(x: rect.minX + w * 0.46, y: rect.minY + h * 0.18))
+        path.addCurve(to: CGPoint(x: rect.minX + w * 0.72, y: rect.minY + h * 0.10),
+                      controlPoint1: CGPoint(x: rect.minX + w * 0.54, y: rect.minY + h * 0.18),
+                      controlPoint2: CGPoint(x: rect.minX + w * 0.63, y: rect.minY + h * 0.10))
+        path.addCurve(to: CGPoint(x: rect.minX + w * 0.95, y: rect.minY + h * 0.38),
+                      controlPoint1: CGPoint(x: rect.minX + w * 0.84, y: rect.minY + h * 0.10),
+                      controlPoint2: CGPoint(x: rect.minX + w * 0.95, y: rect.minY + h * 0.20))
+        path.addCurve(to: CGPoint(x: rect.minX + w * 0.5, y: rect.minY + h * 0.95),
+                      controlPoint1: CGPoint(x: rect.minX + w * 0.95, y: rect.minY + h * 0.60),
+                      controlPoint2: CGPoint(x: rect.minX + w * 0.80, y: rect.minY + h * 0.86))
+        path.close()
+        return path
+    }
+}
+
 class ModeViewController: UIViewController {
 
     private let backgroundImageView = UIImageView()
@@ -28,29 +103,24 @@ class ModeViewController: UIViewController {
         }
     }
 
-    private lazy var folderButton: UIButton = makeButton(
-        title: "フォルダへ",
-        action: #selector(goToFolder)
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateHeartButtons()
+    }
+
+    private lazy var studyButton: HeartButton = makeButton(
+        title: "Study",
+        action: #selector(goToStudyMenu)
     )
 
-    private lazy var tabBarButton: UIButton = makeButton(
-        title: "スケジュール/履歴へ",
-        action: #selector(goToTabBar)
+    private lazy var goalMenuButton: HeartButton = makeButton(
+        title: "Goal",
+        action: #selector(goToGoalMenu)
     )
 
-    private lazy var settingButton: UIButton = makeButton(
-        title: "設定",
+    private lazy var settingButton: HeartButton = makeButton(
+        title: "Setting",
         action: #selector(goToSetting)
-    )
-
-    private lazy var goalButton: UIButton = makeButton(
-        title: "目標設定",
-        action: #selector(goToGoal)
-    )
-
-    private lazy var stickerButton: UIButton = makeButton(
-        title: "ステッカーへ",
-        action: #selector(goToSticker)
     )
 
     private func setupUI() {
@@ -61,22 +131,20 @@ class ModeViewController: UIViewController {
 
         titleLabel.text = "MANKI"
         titleLabel.textAlignment = .center
-        subtitleLabel.text = "Study Mode"
+        subtitleLabel.text = "Select Mode"
         subtitleLabel.textAlignment = .center
 
         view.addSubview(backgroundImageView)
         let stack = UIStackView(arrangedSubviews: [
             titleLabel,
             subtitleLabel,
-            folderButton,
-            tabBarButton,
-            goalButton,
-            stickerButton,
+            studyButton,
+            goalMenuButton,
             settingButton
         ])
         stack.axis = .vertical
-        stack.alignment = .fill
-        stack.spacing = AppSpacing.s(14)
+        stack.alignment = .center
+        stack.spacing = AppSpacing.s(10)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stack)
@@ -91,25 +159,76 @@ class ModeViewController: UIViewController {
             centerY,
             stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),
-            stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7)
+            stack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.88),
+            stack.widthAnchor.constraint(greaterThanOrEqualToConstant: 260),
+
+            titleLabel.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            subtitleLabel.widthAnchor.constraint(equalTo: stack.widthAnchor),
+
+            studyButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.46),
+            goalMenuButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.46),
+            settingButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.46),
+
+            studyButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+            goalMenuButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+            settingButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+
+            studyButton.widthAnchor.constraint(lessThanOrEqualToConstant: 210),
+            goalMenuButton.widthAnchor.constraint(lessThanOrEqualToConstant: 210),
+            settingButton.widthAnchor.constraint(lessThanOrEqualToConstant: 210)
         ])
     }
 
-    private func makeButton(title: String, action: Selector) -> UIButton {
-        let button = UIButton(type: .system)
+    private func makeButton(title: String, action: Selector) -> HeartButton {
+        let button = HeartButton(frame: .zero)
         button.setTitle(title, for: .normal)
         button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
-        let preferredHeight = button.heightAnchor.constraint(equalToConstant: 48)
+        button.titleEdgeInsets = UIEdgeInsets(top: AppSpacing.s(6), left: 0, bottom: 0, right: 0)
+        let preferredHeight = button.heightAnchor.constraint(equalToConstant: 138)
         preferredHeight.priority = .defaultHigh
         preferredHeight.isActive = true
-        let minHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+        let minHeight = button.heightAnchor.constraint(greaterThanOrEqualToConstant: 126)
         minHeight.priority = .defaultLow
         minHeight.isActive = true
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
 
-    @objc private func goToFolder() {
+    @objc private func goToStudyMenu() {
+        let controller = ModeMenuViewController(
+            menuTitle: "Study",
+            firstButtonTitle: "ステッカー",
+            secondButtonTitle: "フォルダー"
+        )
+        controller.onFirstTapped = { [weak self] in
+            self?.openSticker()
+        }
+        controller.onSecondTapped = { [weak self] in
+            self?.openFolder()
+        }
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
+    @objc private func goToGoalMenu() {
+        let controller = ModeMenuViewController(
+            menuTitle: "Goal",
+            firstButtonTitle: "スケジュール/履歴",
+            secondButtonTitle: "目標設定"
+        )
+        controller.onFirstTapped = { [weak self] in
+            self?.openScheduleAndHistory()
+        }
+        controller.onSecondTapped = { [weak self] in
+            self?.openGoalSetting()
+        }
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
+    private func openFolder() {
         guard let nav = storyboard?.instantiateViewController(withIdentifier: "FolderNavigationController") else {
             return
         }
@@ -117,7 +236,7 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
-    @objc private func goToTabBar() {
+    private func openScheduleAndHistory() {
         guard let tabBar = storyboard?.instantiateViewController(withIdentifier: "MainTabBarController") else {
             return
         }
@@ -133,14 +252,14 @@ class ModeViewController: UIViewController {
         present(nav, animated: true)
     }
 
-    @objc private func goToSticker() {
+    private func openSticker() {
         let controller = StiCamViewController()
         let nav = UINavigationController(rootViewController: controller)
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true)
     }
 
-    @objc private func goToGoal() {
+    private func openGoalSetting() {
         let controller = GoalViewController()
         let nav = UINavigationController(rootViewController: controller)
         nav.modalPresentationStyle = .fullScreen
@@ -153,13 +272,20 @@ class ModeViewController: UIViewController {
         backgroundImageView.image = backgroundImage(for: ThemeManager.current)
         titleLabel.font = AppFont.title(size: 20)
         titleLabel.textColor = palette.text
-        subtitleLabel.font = AppFont.en(size: 22)
+        subtitleLabel.font = AppFont.jp(size: 18, weight: .bold)
         subtitleLabel.textColor = palette.mutedText
-        ThemeManager.stylePrimaryButton(folderButton)
-        ThemeManager.stylePrimaryButton(tabBarButton)
-        ThemeManager.stylePrimaryButton(goalButton)
-        ThemeManager.stylePrimaryButton(stickerButton)
-        ThemeManager.styleSecondaryButton(settingButton)
+        studyButton.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
+        goalMenuButton.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
+        settingButton.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
+        studyButton.applyHeartStyle(fill: palette.accent, border: palette.border, textColor: palette.text)
+        goalMenuButton.applyHeartStyle(fill: palette.accentStrong, border: palette.border, textColor: palette.text)
+        settingButton.applyHeartStyle(fill: palette.surfaceAlt, border: palette.border, textColor: palette.text)
+    }
+
+    private func updateHeartButtons() {
+        studyButton.setNeedsLayout()
+        goalMenuButton.setNeedsLayout()
+        settingButton.setNeedsLayout()
     }
 
     private func backgroundImage(for theme: AppTheme) -> UIImage? {

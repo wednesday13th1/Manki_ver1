@@ -60,6 +60,10 @@ final class ScheduleViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: false)
+        navigationItem.title = tabTitle
+        tabBarController?.title = tabTitle
+        tabBarController?.navigationItem.title = tabTitle
+        navigationController?.navigationBar.topItem?.title = tabTitle
         applyTheme()
         reloadItems()
         if showCountdown {
@@ -195,9 +199,10 @@ final class ScheduleViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: tableView.centerYAnchor),
             emptyLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(20)),
             emptyLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(20)),
+            emptyLabel.topAnchor.constraint(greaterThanOrEqualTo: tableView.topAnchor, constant: AppSpacing.s(20)),
         ])
 
         NSLayoutConstraint.activate(constraints)
@@ -234,17 +239,9 @@ final class ScheduleViewController: UIViewController {
             if days == 0 {
                 let text = "次の小テストは今日です！ (\(dateText))"
                 countdownLabel.text = text
-                navigationItem.title = text
-                tabBarController?.title = text
-                tabBarController?.navigationItem.title = text
-                navigationController?.navigationBar.topItem?.title = text
             } else {
                 let text = "次の小テストまであと \(days)日 (\(dateText))"
                 countdownLabel.text = text
-                navigationItem.title = text
-                tabBarController?.title = text
-                tabBarController?.navigationItem.title = text
-                navigationController?.navigationBar.topItem?.title = text
             }
             return
         }
@@ -256,10 +253,6 @@ final class ScheduleViewController: UIViewController {
                 ? "次の予定は今日です！ (\(dateText))"
                 : "次の予定まであと \(days)日 (\(dateText))"
             countdownLabel.text = text
-            navigationItem.title = text
-            tabBarController?.title = text
-            tabBarController?.navigationItem.title = text
-            navigationController?.navigationBar.topItem?.title = text
             return
         }
 
@@ -267,19 +260,11 @@ final class ScheduleViewController: UIViewController {
             let dateText = formatDate(latestQuiz)
             let text = "次の小テストは未設定です。直近: \(dateText)"
             countdownLabel.text = text
-            navigationItem.title = text
-            tabBarController?.title = text
-            tabBarController?.navigationItem.title = text
-            navigationController?.navigationBar.topItem?.title = text
             return
         }
 
         let text = "次の小テストの日を追加してください。"
         countdownLabel.text = text
-        navigationItem.title = text
-        tabBarController?.title = text
-        tabBarController?.navigationItem.title = text
-        navigationController?.navigationBar.topItem?.title = text
     }
 
     private func startOfMonth(for date: Date) -> Date {

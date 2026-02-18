@@ -381,7 +381,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         ]
         configButtons.forEach { button, title in
             button.translatesAutoresizingMaskIntoConstraints = false
-            button.layer.cornerRadius = 12
+            // 初回表示時から丸ボタンに見えるよう十分大きい角丸を指定
+            button.layer.cornerRadius = 999
             button.layer.borderWidth = 1
             button.setTitle(title, for: .normal)
             button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
@@ -440,7 +441,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         screenBottomConstraint = retroScreenView.bottomAnchor.constraint(equalTo: retroShellView.bottomAnchor, constant: -AppSpacing.s(16))
 
         NSLayoutConstraint.activate([
-            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
+            retroShellView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(36)),
             retroShellView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(28)),
             retroShellView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(28)),
             retroShellBottomConstraint!,
