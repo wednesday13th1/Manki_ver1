@@ -185,6 +185,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.dataSource = self
         tableView.delegate = self
         tableView.rowHeight = 72
+        tableView.contentInsetAdjustmentBehavior = .never
         tableView.delaysContentTouches = false
         tableView.keyboardDismissMode = .onDrag
         retroScreenView.addSubview(searchContainer)
@@ -221,6 +222,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             tableView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor),
         ])
+
+        retroScreenView.bringSubviewToFront(searchContainer)
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -687,18 +690,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     private func shareSet(_ set: SavedSet) {
-        let data = buildShareData(for: set)
-        guard !data.isEmpty else {
-            showAlert(title: "共有エラー", message: "データの作成に失敗しました。")
+        guard !set.wordIDs.isEmpty else {
+            showAlert(title: "共有エラー", message: "このセットには共有できる単語がありません。")
             return
         }
-        let safeName = sanitizeFileName(set.name.isEmpty ? "set" : set.name)
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(safeName).manki.json")
-        do {
-            try data.write(to: fileURL, options: .atomic)
-        } catch {
-            showAlert(title: "共有エラー", message: "ファイルの作成に失敗しました。")
+        guard let fileURL = buildWordListPDF(for: set) else {
+            showAlert(title: "共有エラー", message: "データの作成に失敗しました。")
             return
         }
         let activity = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
@@ -709,12 +706,118 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         present(activity, animated: true)
     }
 
-    private func buildShareData(for set: SavedSet) -> Data {
+    private func buildWordListPDF(for set: SavedSet) -> URL? {
         let allWords = loadSavedWords()
         let wordMap = Dictionary(uniqueKeysWithValues: allWords.map { ($0.id, $0) })
         let words = set.wordIDs.compactMap { wordMap[$0] }
-        let payload = SharedWordSet(set: set, words: words)
-        return (try? JSONEncoder().encode(payload)) ?? Data()
+        guard !words.isEmpty else { return nil }
+
+        let safeName = sanitizeFileName(set.name.isEmpty ? "set" : set.name)
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(safeName)-word-list.pdf")
+
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 @72dpi
+        let margin: CGFloat = 32
+        let rowHeight: CGFloat = 26
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+
+        do {
+            try renderer.writePDF(to: fileURL) { context in
+                let titleFont = UIFont.boldSystemFont(ofSize: 18)
+                let metaFont = UIFont.systemFont(ofSize: 11)
+                let headerFont = UIFont.boldSystemFont(ofSize: 12)
+                let bodyFont = UIFont.systemFont(ofSize: 11)
+                let textColor = UIColor.black
+
+                let tableTopStart: CGFloat = margin + 72
+                let tableBottom: CGFloat = pageRect.height - margin
+                let tableWidth = pageRect.width - (margin * 2)
+                let noWidth: CGFloat = 44
+                let englishWidth = (tableWidth - noWidth) * 0.5
+                let japaneseWidth = tableWidth - noWidth - englishWidth
+
+                var currentY: CGFloat = 0
+                var row = 0
+                var pageNumber = 1
+
+                func drawPageHeader() {
+                    context.beginPage()
+
+                    let title = set.name.isEmpty ? "Word List" : "\(set.name) Word List"
+                    title.draw(
+                        at: CGPoint(x: margin, y: margin),
+                        withAttributes: [
+                            .font: titleFont,
+                            .foregroundColor: textColor
+                        ]
+                    )
+
+                    let meta = "Total: \(words.count)   Page: \(pageNumber)"
+                    meta.draw(
+                        at: CGPoint(x: margin, y: margin + 26),
+                        withAttributes: [
+                            .font: metaFont,
+                            .foregroundColor: textColor
+                        ]
+                    )
+
+                    currentY = tableTopStart
+
+                    UIColor(white: 0.93, alpha: 1).setFill()
+                    UIBezierPath(rect: CGRect(x: margin, y: currentY, width: tableWidth, height: rowHeight)).fill()
+                    UIColor.black.setStroke()
+                    UIBezierPath(rect: CGRect(x: margin, y: currentY, width: tableWidth, height: rowHeight)).stroke()
+
+                    let noRect = CGRect(x: margin + 6, y: currentY + 6, width: noWidth - 12, height: rowHeight - 12)
+                    let enRect = CGRect(x: margin + noWidth + 6, y: currentY + 6, width: englishWidth - 12, height: rowHeight - 12)
+                    let jaRect = CGRect(x: margin + noWidth + englishWidth + 6, y: currentY + 6, width: japaneseWidth - 12, height: rowHeight - 12)
+                    "No".draw(in: noRect, withAttributes: [.font: headerFont, .foregroundColor: textColor])
+                    "English".draw(in: enRect, withAttributes: [.font: headerFont, .foregroundColor: textColor])
+                    "日本語".draw(in: jaRect, withAttributes: [.font: headerFont, .foregroundColor: textColor])
+
+                    currentY += rowHeight
+                }
+
+                drawPageHeader()
+
+                while row < words.count {
+                    if currentY + rowHeight > tableBottom {
+                        pageNumber += 1
+                        drawPageHeader()
+                    }
+
+                    let word = words[row]
+                    if row.isMultiple(of: 2) {
+                        UIColor(white: 0.98, alpha: 1).setFill()
+                        UIBezierPath(rect: CGRect(x: margin, y: currentY, width: tableWidth, height: rowHeight)).fill()
+                    }
+                    UIColor.black.setStroke()
+                    UIBezierPath(rect: CGRect(x: margin, y: currentY, width: tableWidth, height: rowHeight)).stroke()
+
+                    let noText = "\(row + 1)"
+                    let noRect = CGRect(x: margin + 6, y: currentY + 6, width: noWidth - 12, height: rowHeight - 12)
+                    noText.draw(in: noRect, withAttributes: [.font: bodyFont, .foregroundColor: textColor])
+
+                    let englishRect = CGRect(x: margin + noWidth + 6, y: currentY + 6, width: englishWidth - 12, height: rowHeight - 12)
+                    word.english.draw(
+                        in: englishRect,
+                        withAttributes: [.font: bodyFont, .foregroundColor: textColor]
+                    )
+
+                    let japaneseRect = CGRect(x: margin + noWidth + englishWidth + 6, y: currentY + 6, width: japaneseWidth - 12, height: rowHeight - 12)
+                    word.japanese.draw(
+                        in: japaneseRect,
+                        withAttributes: [.font: bodyFont, .foregroundColor: textColor]
+                    )
+
+                    currentY += rowHeight
+                    row += 1
+                }
+            }
+            return fileURL
+        } catch {
+            return nil
+        }
     }
 
     private func showAlert(title: String, message: String) {
@@ -731,11 +834,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
         guard presentedViewController == nil else { return }
         presentBlock()
-    }
-
-    private struct SharedWordSet: Codable {
-        let set: SavedSet
-        let words: [SavedWord]
     }
 
     private func sanitizeFileName(_ name: String) -> String {
@@ -806,7 +904,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
-        tableView.contentInset = UIEdgeInsets(top: -20, left: 0, bottom: 20, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
         tableView.showsVerticalScrollIndicator = false
         tableView.separatorColor = palette.border
         emptyLabel.font = AppFont.jp(size: 16)

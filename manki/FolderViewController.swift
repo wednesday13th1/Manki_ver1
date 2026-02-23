@@ -31,6 +31,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private let retroClickWheelAddButton = UIButton(type: .system)
     private let retroClickWheelSortButton = UIButton(type: .system)
     private let retroBadgeLabel = UILabel()
+    private var isNavigatingToSetView = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -67,6 +68,11 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         updateClickWheelShape()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        isNavigatingToSetView = false
+    }
+
     private func updateAntennaShape() {
         let bounds = retroAntennaView.bounds
         guard bounds.width > 0, bounds.height > 0 else { return }
@@ -93,6 +99,8 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         tableView.dataSource = self
         tableView.delegate = self
         tableView.rowHeight = 60
+        tableView.contentInsetAdjustmentBehavior = .never
+        tableView.keyboardDismissMode = .onDrag
         if #available(iOS 15.0, *) {
             tableView.sectionHeaderTopPadding = 6
         }
@@ -118,6 +126,8 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
             tableView.trailingAnchor.constraint(equalTo: retroScreenView.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: retroScreenView.bottomAnchor),
         ])
+
+        retroScreenView.bringSubviewToFront(searchContainer)
     }
 
     private func configureEmptyLabel() {
@@ -336,8 +346,11 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        guard !isNavigatingToSetView else { return }
+        isNavigatingToSetView = true
         if indexPath.section == 0 {
             let controller = SetViewController(folderID: nil)
+            controller.title = "未分類"
             navigationController?.pushViewController(controller, animated: true)
             return
         }
