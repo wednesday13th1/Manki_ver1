@@ -38,11 +38,22 @@ final class AddViewController: UIViewController {
     private var importOverlay: UIControl?
     private var importContainer: UIView?
     private var importTextView: UITextView?
+    private var importStickerModeControl: UISegmentedControl?
+    private var manualImportPairs: [(String, String)] = []
+    private var manualImportTargetIndices: [Int] = []
+    private var manualImportStickerMap: [Int: String] = [:]
+    private var manualImportStep: Int = 0
     private var themeObserver: NSObjectProtocol?
 
     private enum PendingImageSource {
         case generated
         case sticker
+    }
+
+    private enum ImportStickerMode: Int {
+        case manual = 0
+        case auto = 1
+        case none = 2
     }
 
     override func viewDidLoad() {
@@ -317,6 +328,15 @@ final class AddViewController: UIViewController {
         textView.layer.cornerRadius = 0
         textView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
 
+        let stickerModeLabel = UILabel()
+        stickerModeLabel.translatesAutoresizingMaskIntoConstraints = false
+        stickerModeLabel.text = "ステッカー割当"
+        stickerModeLabel.font = AppFont.jp(size: 13, weight: .semibold)
+
+        let stickerModeControl = UISegmentedControl(items: ["手動", "自動", "なし"])
+        stickerModeControl.translatesAutoresizingMaskIntoConstraints = false
+        stickerModeControl.selectedSegmentIndex = ImportStickerMode.manual.rawValue
+
         let importButton = UIButton(type: .system)
         importButton.translatesAutoresizingMaskIntoConstraints = false
         importButton.setTitle("読み込み", for: .normal)
@@ -336,6 +356,8 @@ final class AddViewController: UIViewController {
 
         container.addSubview(titleLabel)
         container.addSubview(textView)
+        container.addSubview(stickerModeLabel)
+        container.addSubview(stickerModeControl)
         container.addSubview(buttonStack)
         overlay.addSubview(container)
         view.addSubview(overlay)
@@ -361,7 +383,15 @@ final class AddViewController: UIViewController {
             textView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
             textView.heightAnchor.constraint(equalToConstant: 180),
 
-            buttonStack.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: AppSpacing.s(12)),
+            stickerModeLabel.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: AppSpacing.s(10)),
+            stickerModeLabel.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
+            stickerModeLabel.trailingAnchor.constraint(equalTo: textView.trailingAnchor),
+
+            stickerModeControl.topAnchor.constraint(equalTo: stickerModeLabel.bottomAnchor, constant: AppSpacing.s(6)),
+            stickerModeControl.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
+            stickerModeControl.trailingAnchor.constraint(equalTo: textView.trailingAnchor),
+
+            buttonStack.topAnchor.constraint(equalTo: stickerModeControl.bottomAnchor, constant: AppSpacing.s(12)),
             buttonStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: AppSpacing.s(16)),
             buttonStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -AppSpacing.s(16)),
             buttonStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -AppSpacing.s(16)),
@@ -377,6 +407,9 @@ final class AddViewController: UIViewController {
         textView.backgroundColor = palette.surfaceAlt
         textView.textColor = palette.text
         textView.layer.borderColor = palette.border.cgColor
+        stickerModeLabel.textColor = palette.text
+        stickerModeControl.backgroundColor = palette.surfaceAlt
+        stickerModeControl.selectedSegmentTintColor = palette.accent.withAlphaComponent(0.22)
         [importButton, cancelButton].forEach { button in
             button.backgroundColor = palette.surfaceAlt
             button.layer.borderWidth = 2
@@ -384,10 +417,21 @@ final class AddViewController: UIViewController {
             button.setTitleColor(palette.text, for: .normal)
             button.layer.cornerRadius = 0
         }
+        let normalAttributes: [NSAttributedString.Key: Any] = [
+            .font: AppFont.jp(size: 12, weight: .regular),
+            .foregroundColor: palette.text
+        ]
+        let selectedAttributes: [NSAttributedString.Key: Any] = [
+            .font: AppFont.jp(size: 12, weight: .bold),
+            .foregroundColor: palette.text
+        ]
+        stickerModeControl.setTitleTextAttributes(normalAttributes, for: .normal)
+        stickerModeControl.setTitleTextAttributes(selectedAttributes, for: .selected)
 
         importOverlay = overlay
         importContainer = container
         importTextView = textView
+        importStickerModeControl = stickerModeControl
 
         overlay.alpha = 0
         container.alpha = 0
@@ -400,6 +444,10 @@ final class AddViewController: UIViewController {
     }
 
     @objc private func dismissImportModal() {
+        dismissImportModal(completion: nil)
+    }
+
+    private func dismissImportModal(completion: (() -> Void)?) {
         guard let overlay = importOverlay, let container = importContainer else { return }
         UIView.animate(withDuration: 0.15, delay: 0, options: [.curveEaseIn]) {
             overlay.alpha = 0
@@ -410,6 +458,8 @@ final class AddViewController: UIViewController {
             self?.importOverlay = nil
             self?.importContainer = nil
             self?.importTextView = nil
+            self?.importStickerModeControl = nil
+            completion?()
         }
     }
 
@@ -423,32 +473,170 @@ final class AddViewController: UIViewController {
             showAlert(title: "形式エラー", message: "英語と日本語の2列を貼り付けてください。")
             return
         }
+        let mode = selectedImportStickerMode()
+        dismissImportModal { [weak self] in
+            guard let self else { return }
+            switch mode {
+            case .manual:
+                self.startManualStickerImport(for: pairs)
+            case .auto:
+                self.commitImport(pairs: pairs, mode: .auto)
+            case .none:
+                self.commitImport(pairs: pairs, mode: .none)
+            }
+        }
+    }
+
+    private func selectedImportStickerMode() -> ImportStickerMode {
+        guard let raw = importStickerModeControl?.selectedSegmentIndex,
+              let mode = ImportStickerMode(rawValue: raw) else {
+            return .manual
+        }
+        return mode
+    }
+
+    private func startManualStickerImport(for pairs: [(String, String)]) {
+        let words = loadSavedWords()
+        let target = pairs.enumerated().compactMap { index, pair -> Int? in
+            guard let existing = words.first(where: { $0.english.caseInsensitiveCompare(pair.0) == .orderedSame }) else {
+                return index
+            }
+            return existing.illustrationImageFileName == nil ? index : nil
+        }
+        if target.isEmpty {
+            commitImport(pairs: pairs, mode: .none)
+            return
+        }
+        let stickerCount = StickerStore.loadStickers().count
+        if stickerCount == 0 {
+            showAlert(title: "ステッカーなし", message: "所持ステッカーがないため、画像なしで取り込みます。") { [weak self] in
+                self?.commitImport(pairs: pairs, mode: .none)
+            }
+            return
+        }
+        manualImportPairs = pairs
+        manualImportTargetIndices = target
+        manualImportStickerMap = [:]
+        manualImportStep = 0
+        showManualStickerStep()
+    }
+
+    private func showManualStickerStep() {
+        guard manualImportStep < manualImportTargetIndices.count else {
+            let selected = manualImportStickerMap
+            let pairs = manualImportPairs
+            clearManualImportState()
+            commitImport(pairs: pairs, mode: .manual(selected))
+            return
+        }
+        let pairIndex = manualImportTargetIndices[manualImportStep]
+        guard pairIndex < manualImportPairs.count else {
+            manualImportStep += 1
+            showManualStickerStep()
+            return
+        }
+        let pair = manualImportPairs[pairIndex]
+        let progress = "\(manualImportStep + 1)/\(manualImportTargetIndices.count)"
+        presentUnifiedModal(
+            title: "ステッカー選択 \(progress)",
+            message: "\(pair.0)\n\(pair.1)",
+            actions: [
+                UnifiedModalAction(title: "選ぶ") { [weak self] in
+                    self?.presentStickerPickerForManualImport(pairIndex: pairIndex)
+                },
+                UnifiedModalAction(title: "スキップ") { [weak self] in
+                    self?.manualImportStep += 1
+                    self?.showManualStickerStep()
+                },
+                UnifiedModalAction(title: "中止", style: .cancel) { [weak self] in
+                    self?.clearManualImportState()
+                }
+            ]
+        )
+    }
+
+    private func presentStickerPickerForManualImport(pairIndex: Int) {
+        let picker = StiCollectViewController()
+        picker.selectionHandler = { [weak self] sticker in
+            guard let self else { return }
+            self.manualImportStickerMap[pairIndex] = sticker.imageFileName
+            self.manualImportStep += 1
+            self.showManualStickerStep()
+        }
+        let nav = UINavigationController(rootViewController: picker)
+        nav.modalPresentationStyle = .pageSheet
+        present(nav, animated: true)
+    }
+
+    private func clearManualImportState() {
+        manualImportPairs = []
+        manualImportTargetIndices = []
+        manualImportStickerMap = [:]
+        manualImportStep = 0
+    }
+
+    private enum ImportCommitMode {
+        case auto
+        case none
+        case manual([Int: String])
+    }
+
+    private func commitImport(pairs: [(String, String)], mode: ImportCommitMode) {
         savedWords = loadSavedWords()
+        let stickerPool = StickerStore.loadStickers()
+            .map(\.imageFileName)
+            .filter { stickerFileExists(fileName: $0) }
+        var nextStickerIndex = 0
         var added = 0
         var updated = 0
-        for (english, japanese) in pairs {
+        var matchedStickerCount = 0
+        for (index, pair) in pairs.enumerated() {
+            let english = pair.0
+            let japanese = pair.1
+            let selectedImportSticker: String?
+            switch mode {
+            case .auto:
+                selectedImportSticker = nextImportSticker(from: stickerPool, nextIndex: &nextStickerIndex)
+            case .none:
+                selectedImportSticker = nil
+            case .manual(let selectedMap):
+                selectedImportSticker = selectedMap[index]
+            }
             if let index = savedWords.firstIndex(where: { $0.english.caseInsensitiveCompare(english) == .orderedSame }) {
                 let existing = savedWords[index]
+                let imageFileName = existing.illustrationImageFileName ?? selectedImportSticker
+                if existing.illustrationImageFileName == nil, imageFileName != nil {
+                    matchedStickerCount += 1
+                }
                 let updatedWord = SavedWord(english: english,
                                             japanese: japanese,
                                             illustrationScenario: existing.illustrationScenario,
-                                            illustrationImageFileName: existing.illustrationImageFileName,
+                                            illustrationImageFileName: imageFileName,
                                             isFavorite: existing.isFavorite,
                                             importanceLevel: existing.importanceLevel,
                                             id: existing.id)
                 savedWords[index] = updatedWord
                 updated += 1
             } else {
+                let imageFileName = nextImportSticker(from: stickerPool, nextIndex: &nextStickerIndex)
+                if imageFileName != nil {
+                    matchedStickerCount += 1
+                }
                 savedWords.append(SavedWord(english: english,
                                             japanese: japanese,
                                             illustrationScenario: nil,
-                                            illustrationImageFileName: nil))
+                                            illustrationImageFileName: imageFileName))
                 added += 1
             }
         }
         saveSavedWords()
-        dismissImportModal()
-        showAlert(title: "インポート完了", message: "追加 \(added)件 / 上書き \(updated)件")
+        showAlert(title: "インポート完了", message: "追加 \(added)件 / 上書き \(updated)件 / ステッカー割当 \(matchedStickerCount)件")
+    }
+
+    private func nextImportSticker(from pool: [String], nextIndex: inout Int) -> String? {
+        guard nextIndex < pool.count else { return nil }
+        defer { nextIndex += 1 }
+        return pool[nextIndex]
     }
 
     private func parseImportText(_ raw: String) -> [(String, String)] {
