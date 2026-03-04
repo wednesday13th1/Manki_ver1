@@ -64,7 +64,9 @@ enum AppFont {
 enum ThemeManager {
     static let didChange = Notification.Name("ThemeManagerDidChange")
     private static let storageKey = "manki.theme.current"
+    private static let modeBackgroundAlphaKey = "manki.mode.background.alpha"
     private static let backgroundTag = 9832
+    private static let modeBackgroundFileName = "mode_custom_background.jpg"
     private static var cachedPatterns: [AppTheme: UIImage] = [:]
 
     static var current: AppTheme {
@@ -82,6 +84,43 @@ enum ThemeManager {
 
     static func setTheme(_ theme: AppTheme) {
         current = theme
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static func modeBackgroundImage() -> UIImage? {
+        guard let fileURL = modeBackgroundFileURL() else {
+            return nil
+        }
+        return UIImage(contentsOfFile: fileURL.path)
+    }
+
+    static func saveModeBackgroundImage(_ image: UIImage) {
+        guard let fileURL = modeBackgroundFileURL(),
+              let data = image.jpegData(compressionQuality: 0.85) else {
+            return
+        }
+        try? data.write(to: fileURL, options: .atomic)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static func clearModeBackgroundImage() {
+        guard let fileURL = modeBackgroundFileURL() else {
+            return
+        }
+        try? FileManager.default.removeItem(at: fileURL)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static var modeBackgroundAlpha: CGFloat {
+        let stored = UserDefaults.standard.object(forKey: modeBackgroundAlphaKey) as? Double
+        let defaultValue = 0.8
+        let value = stored ?? defaultValue
+        return CGFloat(min(max(value, 0.2), 1.0))
+    }
+
+    static func setModeBackgroundAlpha(_ alpha: CGFloat) {
+        let clamped = min(max(alpha, 0.2), 1.0)
+        UserDefaults.standard.set(Double(clamped), forKey: modeBackgroundAlphaKey)
         NotificationCenter.default.post(name: didChange, object: nil)
     }
 
@@ -252,6 +291,10 @@ enum ThemeManager {
             let dotRect = CGRect(x: 6, y: 6, width: 2, height: 2)
             context.cgContext.fillEllipse(in: dotRect)
         }
+    }
+
+    private static func modeBackgroundFileURL() -> URL? {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(modeBackgroundFileName)
     }
 }
 

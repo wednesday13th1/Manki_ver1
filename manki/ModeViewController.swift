@@ -85,6 +85,7 @@ private final class HeartButton: UIButton {
 class ModeViewController: UIViewController {
 
     private let backgroundImageView = UIImageView()
+    private let backgroundFilterOverlayView = UIView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private var themeObserver: NSObjectProtocol?
@@ -108,6 +109,11 @@ class ModeViewController: UIViewController {
         updateHeartButtons()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        applyTheme()
+    }
+
     private lazy var studyButton: HeartButton = makeButton(
         title: "Study",
         action: #selector(goToStudyMenu)
@@ -129,12 +135,16 @@ class ModeViewController: UIViewController {
         backgroundImageView.clipsToBounds = true
         backgroundImageView.alpha = 0.8
 
+        backgroundFilterOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundFilterOverlayView.isUserInteractionEnabled = false
+
         titleLabel.text = "MANKI"
         titleLabel.textAlignment = .center
         subtitleLabel.text = "Select Mode"
         subtitleLabel.textAlignment = .center
 
         view.addSubview(backgroundImageView)
+        view.addSubview(backgroundFilterOverlayView)
         let stack = UIStackView(arrangedSubviews: [
             titleLabel,
             subtitleLabel,
@@ -155,6 +165,10 @@ class ModeViewController: UIViewController {
             backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundFilterOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundFilterOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundFilterOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundFilterOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             centerY,
             stack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
@@ -269,7 +283,16 @@ class ModeViewController: UIViewController {
     private func applyTheme() {
         let palette = ThemeManager.palette()
         view.backgroundColor = palette.background
-        backgroundImageView.image = backgroundImage(for: ThemeManager.current)
+        let customBackground = ThemeManager.modeBackgroundImage()
+        let baseBackground = customBackground ?? backgroundImage(for: ThemeManager.current)
+        backgroundImageView.image = baseBackground
+        backgroundImageView.alpha = ThemeManager.modeBackgroundAlpha
+        if customBackground != nil {
+            // Always-visible theme tint for user-selected photos.
+            backgroundFilterOverlayView.backgroundColor = palette.accent.withAlphaComponent(0.50)
+        } else {
+            backgroundFilterOverlayView.backgroundColor = UIColor.clear
+        }
         titleLabel.font = AppFont.title(size: 20)
         titleLabel.textColor = palette.text
         subtitleLabel.font = AppFont.jp(size: 18, weight: .bold)

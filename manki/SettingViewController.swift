@@ -6,13 +6,19 @@
 //
 
 import UIKit
+import PhotosUI
 
-class SettingViewController: UIViewController {
+class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
 
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let themeTitleLabel = UILabel()
+    private let backgroundTitleLabel = UILabel()
+    private let opacityTitleLabel = UILabel()
+    private let opacityValueLabel = UILabel()
     private let themeStack = UIStackView()
+    private let backgroundButton = UIButton(type: .system)
+    private let opacitySlider = UISlider()
     private var themeButtons: [UIButton] = []
     private let cardView = UIView()
     private var themeObserver: NSObjectProtocol?
@@ -44,12 +50,26 @@ class SettingViewController: UIViewController {
         subtitleLabel.textAlignment = .center
         themeTitleLabel.text = "テーマカラー"
         themeTitleLabel.textAlignment = .left
+        backgroundTitleLabel.text = "背景画像"
+        backgroundTitleLabel.textAlignment = .left
+        opacityTitleLabel.text = "背景の透明度"
+        opacityTitleLabel.textAlignment = .left
+        opacityValueLabel.textAlignment = .right
 
         themeStack.axis = .horizontal
         themeStack.spacing = AppSpacing.s(12)
         themeStack.alignment = .center
         themeStack.distribution = .fillEqually
         themeStack.translatesAutoresizingMaskIntoConstraints = false
+
+        backgroundButton.translatesAutoresizingMaskIntoConstraints = false
+        backgroundButton.setTitle("背景を選ぶ", for: .normal)
+        backgroundButton.addTarget(self, action: #selector(openBackgroundMenu), for: .touchUpInside)
+
+        opacitySlider.translatesAutoresizingMaskIntoConstraints = false
+        opacitySlider.minimumValue = 0.2
+        opacitySlider.maximumValue = 1.0
+        opacitySlider.addTarget(self, action: #selector(opacityChanged(_:)), for: .valueChanged)
 
         themeButtons = AppTheme.allCases.enumerated().map { index, theme in
             let button = UIButton(type: .system)
@@ -73,14 +93,22 @@ class SettingViewController: UIViewController {
         view.addSubview(stack)
         cardView.addSubview(themeTitleLabel)
         cardView.addSubview(themeStack)
+        cardView.addSubview(backgroundTitleLabel)
+        cardView.addSubview(backgroundButton)
+        cardView.addSubview(opacityTitleLabel)
+        cardView.addSubview(opacityValueLabel)
+        cardView.addSubview(opacitySlider)
         themeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        backgroundTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        opacityTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        opacityValueLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            cardView.heightAnchor.constraint(equalToConstant: 140),
+            cardView.heightAnchor.constraint(equalToConstant: 300),
 
             themeTitleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: AppSpacing.s(12)),
             themeTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
@@ -90,7 +118,78 @@ class SettingViewController: UIViewController {
             themeStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
             themeStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
             themeStack.heightAnchor.constraint(equalToConstant: 36),
+
+            backgroundTitleLabel.topAnchor.constraint(equalTo: themeStack.bottomAnchor, constant: AppSpacing.s(20)),
+            backgroundTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            backgroundTitleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+
+            backgroundButton.topAnchor.constraint(equalTo: backgroundTitleLabel.bottomAnchor, constant: AppSpacing.s(10)),
+            backgroundButton.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            backgroundButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+            backgroundButton.heightAnchor.constraint(equalToConstant: 40),
+
+            opacityTitleLabel.topAnchor.constraint(equalTo: backgroundButton.bottomAnchor, constant: AppSpacing.s(16)),
+            opacityTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            opacityTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: opacityValueLabel.leadingAnchor, constant: -AppSpacing.s(8)),
+
+            opacityValueLabel.centerYAnchor.constraint(equalTo: opacityTitleLabel.centerYAnchor),
+            opacityValueLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+            opacityValueLabel.widthAnchor.constraint(equalToConstant: 56),
+
+            opacitySlider.topAnchor.constraint(equalTo: opacityTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            opacitySlider.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            opacitySlider.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
         ])
+    }
+
+    @objc private func openBackgroundMenu() {
+        let alert = UIAlertController(title: "背景画像", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "写真を選ぶ", style: .default) { [weak self] _ in
+            self?.presentPhotoPicker()
+        })
+        if ThemeManager.modeBackgroundImage() != nil {
+            alert.addAction(UIAlertAction(title: "背景をリセット", style: .destructive) { [weak self] _ in
+                ThemeManager.clearModeBackgroundImage()
+                self?.updateBackgroundButtonTitle()
+            })
+        }
+        alert.addAction(UIAlertAction(title: "キャンセル", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = backgroundButton
+            popover.sourceRect = backgroundButton.bounds
+        }
+        present(alert, animated: true)
+    }
+
+    private func presentPhotoPicker() {
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.selectionLimit = 1
+        configuration.filter = .images
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let provider = results.first?.itemProvider,
+              provider.canLoadObject(ofClass: UIImage.self) else {
+            return
+        }
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
+            guard let image = object as? UIImage else {
+                return
+            }
+            ThemeManager.saveModeBackgroundImage(image)
+            DispatchQueue.main.async {
+                self?.updateBackgroundButtonTitle()
+            }
+        }
+    }
+
+    @objc private func opacityChanged(_ sender: UISlider) {
+        ThemeManager.setModeBackgroundAlpha(CGFloat(sender.value))
+        updateOpacityValueLabel()
     }
 
     @objc private func selectTheme(_ sender: UIButton) {
@@ -132,15 +231,40 @@ class SettingViewController: UIViewController {
         subtitleLabel.textColor = palette.mutedText
         themeTitleLabel.font = AppFont.jp(size: 15, weight: .bold)
         themeTitleLabel.textColor = palette.text
+        backgroundTitleLabel.font = AppFont.jp(size: 15, weight: .bold)
+        backgroundTitleLabel.textColor = palette.text
+        opacityTitleLabel.font = AppFont.jp(size: 15, weight: .bold)
+        opacityTitleLabel.textColor = palette.text
+        opacityValueLabel.font = AppFont.en(size: 18)
+        opacityValueLabel.textColor = palette.text
 
         cardView.backgroundColor = palette.surface
         cardView.layer.borderColor = palette.border.cgColor
+        backgroundButton.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        ThemeManager.styleSecondaryButton(backgroundButton)
+        opacitySlider.minimumTrackTintColor = palette.accentStrong
+        opacitySlider.maximumTrackTintColor = palette.surfaceAlt
+        opacitySlider.tintColor = palette.accent
+        opacitySlider.value = Float(ThemeManager.modeBackgroundAlpha)
+        updateOpacityValueLabel()
+        updateBackgroundButtonTitle()
 
         for (index, button) in themeButtons.enumerated() {
             let theme = AppTheme.allCases[index]
             button.backgroundColor = ThemeManager.palette(for: theme).accent
         }
         updateThemeSelection()
+    }
+
+    private func updateBackgroundButtonTitle() {
+        let hasCustomBackground = ThemeManager.modeBackgroundImage() != nil
+        let title = hasCustomBackground ? "背景を変更する" : "背景を選ぶ"
+        backgroundButton.setTitle(title, for: .normal)
+    }
+
+    private func updateOpacityValueLabel() {
+        let percent = Int(round(ThemeManager.modeBackgroundAlpha * 100))
+        opacityValueLabel.text = "\(percent)%"
     }
 
     private func updateThemeSelection() {
