@@ -444,10 +444,10 @@ final class AddViewController: UIViewController {
     }
 
     @objc private func dismissImportModal() {
-        dismissImportModal(completion: nil)
+        dismissImportModalAnimated(completion: nil)
     }
 
-    private func dismissImportModal(completion: (() -> Void)?) {
+    private func dismissImportModalAnimated(completion: (() -> Void)?) {
         guard let overlay = importOverlay, let container = importContainer else { return }
         UIView.animate(withDuration: 0.15, delay: 0, options: [.curveEaseIn]) {
             overlay.alpha = 0
@@ -474,7 +474,7 @@ final class AddViewController: UIViewController {
             return
         }
         let mode = selectedImportStickerMode()
-        dismissImportModal { [weak self] in
+        dismissImportModalAnimated { [weak self] in
             guard let self else { return }
             switch mode {
             case .manual:
