@@ -12,6 +12,8 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private var folders: [SavedFolder] = []
     private var filteredFolders: [SavedFolder] = []
     private var sets: [SavedSet] = []
+    private var setCountByFolderID: [String: Int] = [:]
+    private var unclassifiedSetCount: Int = 0
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
@@ -32,6 +34,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private let retroClickWheelSortButton = UIButton(type: .system)
     private let retroBadgeLabel = UILabel()
     private var isNavigatingToSetView = false
+    private var reloadTaskID: Int = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -284,9 +287,33 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     }
 
     private func reloadData() {
-        folders = FolderStore.loadFolders()
-        sets = SetStore.loadSets()
-        applyFilterAndReload()
+        reloadTaskID += 1
+        let currentTaskID = reloadTaskID
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let loadedFolders = FolderStore.loadFolders()
+            let loadedSets = SetStore.loadSets()
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.reloadTaskID == currentTaskID else { return }
+                self.folders = loadedFolders
+                self.sets = loadedSets
+                self.rebuildSetCounts()
+                self.applyFilterAndReload()
+            }
+        }
+    }
+
+    private func rebuildSetCounts() {
+        var counts: [String: Int] = [:]
+        var unclassified = 0
+        for set in sets {
+            if let folderID = set.folderID {
+                counts[folderID, default: 0] += 1
+            } else {
+                unclassified += 1
+            }
+        }
+        setCountByFolderID = counts
+        unclassifiedSetCount = unclassified
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -325,12 +352,11 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseID)
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: reuseID)
         if indexPath.section == 0 {
-            let count = sets.filter { $0.folderID == nil }.count
             cell.textLabel?.text = "未分類"
-            cell.detailTextLabel?.text = "セット \(count) 個"
+            cell.detailTextLabel?.text = "セット \(unclassifiedSetCount) 個"
         } else {
             let folder = displayedFolders()[indexPath.row]
-            let count = sets.filter { $0.folderID == folder.id }.count
+            let count = setCountByFolderID[folder.id, default: 0]
             cell.textLabel?.text = folder.name
             cell.detailTextLabel?.text = "セット \(count) 個"
         }
@@ -567,8 +593,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
                 filteredFolders = sorted
             }
         }
-        let unclassifiedCount = sets.filter { $0.folderID == nil }.count
-        emptyLabel.isHidden = !(folders.isEmpty && unclassifiedCount == 0)
+        emptyLabel.isHidden = !(folders.isEmpty && unclassifiedSetCount == 0)
         tableView.reloadData()
     }
 }

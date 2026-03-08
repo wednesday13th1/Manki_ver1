@@ -189,13 +189,13 @@ final class ModeMenuViewController: UIViewController {
     }
 
     @objc private func handleFirstTap() {
-        dismiss(animated: false) { [weak self] in
+        dismiss(animated: true) { [weak self] in
             self?.onFirstTapped?()
         }
     }
 
     @objc private func handleSecondTap() {
-        dismiss(animated: false) { [weak self] in
+        dismiss(animated: true) { [weak self] in
             self?.onSecondTapped?()
         }
     }

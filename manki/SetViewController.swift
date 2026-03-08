@@ -28,6 +28,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let showsAll: Bool
     private var sets: [SavedSet] = []
     private var wordsByID: [String: SavedWord] = [:]
+    private var setWordCountByID: [String: Int] = [:]
     private var filteredSets: [SavedSet] = []
     private var displayedSetCache: [SavedSet] = []
     private var sortOption: SetSortOption = .created
@@ -75,6 +76,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let hideToggleButton = UIButton(type: .system)
     private var renameGesture: UILongPressGestureRecognizer?
     private var isHandlingSelection = false
+    private var reloadTaskID: Int = 0
     private var wordMenuOverlay: UIControl?
     private var wordMenuContainer: UIView?
     private var wordMenuTitleLabel: UILabel?
@@ -598,15 +600,35 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     private func reloadData() {
-        let allSets = SetStore.loadSets()
-        if showsAll {
-            sets = allSets
-        } else {
-            sets = allSets.filter { $0.folderID == folderID }
+        reloadTaskID += 1
+        let currentTaskID = reloadTaskID
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            let allSets = SetStore.loadSets()
+            let loadedSets: [SavedSet]
+            if self.showsAll {
+                loadedSets = allSets
+            } else {
+                loadedSets = allSets.filter { $0.folderID == self.folderID }
+            }
+            let words = self.loadSavedWords()
+            let loadedWordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+            let loadedSetWordCount = Dictionary(uniqueKeysWithValues: loadedSets.map { set in
+                let count = set.wordIDs.reduce(into: 0) { partialResult, wordID in
+                    if loadedWordsByID[wordID] != nil {
+                        partialResult += 1
+                    }
+                }
+                return (set.id, count)
+            })
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.reloadTaskID == currentTaskID else { return }
+                self.sets = loadedSets
+                self.wordsByID = loadedWordsByID
+                self.setWordCountByID = loadedSetWordCount
+                self.applyFilterAndReload()
+            }
         }
-        let words = loadSavedWords()
-        wordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
-        applyFilterAndReload()
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -1255,6 +1277,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     }
 
     private func wordCount(for set: SavedSet) -> Int {
+        if let cached = setWordCountByID[set.id] {
+            return cached
+        }
         return set.wordIDs.compactMap { wordsByID[$0] }.count
     }
 

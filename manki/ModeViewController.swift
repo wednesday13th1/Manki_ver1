@@ -89,6 +89,7 @@ class ModeViewController: UIViewController {
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private var themeObserver: NSObjectProtocol?
+    private var isTransitioning = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -112,6 +113,11 @@ class ModeViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         applyTheme()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        isTransitioning = false
     }
 
     private lazy var studyButton: HeartButton = makeButton(
@@ -221,8 +227,7 @@ class ModeViewController: UIViewController {
             self?.openFolder()
         }
         let nav = UINavigationController(rootViewController: controller)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
     }
 
     @objc private func goToGoalMenu() {
@@ -238,16 +243,14 @@ class ModeViewController: UIViewController {
             self?.openGoalSetting()
         }
         let nav = UINavigationController(rootViewController: controller)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
     }
 
     private func openFolder() {
         guard let nav = storyboard?.instantiateViewController(withIdentifier: "FolderNavigationController") else {
             return
         }
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
     }
 
     private func openScheduleAndHistory() {
@@ -255,29 +258,34 @@ class ModeViewController: UIViewController {
             return
         }
         let nav = UINavigationController(rootViewController: tabBar)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
     }
 
     @objc private func goToSetting() {
         let controller = SettingViewController()
         let nav = UINavigationController(rootViewController: controller)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
     }
 
     private func openSticker() {
         let controller = StiCamViewController()
         let nav = UINavigationController(rootViewController: controller)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
     }
 
     private func openGoalSetting() {
         let controller = GoalViewController()
         let nav = UINavigationController(rootViewController: controller)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        presentMenu(nav)
+    }
+
+    private func presentMenu(_ controller: UIViewController) {
+        guard !isTransitioning, presentedViewController == nil else { return }
+        isTransitioning = true
+        controller.modalPresentationStyle = .fullScreen
+        present(controller, animated: true) { [weak self] in
+            self?.isTransitioning = false
+        }
     }
 
     private func applyTheme() {

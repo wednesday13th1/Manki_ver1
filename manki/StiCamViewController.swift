@@ -13,7 +13,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let previewImageView = UIImageView()
-    private let filterControl = UISegmentedControl(items: ["モノクロ", "セピア"])
+    private let filterControl = UISegmentedControl(items: ["モノクロ", "セピア", "テーマ色"])
     private let captureButton = UIButton(type: .system)
     private let saveButton = UIButton(type: .system)
     private let collectionButton = UIButton(type: .system)
@@ -28,6 +28,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     private enum FilterMode: Int {
         case noir = 0
         case sepia = 1
+        case theme = 2
     }
     private var filterMode: FilterMode = .noir
 
@@ -48,6 +49,9 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
             queue: .main
         ) { [weak self] _ in
             self?.applyTheme()
+            if self?.filterMode == .theme {
+                self?.updatePreview()
+            }
         }
     }
 
@@ -363,6 +367,8 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
             return applyFilter(name: "CIPhotoEffectNoir", to: image)
         case .sepia:
             return applyFilter(name: "CISepiaTone", to: image, intensity: 0.85)
+        case .theme:
+            return applyThemeColorFilter(to: image)
         }
     }
 
@@ -377,6 +383,17 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
         let context = CIContext()
         guard let cgImage = context.createCGImage(output, from: output.extent) else { return image }
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+    }
+
+    private func applyThemeColorFilter(to image: UIImage) -> UIImage {
+        let tint = ThemeManager.palette().accent.withAlphaComponent(0.28)
+        let renderer = UIGraphicsImageRenderer(size: image.size)
+        return renderer.image { _ in
+            let rect = CGRect(origin: .zero, size: image.size)
+            image.draw(in: rect)
+            tint.setFill()
+            UIRectFillUsingBlendMode(rect, .multiply)
+        }
     }
 
     private func applyEmoji(_ emoji: String, to image: UIImage) -> UIImage {
