@@ -386,7 +386,7 @@ final class StiCamViewController: UIViewController, UIImagePickerControllerDeleg
     }
 
     private func applyThemeColorFilter(to image: UIImage) -> UIImage {
-        let tint = ThemeManager.palette().accent.withAlphaComponent(0.28)
+        let tint = ThemeManager.palette().accent.withAlphaComponent(0.5)
         let renderer = UIGraphicsImageRenderer(size: image.size)
         return renderer.image { _ in
             let rect = CGRect(origin: .zero, size: image.size)
