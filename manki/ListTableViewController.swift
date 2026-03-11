@@ -86,6 +86,7 @@ class ListTableViewController: UITableViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
         wordArray = loadSavedWords()
         if let filterWordIDs {
             wordArray = wordArray.filter { filterWordIDs.contains($0.id) }

@@ -226,7 +226,7 @@ class ModeViewController: UIViewController {
         controller.onSecondTapped = { [weak self] in
             self?.openFolder()
         }
-        let nav = UINavigationController(rootViewController: controller)
+        let nav = MenuNavigationController(rootViewController: controller)
         presentMenu(nav)
     }
 
@@ -242,7 +242,7 @@ class ModeViewController: UIViewController {
         controller.onSecondTapped = { [weak self] in
             self?.openGoalSetting()
         }
-        let nav = UINavigationController(rootViewController: controller)
+        let nav = MenuNavigationController(rootViewController: controller)
         presentMenu(nav)
     }
 
@@ -257,25 +257,25 @@ class ModeViewController: UIViewController {
         guard let tabBar = storyboard?.instantiateViewController(withIdentifier: "MainTabBarController") else {
             return
         }
-        let nav = UINavigationController(rootViewController: tabBar)
+        let nav = MenuNavigationController(rootViewController: tabBar)
         presentMenu(nav)
     }
 
     @objc private func goToSetting() {
         let controller = SettingViewController()
-        let nav = UINavigationController(rootViewController: controller)
+        let nav = MenuNavigationController(rootViewController: controller)
         presentMenu(nav)
     }
 
     private func openSticker() {
         let controller = StiCamViewController()
-        let nav = UINavigationController(rootViewController: controller)
+        let nav = MenuNavigationController(rootViewController: controller)
         presentMenu(nav)
     }
 
     private func openGoalSetting() {
         let controller = GoalViewController()
-        let nav = UINavigationController(rootViewController: controller)
+        let nav = MenuNavigationController(rootViewController: controller)
         presentMenu(nav)
     }
 

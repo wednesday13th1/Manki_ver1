@@ -223,6 +223,7 @@ enum ThemeManager {
     static func applyNavigationAppearance(to navigationController: UINavigationController?) {
         guard let navigationController else { return }
         let palette = palette()
+        navigationController.navigationBar.tintColor = palette.text
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = palette.surface
@@ -235,16 +236,37 @@ enum ThemeManager {
             .font: AppFont.jp(size: 14, weight: .bold)
         ]
         appearance.shadowColor = palette.border
-        appearance.buttonAppearance.normal.titleTextAttributes = barAttributes
-        appearance.buttonAppearance.highlighted.titleTextAttributes = barAttributes
-        appearance.doneButtonAppearance.normal.titleTextAttributes = barAttributes
-        appearance.doneButtonAppearance.highlighted.titleTextAttributes = barAttributes
-        appearance.backButtonAppearance.normal.titleTextAttributes = barAttributes
-        appearance.backButtonAppearance.highlighted.titleTextAttributes = barAttributes
+        let buttonBackgroundColor = palette.accent
+        let buttonHighlightColor = palette.accentStrong
+        let buttonAppearance = UIBarButtonItemAppearance()
+        buttonAppearance.normal.titleTextAttributes = barAttributes
+        buttonAppearance.highlighted.titleTextAttributes = barAttributes
+        let normalImage = ThemeManager.makeRoundedImage(color: buttonBackgroundColor, cornerRadius: 10, size: CGSize(width: 80, height: 34))
+        let highlightedImage = ThemeManager.makeRoundedImage(color: buttonHighlightColor, cornerRadius: 10, size: CGSize(width: 80, height: 34))
+        buttonAppearance.normal.backgroundImage = normalImage
+        buttonAppearance.highlighted.backgroundImage = highlightedImage
+        buttonAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -1)
+        buttonAppearance.highlighted.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -1)
+        appearance.buttonAppearance = buttonAppearance
+        appearance.doneButtonAppearance = buttonAppearance
+        appearance.backButtonAppearance = buttonAppearance
         navigationController.navigationBar.standardAppearance = appearance
         navigationController.navigationBar.scrollEdgeAppearance = appearance
         navigationController.navigationBar.compactAppearance = appearance
         navigationController.navigationBar.tintColor = palette.text
+    }
+
+    private static func makeRoundedImage(color: UIColor, cornerRadius: CGFloat, size: CGSize) -> UIImage? {
+        let rect = CGRect(origin: .zero, size: size)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+        color.setFill()
+        path.fill()
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        let cap = max(6, cornerRadius + 1)
+        let insets = UIEdgeInsets(top: cap, left: cap, bottom: cap, right: cap)
+        return image?.resizableImage(withCapInsets: insets, resizingMode: .stretch)
     }
 
     static func applySearchBar(_ searchBar: UISearchBar) {

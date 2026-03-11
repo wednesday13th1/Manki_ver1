@@ -21,6 +21,7 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
 
         title = selectionHandler == nil ? "ステッカーコレクション" : "ステッカーを選ぶ"
         view.backgroundColor = .systemBackground
+        ThemeManager.applyNavigationAppearance(to: navigationController)
         configureCollectionView()
         configureEmptyLabel()
         configureSelectionBarItem()
@@ -28,6 +29,7 @@ final class StiCollectViewController: UIViewController, UICollectionViewDataSour
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
         reloadStickers()
     }
 

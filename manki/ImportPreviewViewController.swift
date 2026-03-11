@@ -27,8 +27,14 @@ final class ImportPreviewViewController: UIViewController {
         super.viewDidLoad()
         title = "取り込み確認"
         view.backgroundColor = .systemBackground
+        ThemeManager.applyNavigationAppearance(to: navigationController)
         configureNavigation()
         configureTable()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
     }
 
     private func configureNavigation() {
