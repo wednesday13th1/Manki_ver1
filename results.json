@@ -1,0 +1,270 @@
+{
+  "sessions": [
+    {
+      "timestamp": "2025-12-16T15:25:52",
+      "filters": {
+        "mode": "mixed",
+        "num_questions": 5,
+        "num_choices": 4,
+        "direction": "both",
+        "emotion_filter": null,
+        "level_filter": null,
+        "score_filter": null
+      },
+      "total_time_limit_sec": 60,
+      "per_question_limit_sec": 25,
+      "questions": [
+        {
+          "index": 1,
+          "type": "choice",
+          "direction": "en_to_ja",
+          "word": "aberration",
+          "meaning": "a departure from what is normal or expected",
+          "user_answer": "B",
+          "correct": false,
+          "timeout": false,
+          "answer_time_sec": 7.3291
+        },
+        {
+          "index": 2,
+          "type": "tf",
+          "direction": "en_to_ja",
+          "word": "resilient",
+          "meaning": "回復力のある",
+          "user_answer": "T",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 4.9457
+        },
+        {
+          "index": 3,
+          "type": "choice",
+          "direction": "ja_to_en",
+          "word": "run",
+          "meaning": "走る",
+          "user_answer": "C",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 3.4633
+        },
+        {
+          "index": 4,
+          "type": "choice",
+          "direction": "ja_to_en",
+          "word": "candid",
+          "meaning": "truthful and straightforward; frank",
+          "user_answer": "A",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 4.5183
+        },
+        {
+          "index": 5,
+          "type": "tf",
+          "direction": "en_to_ja",
+          "word": "empathy",
+          "meaning": "共感",
+          "user_answer": "T",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 6.1942
+        }
+      ],
+      "summary": {
+        "answered": 5,
+        "score": 4,
+        "total_questions_generated": 5,
+        "accuracy": 0.8,
+        "total_elapsed_sec": 26.4522
+      }
+    },
+    {
+      "timestamp": "2025-12-16T15:28:25",
+      "filters": {
+        "mode": "mixed",
+        "num_questions": 5,
+        "num_choices": 4,
+        "direction": "both",
+        "emotion_filter": null,
+        "level_filter": null,
+        "score_filter": null
+      },
+      "total_time_limit_sec": 60,
+      "per_question_limit_sec": 25,
+      "questions": [
+        {
+          "index": 1,
+          "type": "written",
+          "direction": "ja_to_en",
+          "word": "book",
+          "meaning": "本",
+          "user_answer": "book",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 3.5283
+        },
+        {
+          "index": 2,
+          "type": "choice",
+          "direction": "ja_to_en",
+          "word": "optimistic",
+          "meaning": "楽観的",
+          "user_answer": "D",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 4.0131
+        },
+        {
+          "index": 3,
+          "type": "written",
+          "direction": "ja_to_en",
+          "word": "candid",
+          "meaning": "truthful and straightforward; frank",
+          "user_answer": "candid",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 3.7526
+        },
+        {
+          "index": 4,
+          "type": "choice",
+          "direction": "en_to_ja",
+          "word": "empathy",
+          "meaning": "共感",
+          "user_answer": "C",
+          "correct": true,
+          "timeout": false,
+          "answer_time_sec": 4.6063
+        },
+        {
+          "index": 5,
+          "type": "written",
+          "direction": "ja_to_en",
+          "word": "benevolent",
+          "meaning": "well-meaning and kindly",
+          "user_answer": "generous",
+          "correct": false,
+          "timeout": false,
+          "answer_time_sec": 6.4228
+        }
+      ],
+      "summary": {
+        "answered": 5,
+        "score": 4,
+        "total_questions_generated": 5,
+        "accuracy": 0.8,
+        "total_elapsed_sec": 22.3241
+      }
+    }
+  ],
+  "per_word": {
+    "aberration": {
+      "attempts": 1,
+      "correct": 0,
+      "total_time": 7.329083791002631,
+      "last_seen": "2025-12-16T15:25:59",
+      "level_tag": "eiken-1",
+      "score_tag": [
+        "eiken-1",
+        "ielts-7.5",
+        "sat",
+        "toefl-ibt-100"
+      ],
+      "accuracy": 0.0,
+      "avg_time": 7.3291
+    },
+    "resilient": {
+      "attempts": 1,
+      "correct": 1,
+      "total_time": 4.94568266600254,
+      "last_seen": "2025-12-16T15:26:04",
+      "level_tag": "eiken-pre1",
+      "score_tag": [
+        "eiken-pre1",
+        "ielts-6.5",
+        "toefl-ibt-80"
+      ],
+      "accuracy": 1.0,
+      "avg_time": 4.9457
+    },
+    "run": {
+      "attempts": 1,
+      "correct": 1,
+      "total_time": 3.4633412919938564,
+      "last_seen": "2025-12-16T15:26:08",
+      "level_tag": "eiken-5",
+      "score_tag": [
+        "junior-basic"
+      ],
+      "accuracy": 1.0,
+      "avg_time": 3.4633
+    },
+    "candid": {
+      "attempts": 2,
+      "correct": 2,
+      "total_time": 8.270869207990472,
+      "last_seen": "2025-12-16T15:28:36",
+      "level_tag": "eiken-pre1",
+      "score_tag": [
+        "eiken-pre1",
+        "ielts-6.5",
+        "toeic-800"
+      ],
+      "accuracy": 1.0,
+      "avg_time": 4.1354
+    },
+    "empathy": {
+      "attempts": 2,
+      "correct": 2,
+      "total_time": 10.80046533299901,
+      "last_seen": "2025-12-16T15:28:41",
+      "level_tag": "eiken-pre1",
+      "score_tag": [
+        "eiken-pre1",
+        "ielts-6.5"
+      ],
+      "accuracy": 1.0,
+      "avg_time": 5.4002
+    },
+    "book": {
+      "attempts": 1,
+      "correct": 1,
+      "total_time": 3.5282632500020554,
+      "last_seen": "2025-12-16T15:28:28",
+      "level_tag": "eiken-5",
+      "score_tag": [
+        "junior-basic"
+      ],
+      "accuracy": 1.0,
+      "avg_time": 3.5283
+    },
+    "optimistic": {
+      "attempts": 1,
+      "correct": 1,
+      "total_time": 4.013108500003,
+      "last_seen": "2025-12-16T15:28:32",
+      "level_tag": "eiken-pre1",
+      "score_tag": [
+        "eiken-pre1",
+        "ielts-6.5",
+        "toeic-800"
+      ],
+      "accuracy": 1.0,
+      "avg_time": 4.0131
+    },
+    "benevolent": {
+      "attempts": 1,
+      "correct": 0,
+      "total_time": 6.422775624989299,
+      "last_seen": "2025-12-16T15:28:47",
+      "level_tag": "eiken-1",
+      "score_tag": [
+        "eiken-1",
+        "ielts-7.5",
+        "sat"
+      ],
+      "accuracy": 0.0,
+      "avg_time": 6.4228
+    }
+  }
+}
