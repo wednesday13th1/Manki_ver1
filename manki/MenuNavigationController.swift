@@ -71,30 +71,14 @@ final class MenuNavigationController: UINavigationController {
         let palette = ThemeManager.palette()
         let iconColor = palette.text
         let iconHome = UIImage(systemName: "house")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
-        let iconSticker = UIImage(systemName: "camera.viewfinder")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
         let iconFolder = UIImage(systemName: "folder")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
-        let iconCalendar = UIImage(systemName: "calendar")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
-        let iconTarget = UIImage(systemName: "target")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
-        let iconGear = UIImage(systemName: "gearshape")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
 
         return [
             SideMenuItem(title: "モード選択に戻る", icon: iconHome) { [weak self] in
                 self?.dismiss(animated: true)
             },
-            SideMenuItem(title: "Study: ステッカー", icon: iconSticker) { [weak self] in
-                self?.switchRoot(to: StiCamViewController())
-            },
-            SideMenuItem(title: "Study: フォルダー", icon: iconFolder) { [weak self] in
+            SideMenuItem(title: "学習セット", icon: iconFolder) { [weak self] in
                 self?.switchRoot(to: self?.makeStoryboardController(identifier: "FolderViewController"))
-            },
-            SideMenuItem(title: "Goal: スケジュール/履歴", icon: iconCalendar) { [weak self] in
-                self?.switchRoot(to: self?.makeStoryboardController(identifier: "MainTabBarController"))
-            },
-            SideMenuItem(title: "Goal: 目標設定", icon: iconTarget) { [weak self] in
-                self?.switchRoot(to: GoalViewController())
-            },
-            SideMenuItem(title: "Setting", icon: iconGear) { [weak self] in
-                self?.switchRoot(to: SettingViewController())
             }
         ]
     }

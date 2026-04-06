@@ -14,19 +14,15 @@ enum WordHiddenMode {
 }
 
 class ListTableViewCell: UITableViewCell {
-    
+
     @IBOutlet var englishLabel: UILabel!
     @IBOutlet var japaneseLabel: UILabel!
     private let exampleLabel = UILabel()
     private let notebookBackgroundView = NotebookBackgroundView()
     private let favoriteButton = UIButton(type: .system)
-    private let importanceButton = UIButton(type: .system)
     private var isFavorite = false
-    private var currentLevel = 1
 
     var onFavoriteChanged: ((Bool) -> Void)?
-    var onImportanceChanged: ((Int) -> Void)?
-    var onSelectImportanceTapped: (() -> Void)?
     var onToggleReveal: (() -> Void)?
 
     override func awakeFromNib() {
@@ -65,22 +61,11 @@ class ListTableViewCell: UITableViewCell {
         japaneseLabel.translatesAutoresizingMaskIntoConstraints = false
         exampleLabel.translatesAutoresizingMaskIntoConstraints = false
         favoriteButton.translatesAutoresizingMaskIntoConstraints = false
-        importanceButton.translatesAutoresizingMaskIntoConstraints = false
         notebookBackgroundView.translatesAutoresizingMaskIntoConstraints = false
 
         favoriteButton.addTarget(self, action: #selector(toggleFavorite), for: .touchUpInside)
         favoriteButton.tintColor = .systemYellow
         favoriteButton.setContentHuggingPriority(.required, for: .horizontal)
-
-        importanceButton.addTarget(self, action: #selector(selectImportance), for: .touchUpInside)
-        importanceButton.setTitleColor(.systemBlue, for: .normal)
-        importanceButton.layer.cornerRadius = 10
-        importanceButton.layer.borderWidth = 1
-        importanceButton.layer.borderColor = UIColor.systemBlue.cgColor
-        importanceButton.contentEdgeInsets = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
-        if let currentSize = importanceButton.titleLabel?.font.pointSize {
-            importanceButton.titleLabel?.font = AppFont.en(size: currentSize)
-        }
 
         let textStack = UIStackView(arrangedSubviews: [englishLabel, japaneseLabel, exampleLabel])
         textStack.axis = .vertical
@@ -88,7 +73,7 @@ class ListTableViewCell: UITableViewCell {
         textStack.alignment = .fill
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let rowStack = UIStackView(arrangedSubviews: [textStack, favoriteButton, importanceButton])
+        let rowStack = UIStackView(arrangedSubviews: [textStack, favoriteButton])
         rowStack.axis = .horizontal
         rowStack.spacing = AppSpacing.s(10)
         rowStack.alignment = .center
@@ -100,12 +85,10 @@ class ListTableViewCell: UITableViewCell {
         japaneseLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         exampleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         favoriteButton.setContentHuggingPriority(.required, for: .horizontal)
-        importanceButton.setContentHuggingPriority(.required, for: .horizontal)
 
         NSLayoutConstraint.activate([
             favoriteButton.widthAnchor.constraint(equalToConstant: 28),
             favoriteButton.heightAnchor.constraint(equalToConstant: 28),
-            importanceButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 56),
 
             notebookBackgroundView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(8)),
             notebookBackgroundView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(8)),
@@ -121,15 +104,11 @@ class ListTableViewCell: UITableViewCell {
 
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
-
-        // Configure the view for the selected state
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
         onFavoriteChanged = nil
-        onImportanceChanged = nil
-        onSelectImportanceTapped = nil
         onToggleReveal = nil
     }
 
@@ -165,9 +144,7 @@ class ListTableViewCell: UITableViewCell {
         exampleLabel.isHidden = example.isEmpty
         applyHiddenMode(hiddenMode, isRevealed: isRevealed)
         isFavorite = word.isFavorite
-        currentLevel = max(1, min(5, word.importanceLevel))
         updateFavoriteAppearance()
-        updateImportanceButton()
     }
 
     private func updateFavoriteAppearance() {
@@ -181,23 +158,13 @@ class ListTableViewCell: UITableViewCell {
         onFavoriteChanged?(isFavorite)
     }
 
-    @objc private func selectImportance() {
-        onSelectImportanceTapped?()
-    }
-
     @objc private func handleRevealTap() {
         onToggleReveal?()
     }
 
     func updateImportance(level: Int) {
-        currentLevel = max(1, min(5, level))
-        updateImportanceButton()
+        _ = level
     }
-
-    private func updateImportanceButton() {
-        importanceButton.setTitle("Lv\(currentLevel)", for: .normal)
-    }
-    
 }
 
 final class NotebookBackgroundView: UIView {
@@ -258,12 +225,14 @@ final class NotebookBackgroundView: UIView {
 
         let holeRadius: CGFloat = 5.5
         let holeSpacing: CGFloat = 28
-        let holeX = leftMargin - 16
-        var holeY: CGFloat = 20
+        let holeStartY: CGFloat = 18
+        let holeX: CGFloat = 10
 
         context.setStrokeColor(holeStrokeColor.cgColor)
         context.setLineWidth(1)
-        while holeY < rect.height - 12 {
+
+        var holeY = holeStartY
+        while holeY < rect.height - 10 {
             let holeRect = CGRect(x: holeX - holeRadius,
                                   y: holeY - holeRadius,
                                   width: holeRadius * 2,

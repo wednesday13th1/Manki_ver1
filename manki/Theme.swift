@@ -292,6 +292,7 @@ enum ThemeManager {
         button.layer.shadowOpacity = 0.2
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
         button.layer.shadowRadius = 4
+        button.applyMankiButtonMetrics()
     }
 
     static func styleSecondaryButton(_ button: UIButton) {
@@ -301,6 +302,19 @@ enum ThemeManager {
         button.layer.cornerRadius = 12
         button.layer.borderWidth = 1
         button.layer.borderColor = palette.border.cgColor
+        button.applyMankiButtonMetrics()
+    }
+
+    static func styleCard(_ view: UIView, fillColor: UIColor? = nil) {
+        let palette = palette()
+        view.backgroundColor = fillColor ?? palette.surface
+        view.layer.cornerRadius = AppLayout.cardCornerRadius
+        view.layer.borderWidth = 1
+        view.layer.borderColor = palette.border.cgColor
+        view.layer.shadowColor = palette.border.cgColor
+        view.layer.shadowOpacity = 0.08
+        view.layer.shadowOffset = CGSize(width: 0, height: 6)
+        view.layer.shadowRadius = 12
     }
 
     private static func makePatternImage(dotColor: UIColor, background: UIColor) -> UIImage {

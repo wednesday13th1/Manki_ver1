@@ -123,9 +123,6 @@ class ListTableViewController: UITableViewController {
         cell.onFavoriteChanged = { [weak self] isFavorite in
             self?.updateWord(id: word.id, isFavorite: isFavorite)
         }
-        cell.onSelectImportanceTapped = { [weak self] in
-            self?.presentImportancePicker(for: word)
-        }
         cell.onToggleReveal = { [weak self] in
             self?.toggleReveal(for: word.id)
         }

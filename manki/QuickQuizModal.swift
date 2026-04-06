@@ -32,10 +32,20 @@ struct QuickQuizData {
 
 enum QuickQuizFactory {
     static func makeQuestion() -> QuickQuizData? {
-        guard let last = LastStudyStore.load() else { return nil }
         let sets = SetStore.loadSets()
-        guard let targetSet = sets.first(where: { $0.id == last.id }) else { return nil }
         let wordsByID = Dictionary(uniqueKeysWithValues: loadSavedWords().map { ($0.id, $0) })
+        let preferredSetID = LastStudyStore.load()?.id
+        let sortedSets = sets.sorted { lhs, rhs in
+            if lhs.id == preferredSetID { return true }
+            if rhs.id == preferredSetID { return false }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+        guard let targetSet = sortedSets.first(where: { set in
+            let setWords = set.wordIDs.compactMap { wordsByID[$0] }
+            return setWords.count >= 2
+        }) else {
+            return nil
+        }
         let setWords = targetSet.wordIDs.compactMap { wordsByID[$0] }
         guard setWords.count >= 2 else { return nil }
 
@@ -53,7 +63,7 @@ enum QuickQuizFactory {
         choices.shuffle()
 
         let prompt = "「\(word.english)」の意味は？"
-        return QuickQuizData(setName: last.name, prompt: prompt, choices: choices, correct: correct)
+        return QuickQuizData(setName: targetSet.name, prompt: prompt, choices: choices, correct: correct)
     }
 
     private static func loadSavedWords() -> [SavedWord] {
@@ -76,7 +86,6 @@ final class QuickQuizModal {
     private let resultLabel = UILabel()
     private let stack = UIStackView()
     private var choiceButtons: [UIButton] = []
-    private let cancelButton = UIButton(type: .system)
     var onDismiss: (() -> Void)?
 
     init(data: QuickQuizData) {
@@ -112,7 +121,6 @@ final class QuickQuizModal {
 
     private func buildUI() {
         overlay.translatesAutoresizingMaskIntoConstraints = false
-        overlay.addTarget(self, action: #selector(dismiss), for: .touchUpInside)
         overlay.accessibilityViewIsModal = true
 
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -142,12 +150,6 @@ final class QuickQuizModal {
             button.heightAnchor.constraint(equalToConstant: 36).isActive = true
             choiceButtons.append(button)
         }
-
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.setTitle("キャンセル", for: .normal)
-        cancelButton.addTarget(self, action: #selector(dismiss), for: .touchUpInside)
-        cancelButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
-        stack.addArrangedSubview(cancelButton)
 
         container.addSubview(titleLabel)
         container.addSubview(questionLabel)
@@ -191,7 +193,7 @@ final class QuickQuizModal {
         resultLabel.font = AppFont.jp(size: 14, weight: .bold)
         resultLabel.textColor = palette.text
 
-        (choiceButtons + [cancelButton]).forEach { button in
+        choiceButtons.forEach { button in
             button.backgroundColor = palette.surfaceAlt
             button.setTitleColor(palette.text, for: .normal)
             button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
@@ -215,7 +217,6 @@ final class QuickQuizModal {
         resultLabel.text = correct ? "正解！" : "不正解… 正解: \(data.correct)"
         resultLabel.isHidden = false
         choiceButtons.forEach { $0.isEnabled = false }
-        cancelButton.isEnabled = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
             self?.dismiss()
         }

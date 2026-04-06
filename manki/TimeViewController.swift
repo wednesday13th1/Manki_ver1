@@ -10,6 +10,9 @@ import UIKit
 final class TimeViewController: UIViewController {
 
     private let resultsFileName = "results.json"
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+    private let contentColumn = UIStackView()
     private let summaryCard = UIView()
     private let rangeSegmented = UISegmentedControl(items: ["1日", "1週間", "1ヶ月"])
     private let summaryTitleLabel = UILabel()
@@ -20,6 +23,9 @@ final class TimeViewController: UIViewController {
     private let streakValueLabel = UILabel()
     private let wordsValueLabel = UILabel()
     private var themeObserver: NSObjectProtocol?
+    private var contentLeadingConstraint: NSLayoutConstraint?
+    private var contentTrailingConstraint: NSLayoutConstraint?
+    private var contentWidthConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,10 +49,51 @@ final class TimeViewController: UIViewController {
         checkDailyGoalAchievement()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateLayoutMetrics()
+    }
+
     private func configureUI() {
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.alwaysBounceVertical = true
+        view.addSubview(scrollView)
+
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(contentView)
+
+        contentColumn.axis = .vertical
+        contentColumn.spacing = AppLayout.sectionSpacing
+        contentColumn.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(contentColumn)
+
+        NSLayoutConstraint.activate([
+            scrollView.frameLayoutGuide.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.frameLayoutGuide.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.frameLayoutGuide.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.frameLayoutGuide.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+
+            contentColumn.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppLayout.contentVerticalInset),
+            contentColumn.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppLayout.contentVerticalInset),
+            contentColumn.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
+        ])
+
+        contentLeadingConstraint = contentColumn.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppLayout.horizontalInset(for: view.bounds.width))
+        contentTrailingConstraint = contentColumn.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppLayout.horizontalInset(for: view.bounds.width))
+        contentWidthConstraint = contentColumn.widthAnchor.constraint(lessThanOrEqualToConstant: AppLayout.maxContentWidth)
+        NSLayoutConstraint.activate([
+            contentLeadingConstraint,
+            contentTrailingConstraint,
+            contentWidthConstraint
+        ].compactMap { $0 })
+
         summaryCard.translatesAutoresizingMaskIntoConstraints = false
-        summaryCard.layer.cornerRadius = 16
-        summaryCard.layer.borderWidth = 1
 
         summaryTitleLabel.text = "勉強時間"
         summaryTitleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -66,18 +113,10 @@ final class TimeViewController: UIViewController {
 
         summaryCard.addSubview(summaryTitleLabel)
         summaryCard.addSubview(statsStack)
-
-        view.addSubview(rangeSegmented)
-        view.addSubview(summaryCard)
+        contentColumn.addArrangedSubview(rangeSegmented)
+        contentColumn.addArrangedSubview(summaryCard)
 
         NSLayoutConstraint.activate([
-            rangeSegmented.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
-            rangeSegmented.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            summaryCard.topAnchor.constraint(equalTo: rangeSegmented.bottomAnchor, constant: AppSpacing.s(12)),
-            summaryCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
-            summaryCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
-
             summaryTitleLabel.topAnchor.constraint(equalTo: summaryCard.topAnchor, constant: AppSpacing.s(12)),
             summaryTitleLabel.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor, constant: AppSpacing.s(16)),
             summaryTitleLabel.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -AppSpacing.s(16)),
@@ -87,6 +126,8 @@ final class TimeViewController: UIViewController {
             statsStack.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor, constant: -AppSpacing.s(16)),
             statsStack.bottomAnchor.constraint(equalTo: summaryCard.bottomAnchor, constant: -AppSpacing.s(16)),
         ])
+
+        summaryCard.heightAnchor.constraint(greaterThanOrEqualToConstant: AppLayout.minCardHeight).isActive = true
     }
 
     private func resultsFileURL() -> URL {
@@ -248,14 +289,14 @@ final class TimeViewController: UIViewController {
 
     private func makeStatStack(titleLabel: UILabel, valueLabel: UILabel, title: String) -> UIStackView {
         titleLabel.text = title
-        titleLabel.numberOfLines = 1
+        titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .left
         valueLabel.textAlignment = .left
-        valueLabel.numberOfLines = 1
+        valueLabel.numberOfLines = 0
 
         let stack = UIStackView(arrangedSubviews: [titleLabel, valueLabel])
         stack.axis = .vertical
-        stack.spacing = 4
+        stack.spacing = AppSpacing.s(4)
         stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }
@@ -265,26 +306,32 @@ final class TimeViewController: UIViewController {
         ThemeManager.applyBackground(to: view)
         ThemeManager.applyNavigationAppearance(to: navigationController)
 
-        [summaryCard].forEach { card in
-            card.backgroundColor = palette.surface
-            card.layer.borderColor = palette.border.cgColor
-        }
+        ThemeManager.styleCard(summaryCard)
 
-        summaryTitleLabel.font = AppFont.title(size: 14)
-        summaryTitleLabel.textColor = palette.text
+        summaryTitleLabel.applyMankiTextStyle(.sectionTitle, color: palette.text)
 
         [totalTitleLabel, streakTitleLabel, wordsTitleLabel].forEach { label in
-            label.font = AppFont.jp(size: 13, weight: .bold)
-            label.textColor = palette.mutedText
+            label.applyMankiTextStyle(.caption, color: palette.mutedText)
         }
         [totalValueLabel, streakValueLabel, wordsValueLabel].forEach { label in
-            label.font = AppFont.jp(size: 18, weight: .bold)
-            label.textColor = palette.text
+            label.applyMankiTextStyle(.statValue, color: palette.text)
         }
-        let attrs = [NSAttributedString.Key.font: AppFont.jp(size: 12, weight: .bold)]
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: AppTextStyle.caption.font(),
+            .foregroundColor: palette.text
+        ]
         rangeSegmented.setTitleTextAttributes(attrs, for: .normal)
         rangeSegmented.setTitleTextAttributes(attrs, for: .selected)
         rangeSegmented.selectedSegmentTintColor = palette.accent
+        rangeSegmented.backgroundColor = palette.surfaceAlt
+    }
+
+    private func updateLayoutMetrics() {
+        let width = view.bounds.width
+        let inset = AppLayout.horizontalInset(for: width)
+        contentLeadingConstraint?.constant = inset
+        contentTrailingConstraint?.constant = -inset
+        contentWidthConstraint?.constant = min(AppLayout.maxContentWidth, width - (inset * 2))
     }
 
     deinit {

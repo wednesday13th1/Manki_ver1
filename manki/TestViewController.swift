@@ -9,18 +9,12 @@ import UIKit
 
 final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource {
 
-    private enum QuestionType {
-        case written
-        case choice
-    }
-
     private enum Direction {
         case enToJa
         case jaToEn
     }
 
     private struct QuizQuestion {
-        let type: QuestionType
         let direction: Direction
         let wordId: String
         let prompt: String
@@ -49,10 +43,8 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
     private let settingsStack = UIStackView()
-    private let typeSegmented = UISegmentedControl(items: ["記述", "選択", "両方"])
     private let directionSegmented = UISegmentedControl(items: ["英→日", "日→英", "両方"])
     private let numQuestionsTextField = UITextField()
-    private let numChoicesTextField = UITextField()
     private let timeTextField = UITextField()
     private let startButton = UIButton(type: .system)
     private let timeLabel = UILabel()
@@ -60,19 +52,14 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private let answerTextField = UITextField()
     private let choicesStack = UIStackView()
     private let favoriteFilterButton = UIButton(type: .system)
-    private let levelsStack = UIStackView()
     private let submitButton = UIButton(type: .system)
     private let timePicker = UIPickerView() //picker ~
     private let numQuestionsPicker = UIPickerView()
-    private let numChoicesPicker = UIPickerView() // ~ picker
 
     private let timeOptionsSec = Array(stride(from: 0, through: 600, by: 30))
     private let numQuestionsOptions = Array(stride(from: 0, through: 100, by: 5))
-    private let numChoicesOptions = Array(2...8)
     private var selectedTimeSeconds = 0
     private var favoriteOnly = false
-    private var selectedLevels: Set<Int> = [1, 2, 3, 4, 5]
-    private var levelButtons: [UIButton] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -115,11 +102,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         settingTitle.font = AppFont.jp(size: 18, weight: .regular)
         settingsStack.addArrangedSubview(settingTitle)
 
-        typeSegmented.selectedSegmentIndex = 2
-        typeSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .normal)
-        typeSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .selected)
-        settingsStack.addArrangedSubview(typeSegmented)
-
         directionSegmented.selectedSegmentIndex = 2
         directionSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .normal)
         directionSegmented.setTitleTextAttributes([.font: AppFont.jp(size: 13, weight: .bold)], for: .selected)
@@ -152,19 +134,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         countStack.addArrangedSubview(numQuestionsTitle)
         countStack.addArrangedSubview(numQuestionsTextField)
         settingsStack.addArrangedSubview(countStack)
-
-        let choicesStackSetting = UIStackView()
-        choicesStackSetting.axis = .vertical
-        choicesStackSetting.spacing = AppSpacing.s(6)
-        let numChoicesTitle = UILabel()
-        numChoicesTitle.text = "選択肢数 (2以上)"
-        numChoicesTitle.font = AppFont.jp(size: 16, weight: .regular)
-        numChoicesTextField.borderStyle = .roundedRect
-        numChoicesTextField.font = AppFont.jp(size: 14)
-        numChoicesTextField.text = "\(defaultChoiceCount)"
-        choicesStackSetting.addArrangedSubview(numChoicesTitle)
-        choicesStackSetting.addArrangedSubview(numChoicesTextField)
-        settingsStack.addArrangedSubview(choicesStackSetting)
 
         startButton.setTitle("テスト開始", for: .normal)
         startButton.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
@@ -216,33 +185,11 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         favoriteRow.addArrangedSubview(favoriteFilterButton)
         settingsStack.addArrangedSubview(favoriteRow)
 
-        let levelTitle = UILabel()
-        levelTitle.text = "レベル (チェックで限定)"
-        levelTitle.font = AppFont.jp(size: 14, weight: .bold)
-        settingsStack.addArrangedSubview(levelTitle)
-
-        levelsStack.axis = .horizontal
-        levelsStack.spacing = AppSpacing.s(8)
-        levelsStack.distribution = .fillEqually
-        settingsStack.addArrangedSubview(levelsStack)
-
-        levelButtons = (1...5).map { level in
-            let button = UIButton(type: .system)
-            button.tag = level
-            button.layer.cornerRadius = 8
-            button.layer.borderWidth = 1
-            button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
-            button.addTarget(self, action: #selector(toggleLevel(_:)), for: .touchUpInside)
-            levelsStack.addArrangedSubview(button)
-            return button
-        }
-        updateLevelButtons()
     }
 
     private func configurePickers() {
         configurePicker(timePicker, tag: 1, textField: timeTextField, options: timeOptionsSec)
         configurePicker(numQuestionsPicker, tag: 2, textField: numQuestionsTextField, options: numQuestionsOptions)
-        configurePicker(numChoicesPicker, tag: 3, textField: numChoicesTextField, options: numChoicesOptions)
     }
 
     private func configurePicker(_ picker: UIPickerView,
@@ -317,36 +264,29 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             return
         }
         guard !filteredWords.isEmpty else {
-            showAlert(title: "条件に合う単語がありません", message: "星・レベルの条件を見直してください。")
+            showAlert(title: "条件に合う単語がありません", message: "お気に入り条件を見直してください。")
             return
         }
 
         let timeLimit = selectedTimeSeconds
         let numQuestionsInput = Int(numQuestionsTextField.text ?? "") ?? 0
-        let numChoicesInput = Int(numChoicesTextField.text ?? "") ?? defaultChoiceCount
-        if numChoicesInput > 0 && numChoicesInput < 2 {
-            showAlert(title: "選択肢数エラー", message: "選択肢数は2以上にしてください。")
-            return
-        }
-        let selectedMode = typeSegmented.selectedSegmentIndex
         let selectedDirection = directionSegmented.selectedSegmentIndex
         let maxChoices = maxUniqueChoiceCount(for: selectedDirection, words: filteredWords)
-        if numChoicesInput > maxChoices {
+        if defaultChoiceCount > maxChoices {
             presentUnifiedModal(
-                title: "選択肢数が多すぎます",
-                message: "現在の単語数/重複の関係で最大 \(maxChoices) 個までです。",
+                title: "4択を作れません",
+                message: "重複を除くと現在は最大 \(maxChoices) 択までです。",
                 actions: [UnifiedModalAction(title: "OK")]
             )
             return
         }
-        sessionModeLabel = modeLabel(for: selectedMode)
+        sessionModeLabel = "4択"
         sessionDirectionLabel = directionLabel(for: selectedDirection)
 
         quiz = generateQuiz(words: filteredWords,
-                            modeIndex: selectedMode,
                             directionIndex: selectedDirection,
                             numQuestions: numQuestionsInput,
-                            numChoices: numChoicesInput)
+                            numChoices: defaultChoiceCount)
         guard !quiz.isEmpty else {
             showAlert(title: "問題を作れません", message: "単語数が不足しています。")
             return
@@ -362,7 +302,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     }
 
     private func generateQuiz(words: [SavedWord],
-                              modeIndex: Int,
                               directionIndex: Int,
                               numQuestions: Int,
                               numChoices: Int) -> [QuizQuestion] {
@@ -371,15 +310,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         let limit = (numQuestions <= 0) ? shuffled.count : min(numQuestions, shuffled.count)
 
         for word in shuffled.prefix(limit) {
-            let type: QuestionType
-            if modeIndex == 0 {
-                type = .written
-            } else if modeIndex == 1 {
-                type = .choice
-            } else {
-                type = Bool.random() ? .written : .choice
-            }
-
             let direction: Direction
             if directionIndex == 0 {
                 direction = .enToJa
@@ -389,13 +319,12 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
                 direction = Bool.random() ? .enToJa : .jaToEn
             }
 
-            if type == .choice && words.count < 2 {
+            if words.count < 2 {
                 continue
             }
 
             let question = buildQuestion(word: word,
                                          words: words,
-                                         type: type,
                                          direction: direction,
                                          numChoices: numChoices)
             questions.append(question)
@@ -418,7 +347,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
     private func buildQuestion(word: SavedWord,
                                words: [SavedWord],
-                               type: QuestionType,
                                direction: Direction,
                                numChoices: Int) -> QuizQuestion {
         let prompt: String
@@ -433,25 +361,15 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             correct = word.english
         }
 
-        if type == .choice {
-            let choices = buildChoices(correctWord: word,
-                                       words: words,
-                                       direction: direction,
-                                       numChoices: numChoices)
-            return QuizQuestion(type: .choice,
-                                direction: direction,
-                                wordId: word.id,
-                                prompt: prompt,
-                                correctAnswer: correct,
-                                choices: choices)
-        }
-
-        return QuizQuestion(type: .written,
-                            direction: direction,
+        let choices = buildChoices(correctWord: word,
+                                   words: words,
+                                   direction: direction,
+                                   numChoices: numChoices)
+        return QuizQuestion(direction: direction,
                             wordId: word.id,
                             prompt: prompt,
                             correctAnswer: correct,
-                            choices: [])
+                            choices: choices)
     }
 
     private func buildChoices(correctWord: SavedWord,
@@ -490,14 +408,9 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         answerTextField.text = ""
         selectedChoiceIndex = nil
 
-        answerTextField.isHidden = question.type == .choice
-        choicesStack.isHidden = question.type == .written
-
-        if question.type == .choice {
-            configureChoiceButtons(choices: question.choices)
-        } else {
-            clearChoices()
-        }
+        answerTextField.isHidden = true
+        choicesStack.isHidden = false
+        configureChoiceButtons(choices: question.choices)
 
         questionStartTime = Date()
         submitButton.isHidden = false
@@ -541,16 +454,12 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         let question = quiz[currentIndex]
 
         let userAnswer: String
-        if question.type == .choice {
-            guard let selected = selectedChoiceIndex,
-                  selected < question.choices.count else {
-                showAlert(title: "選択してください", message: "選択肢を1つ選んでください。")
-                return
-            }
-            userAnswer = question.choices[selected]
-        } else {
-            userAnswer = answerTextField.text ?? ""
+        guard let selected = selectedChoiceIndex,
+              selected < question.choices.count else {
+            showAlert(title: "選択してください", message: "選択肢を1つ選んでください。")
+            return
         }
+        userAnswer = question.choices[selected]
 
         if normalize(userAnswer) == normalize(question.correctAnswer) {
             score += 1
@@ -571,12 +480,10 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     }
 
     private func applyFilters(words: [SavedWord]) -> [SavedWord] {
-        guard !selectedLevels.isEmpty else { return [] }
         var filtered = words
         if favoriteOnly {
             filtered = filtered.filter { $0.isFavorite }
         }
-        filtered = filtered.filter { selectedLevels.contains(max(1, min(5, $0.importanceLevel))) }
         return filtered
     }
 
@@ -588,29 +495,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private func updateFavoriteFilterButton() {
         let imageName = favoriteOnly ? "star.fill" : "star"
         favoriteFilterButton.setImage(UIImage(systemName: imageName), for: .normal)
-    }
-
-    @objc private func toggleLevel(_ sender: UIButton) {
-        let level = sender.tag
-        if selectedLevels.contains(level) {
-            selectedLevels.remove(level)
-        } else {
-            selectedLevels.insert(level)
-        }
-        updateLevelButtons()
-    }
-
-    private func updateLevelButtons() {
-        for button in levelButtons {
-            let isSelected = selectedLevels.contains(button.tag)
-            let imageName = isSelected ? "checkmark.square.fill" : "square"
-            button.setImage(UIImage(systemName: imageName), for: .normal)
-            button.tintColor = isSelected ? .systemBlue : .systemGray
-            button.setTitle(" Lv\(button.tag)", for: .normal)
-            button.setTitleColor(isSelected ? .systemBlue : .systemGray, for: .normal)
-            button.layer.borderColor = (isSelected ? UIColor.systemBlue : UIColor.systemGray4).cgColor
-            button.backgroundColor = isSelected ? UIColor.systemBlue.withAlphaComponent(0.08) : .clear
-        }
     }
 
     private func startTimerIfNeeded(limitSeconds: Int) {
@@ -690,7 +574,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
                                        answerTime: TimeInterval) {
         let entry = SessionQuestion(
             index: currentIndex + 1,
-            type: question.type == .choice ? "choice" : "written",
+            type: "choice",
             direction: question.direction == .enToJa ? "en_to_ja" : "ja_to_en",
             wordId: question.wordId,
             prompt: question.prompt,
@@ -747,17 +631,6 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         return formatter.string(from: Date())
     }
 
-    private func modeLabel(for index: Int) -> String {
-        switch index {
-        case 0:
-            return "記述"
-        case 1:
-            return "選択"
-        default:
-            return "混合"
-        }
-    }
-
     private func directionLabel(for index: Int) -> String {
         switch index {
         case 0:
@@ -798,8 +671,6 @@ extension TestViewController {
             timeTextField.text = value == 0 ? "0 (時間制限無し)" : formatSeconds(value)
         case 2:
             numQuestionsTextField.text = "\(value)"
-        case 3:
-            numChoicesTextField.text = "\(value)"
         default:
             break
         }
@@ -811,8 +682,6 @@ extension TestViewController {
             return timeOptionsSec
         case 2:
             return numQuestionsOptions
-        case 3:
-            return numChoicesOptions
         default:
             return []
         }

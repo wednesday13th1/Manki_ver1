@@ -7,40 +7,121 @@
 
 import UIKit
 
-class WordViewController: UIViewController {
+final class WordViewController: UIViewController {
 
-    private let stackView = UIStackView()
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+    private let contentColumn = UIStackView()
+    private let introCard = UIView()
+    private let introStack = UIStackView()
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
     private let listButton = UIButton(type: .system)
     private let flipButton = UIButton(type: .system)
+    private var contentLeadingConstraint: NSLayoutConstraint?
+    private var contentTrailingConstraint: NSLayoutConstraint?
+    private var contentWidthConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "単語"
-        view.backgroundColor = .systemBackground
         configureUI()
+        applyTheme()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateLayoutMetrics()
     }
 
     private func configureUI() {
-        stackView.axis = .vertical
-        stackView.spacing = AppSpacing.s(16)
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stackView)
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.alwaysBounceVertical = true
+        view.addSubview(scrollView)
+
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(contentView)
+
+        contentColumn.axis = .vertical
+        contentColumn.spacing = AppLayout.sectionSpacing
+        contentColumn.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(contentColumn)
 
         NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: AppSpacing.s(24)),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
+            scrollView.frameLayoutGuide.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.frameLayoutGuide.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.frameLayoutGuide.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.frameLayoutGuide.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+
+            contentColumn.topAnchor.constraint(equalTo: contentView.topAnchor, constant: AppLayout.contentVerticalInset),
+            contentColumn.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -AppLayout.contentVerticalInset),
+            contentColumn.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
         ])
+
+        contentLeadingConstraint = contentColumn.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppLayout.horizontalInset(for: view.bounds.width))
+        contentTrailingConstraint = contentColumn.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppLayout.horizontalInset(for: view.bounds.width))
+        contentWidthConstraint = contentColumn.widthAnchor.constraint(lessThanOrEqualToConstant: AppLayout.maxContentWidth)
+        NSLayoutConstraint.activate([
+            contentLeadingConstraint,
+            contentTrailingConstraint,
+            contentWidthConstraint
+        ].compactMap { $0 })
+
+        introStack.axis = .vertical
+        introStack.spacing = AppSpacing.s(10)
+        introStack.translatesAutoresizingMaskIntoConstraints = false
+        introCard.addSubview(introStack)
+
+        titleLabel.text = "単語メニュー"
+        subtitleLabel.text = "一覧とフリップカードの入口を、Safe Area とスクロール前提の構造で安定表示します。"
+        introStack.addArrangedSubview(titleLabel)
+        introStack.addArrangedSubview(subtitleLabel)
+
+        contentColumn.addArrangedSubview(introCard)
 
         listButton.setTitle("一覧へ", for: .normal)
         listButton.addTarget(self, action: #selector(openList), for: .touchUpInside)
-        stackView.addArrangedSubview(listButton)
-
         flipButton.setTitle("フリップカードへ", for: .normal)
         flipButton.addTarget(self, action: #selector(openFlip), for: .touchUpInside)
-        stackView.addArrangedSubview(flipButton)
+
+        contentColumn.addArrangedSubview(listButton)
+        contentColumn.addArrangedSubview(flipButton)
+
+        NSLayoutConstraint.activate([
+            introStack.topAnchor.constraint(equalTo: introCard.topAnchor),
+            introStack.leadingAnchor.constraint(equalTo: introCard.leadingAnchor),
+            introStack.trailingAnchor.constraint(equalTo: introCard.trailingAnchor),
+            introStack.bottomAnchor.constraint(equalTo: introCard.bottomAnchor)
+        ])
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        ThemeManager.styleCard(introCard)
+        ThemeManager.stylePrimaryButton(listButton)
+        ThemeManager.styleSecondaryButton(flipButton)
+        titleLabel.applyMankiTextStyle(.screenTitle, color: palette.text, alignment: .center)
+        subtitleLabel.applyMankiTextStyle(.body, color: palette.mutedText, alignment: .center)
+    }
+
+    private func updateLayoutMetrics() {
+        let width = view.bounds.width
+        let inset = AppLayout.horizontalInset(for: width)
+        let cardPadding = AppLayout.cardInnerPadding(for: width)
+        contentLeadingConstraint?.constant = inset
+        contentTrailingConstraint?.constant = -inset
+        contentWidthConstraint?.constant = min(AppLayout.maxContentWidth, width - (inset * 2))
+        introStack.layoutMargins = NSDirectionalEdgeInsets(top: cardPadding, leading: cardPadding, bottom: cardPadding, trailing: cardPadding)
+        introStack.isLayoutMarginsRelativeArrangement = true
     }
 
     @objc private func openList() {
@@ -71,5 +152,4 @@ class WordViewController: UIViewController {
         }
         navigationController?.pushViewController(flipVC, animated: true)
     }
-
 }
