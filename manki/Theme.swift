@@ -451,14 +451,49 @@ enum ThemeManager {
 
     static func stylePrimaryButton(_ button: UIButton) {
         let palette = palette()
-        applyThemeButtonStyle(button, palette: palette, cornerRadius: 16, shadowOpacity: 0.18)
+        applyThemeButtonStyle(button, palette: palette, cornerRadius: 0, shadowOpacity: 0.22)
         button.applyMankiButtonMetrics()
     }
 
     static func styleSecondaryButton(_ button: UIButton) {
         let palette = palette()
-        applyThemeButtonStyle(button, palette: palette, cornerRadius: 14, shadowOpacity: 0.08)
+        applyThemeButtonStyle(button, palette: palette, cornerRadius: 0, shadowOpacity: 0.12)
         button.applyMankiButtonMetrics()
+    }
+
+    static func stylePixelIconButton(_ button: UIButton) {
+        let palette = palette()
+        button.configurationUpdateHandler = nil
+        button.tintColor = palette.text
+        button.backgroundColor = palette.surface.withAlphaComponent(0.96)
+        button.layer.cornerRadius = 0
+        button.layer.borderWidth = 2
+        button.layer.borderColor = palette.border.cgColor
+        button.layer.shadowColor = palette.border.cgColor
+        button.layer.shadowOpacity = 0.2
+        button.layer.shadowOffset = CGSize(width: 2, height: 2)
+        button.layer.shadowRadius = 0
+        button.clipsToBounds = false
+        button.imageView?.contentMode = .scaleAspectFit
+    }
+
+    static func stylePixelOutlineButton(_ button: UIButton, selected: Bool = false) {
+        let palette = palette()
+        button.configurationUpdateHandler = nil
+        button.backgroundColor = selected ? palette.accent : palette.surfaceAlt
+        button.tintColor = palette.text
+        button.setTitleColor(palette.text, for: .normal)
+        button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        button.titleLabel?.numberOfLines = 1
+        button.titleLabel?.adjustsFontSizeToFitWidth = true
+        button.layer.cornerRadius = 0
+        button.layer.borderWidth = selected ? 2 : 1.5
+        button.layer.borderColor = palette.border.cgColor
+        button.layer.shadowColor = palette.border.cgColor
+        button.layer.shadowOpacity = selected ? 0.22 : 0.1
+        button.layer.shadowOffset = CGSize(width: 2, height: 2)
+        button.layer.shadowRadius = 0
+        button.clipsToBounds = false
     }
 
     static func styleCard(_ view: UIView, fillColor: UIColor? = nil) {
@@ -518,16 +553,16 @@ enum ThemeManager {
         cornerRadius: CGFloat,
         shadowOpacity: Float
     ) {
-        let title = button.title(for: .normal)
-        let image = button.image(for: .normal)
+        let initialTitle = button.title(for: .normal)
+        let initialImage = button.image(for: .normal)
         let fillColor = readableButtonFillColor(for: palette)
         let highlightedColor = fillColor.blended(with: .black, amount: 0.14)
         let disabledColor = fillColor.withAlphaComponent(0.42)
 
         button.configurationUpdateHandler = { button in
             var configuration = UIButton.Configuration.filled()
-            configuration.title = title ?? button.configuration?.title
-            configuration.image = image ?? button.configuration?.image
+            configuration.title = button.title(for: .normal) ?? button.configuration?.title ?? initialTitle
+            configuration.image = button.image(for: .normal) ?? button.configuration?.image ?? initialImage
             configuration.imagePlacement = .leading
             configuration.imagePadding = 6
             configuration.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 16, bottom: 9, trailing: 16)
@@ -556,8 +591,8 @@ enum ThemeManager {
         button.layer.borderColor = palette.border.withAlphaComponent(0.9).cgColor
         button.layer.shadowColor = palette.border.cgColor
         button.layer.shadowOpacity = shadowOpacity
-        button.layer.shadowOffset = CGSize(width: 0, height: 3)
-        button.layer.shadowRadius = 5
+        button.layer.shadowOffset = CGSize(width: 3, height: 3)
+        button.layer.shadowRadius = 0
         button.clipsToBounds = false
         button.setNeedsUpdateConfiguration()
     }

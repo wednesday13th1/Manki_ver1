@@ -1,7 +1,7 @@
 import UIKit
 
 final class SideMenuViewController: UIViewController {
-    private let menuWidth: CGFloat = 280
+    private let menuWidth: CGFloat = 292
     private let dimmingView = UIControl()
     private let menuContainer = UIView()
     private let menuStack = UIStackView()
@@ -15,7 +15,7 @@ final class SideMenuViewController: UIViewController {
         self.items = items
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
-        modalTransitionStyle = .crossDissolve
+        modalTransitionStyle = .coverVertical
     }
 
     required init?(coder: NSCoder) {
@@ -50,20 +50,20 @@ final class SideMenuViewController: UIViewController {
         dimmingView.addTarget(self, action: #selector(handleClose), for: .touchUpInside)
 
         menuContainer.translatesAutoresizingMaskIntoConstraints = false
-        menuContainer.layer.cornerRadius = 18
+        menuContainer.layer.cornerRadius = 0
         menuContainer.layer.borderWidth = 2
         menuContainer.layer.shadowColor = UIColor.black.cgColor
         menuContainer.layer.shadowOpacity = 0.18
-        menuContainer.layer.shadowOffset = CGSize(width: 2, height: 4)
-        menuContainer.layer.shadowRadius = 8
+        menuContainer.layer.shadowOffset = CGSize(width: 4, height: 4)
+        menuContainer.layer.shadowRadius = 0
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "MENU"
+        titleLabel.text = "MANKI MENU"
         titleLabel.textAlignment = .left
 
         menuStack.translatesAutoresizingMaskIntoConstraints = false
         menuStack.axis = .vertical
-        menuStack.spacing = AppSpacing.s(10)
+        menuStack.spacing = AppSpacing.s(8)
         menuStack.alignment = .fill
 
         view.addSubview(dimmingView)
@@ -102,22 +102,25 @@ final class SideMenuViewController: UIViewController {
             button.tag = index
             button.contentHorizontalAlignment = .left
             button.contentEdgeInsets = UIEdgeInsets(top: AppSpacing.s(10),
-                                                   left: AppSpacing.s(12),
+                                                   left: AppSpacing.s(14),
                                                    bottom: AppSpacing.s(10),
-                                                   right: AppSpacing.s(12))
+                                                   right: AppSpacing.s(14))
             button.titleLabel?.font = FontManager.font(.button, size: 16, weight: .bold)
-            button.titleEdgeInsets = UIEdgeInsets(top: 0, left: AppSpacing.s(8), bottom: 0, right: 0)
+            button.titleLabel?.adjustsFontSizeToFitWidth = true
+            button.titleLabel?.minimumScaleFactor = 0.82
+            button.titleEdgeInsets = UIEdgeInsets(top: 0, left: AppSpacing.s(10), bottom: 0, right: 0)
             button.setTitle(item.title, for: .normal)
             button.tintColor = ThemeManager.palette().text
             if let icon = item.icon {
                 button.setImage(icon, for: .normal)
             }
-            button.layer.cornerRadius = 8
+            button.imageView?.contentMode = .scaleAspectFit
+            button.layer.cornerRadius = 0
             button.layer.borderWidth = item.isSelected ? 2 : 1
             button.addTarget(self, action: #selector(handleItemTap(_:)), for: .touchUpInside)
             menuStack.addArrangedSubview(button)
 
-            let height = button.heightAnchor.constraint(equalToConstant: AppSpacing.s(52))
+            let height = button.heightAnchor.constraint(equalToConstant: AppSpacing.s(50))
             height.priority = .required
             height.isActive = true
         }
@@ -128,7 +131,7 @@ final class SideMenuViewController: UIViewController {
         menuContainer.backgroundColor = palette.surface
         menuContainer.layer.borderColor = palette.border.cgColor
         titleLabel.textColor = palette.text
-        titleLabel.font = FontManager.font(.display, size: 18, weight: .regular)
+        titleLabel.font = FontManager.font(.display, size: 20, weight: .regular)
 
         menuStack.arrangedSubviews.forEach { view in
             guard let button = view as? UIButton else { return }
@@ -137,6 +140,10 @@ final class SideMenuViewController: UIViewController {
             button.backgroundColor = item.isSelected ? palette.accent : palette.surfaceAlt
             button.layer.borderColor = palette.border.cgColor
             button.layer.borderWidth = item.isSelected ? 2 : 1
+            button.layer.shadowColor = palette.border.cgColor
+            button.layer.shadowOpacity = item.isSelected ? 0.22 : 0.08
+            button.layer.shadowOffset = CGSize(width: 2, height: 2)
+            button.layer.shadowRadius = 0
             button.accessibilityTraits = item.isSelected ? [.button, .selected] : [.button]
         }
     }
@@ -150,14 +157,14 @@ final class SideMenuViewController: UIViewController {
     private func animateIn() {
         menuContainer.transform = CGAffineTransform(translationX: -menuWidth, y: 0)
         dimmingView.alpha = 0
-        UIView.animate(withDuration: 0.25, delay: 0, options: [.curveEaseOut]) {
+        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
             self.dimmingView.alpha = 1
             self.menuContainer.transform = .identity
         }
     }
 
     private func animateOut(completion: (() -> Void)? = nil) {
-        UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseIn]) {
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseIn, .allowUserInteraction]) {
             self.dimmingView.alpha = 0
             self.menuContainer.transform = CGAffineTransform(translationX: -self.menuWidth, y: 0)
         } completion: { _ in

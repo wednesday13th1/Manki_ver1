@@ -439,11 +439,11 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         ]
         configButtons.forEach { button, title in
             button.translatesAutoresizingMaskIntoConstraints = false
-            // 初回表示時から丸ボタンに見えるよう十分大きい角丸を指定
-            button.layer.cornerRadius = 999
             button.layer.borderWidth = 1
             button.setTitle(title, for: .normal)
             button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
+            button.titleLabel?.adjustsFontSizeToFitWidth = true
+            button.titleLabel?.minimumScaleFactor = 0.78
             button.contentEdgeInsets = UIEdgeInsets(top: 16, left: 18, bottom: 16, right: 18)
         }
         retroFolderButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -460,7 +460,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroBadgeLabel.textAlignment = .center
 
         [retroClickWheelFolderButton, retroClickWheelWordButton].forEach { button in
-            button.layer.cornerRadius = 10
             button.layer.borderWidth = 1
             button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
             button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
@@ -1060,12 +1059,8 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroClickWheelCenterView.backgroundColor = UIColor.systemGray4
         retroClickWheelVerticalDivider.backgroundColor = UIColor.systemGray2
         retroClickWheelHorizontalDivider.backgroundColor = UIColor.systemGray2
-        retroClickWheelFolderButton.backgroundColor = UIColor.systemGray6
-        retroClickWheelFolderButton.layer.borderColor = UIColor.systemGray3.cgColor
-        retroClickWheelFolderButton.setTitleColor(palette.text, for: .normal)
-        retroClickWheelWordButton.backgroundColor = UIColor.systemGray6
-        retroClickWheelWordButton.layer.borderColor = UIColor.systemGray3.cgColor
-        retroClickWheelWordButton.setTitleColor(palette.text, for: .normal)
+        ThemeManager.stylePixelOutlineButton(retroClickWheelFolderButton)
+        ThemeManager.stylePixelOutlineButton(retroClickWheelWordButton)
 
         retroKeypadView.backgroundColor = UIColor(white: 0.18, alpha: 1.0)
         retroKeypadView.layer.cornerRadius = 22
@@ -1073,13 +1068,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroKeypadView.layer.borderColor = palette.border.cgColor
 
         retroKeyButtons.forEach { key in
-            key.backgroundColor = UIColor.systemGray6
-            key.layer.borderColor = UIColor.systemGray3.cgColor
-            key.setTitleColor(palette.text, for: .normal)
-            key.layer.shadowColor = UIColor.systemGray3.cgColor
-            key.layer.shadowOpacity = 0.2
-            key.layer.shadowOffset = CGSize(width: 0, height: 2)
-            key.layer.shadowRadius = 3
+            ThemeManager.stylePixelOutlineButton(key)
         }
 
         retroBadgeLabel.font = AppFont.title(size: 9)
@@ -1090,13 +1079,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         retroBadgeLabel.layer.borderColor = palette.border.cgColor
         retroBadgeLabel.clipsToBounds = true
 
-        retroAddButton.backgroundColor = UIColor.systemGray6
-        retroAddButton.setTitleColor(palette.text, for: .normal)
-        retroAddButton.layer.borderColor = UIColor.systemGray3.cgColor
-        retroAddButton.layer.shadowColor = UIColor.systemGray3.cgColor
-        retroAddButton.layer.shadowOpacity = 0.25
-        retroAddButton.layer.shadowOffset = CGSize(width: 0, height: 2)
-        retroAddButton.layer.shadowRadius = 3
+        ThemeManager.stylePixelOutlineButton(retroAddButton)
 
         themeHeader.backgroundColor = palette.surface
         themeHeader.layer.cornerRadius = 16
@@ -1351,7 +1334,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
         let keyHeight = retroKeypadRowTop.bounds.height
         if keyHeight > 0 {
-            retroKeyButtons.forEach { $0.layer.cornerRadius = keyHeight / 2 }
+            retroKeyButtons.forEach { $0.layer.cornerRadius = 0 }
         }
     }
 

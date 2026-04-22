@@ -10,12 +10,12 @@ enum AppRoute: CaseIterable {
 
     var title: String {
         switch self {
-        case .home: return "Home"
-        case .folder: return "Folder"
-        case .sets: return "Sets"
-        case .flip: return "Flip"
-        case .test: return "Test"
-        case .settings: return "Settings"
+        case .home: return "ホーム"
+        case .folder: return "フォルダー検索"
+        case .sets: return "学習セット"
+        case .flip: return "フリップ"
+        case .test: return "テスト"
+        case .settings: return "設定"
         }
     }
 

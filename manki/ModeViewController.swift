@@ -228,19 +228,10 @@ final class ModeViewController: UIViewController {
 
         ThemeManager.stylePrimaryButton(startButton)
         startButton.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
-        startButton.layer.cornerRadius = 0
         startButton.layer.borderWidth = 2
 
         [menuButton, settingsButton].forEach { button in
-            button.tintColor = palette.text
-            button.backgroundColor = palette.surface.withAlphaComponent(0.92)
-            button.layer.cornerRadius = AppSpacing.s(23)
-            button.layer.borderWidth = 2
-            button.layer.borderColor = palette.border.cgColor
-            button.layer.shadowColor = palette.border.cgColor
-            button.layer.shadowOpacity = 0.18
-            button.layer.shadowOffset = CGSize(width: 0, height: 2)
-            button.layer.shadowRadius = 4
+            ThemeManager.stylePixelIconButton(button)
         }
 
     }

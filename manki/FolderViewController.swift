@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class FolderViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+final class FolderViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
 
     private var folders: [SavedFolder] = []
     private var filteredFolders: [SavedFolder] = []
@@ -33,12 +33,14 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
     private let retroClickWheelAddButton = UIButton(type: .system)
     private let retroClickWheelSortButton = UIButton(type: .system)
     private let retroBadgeLabel = UILabel()
+    private let keyboardDismissTap = UITapGestureRecognizer()
     private var isNavigatingToSetView = false
     private var reloadTaskID: Int = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "戻る"
+        configureKeyboardDismiss()
         configureRetroShell()
         configureTableView()
         configureEmptyLabel()
@@ -156,10 +158,32 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     private func configureSearch() {
         searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "フォルダー名で検索"
         searchController.searchBar.sizeToFit()
         definesPresentationContext = true
+    }
+
+    private func configureKeyboardDismiss() {
+        keyboardDismissTap.addTarget(self, action: #selector(dismissKeyboard))
+        keyboardDismissTap.cancelsTouchesInView = false
+        keyboardDismissTap.delaysTouchesBegan = false
+        keyboardDismissTap.delegate = self
+        view.addGestureRecognizer(keyboardDismissTap)
+    }
+
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard gestureRecognizer === keyboardDismissTap else { return true }
+        let touchedView = touch.view
+        if let touchedView, touchedView.isDescendant(of: searchController.searchBar) {
+            return false
+        }
+        return true
     }
 
     private func configureRetroShell() {
@@ -181,8 +205,6 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         retroBadgeLabel.textAlignment = .center
 
         [retroClickWheelBackButton, retroClickWheelAddButton, retroClickWheelSortButton].forEach { button in
-            button.layer.cornerRadius = 10
-            button.layer.borderWidth = 1
             button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
             button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
         }
@@ -501,9 +523,7 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         retroClickWheelHorizontalDivider.backgroundColor = UIColor.systemGray2
 
         [retroClickWheelBackButton, retroClickWheelAddButton, retroClickWheelSortButton].forEach { button in
-            button.backgroundColor = UIColor.systemGray6
-            button.layer.borderColor = UIColor.systemGray3.cgColor
-            button.setTitleColor(palette.text, for: .normal)
+            ThemeManager.stylePixelOutlineButton(button)
         }
 
         retroBadgeLabel.font = AppFont.jp(size: 10, weight: .bold)

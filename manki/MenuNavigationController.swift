@@ -1,9 +1,11 @@
 import UIKit
 
-final class MenuNavigationController: UINavigationController {
+final class MenuNavigationController: UINavigationController, UIGestureRecognizerDelegate {
     private lazy var edgePan: UIScreenEdgePanGestureRecognizer = {
         let recognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
         recognizer.edges = .left
+        recognizer.cancelsTouchesInView = false
+        recognizer.delegate = self
         return recognizer
     }()
     private lazy var floatingMenuButton: UIButton = {
@@ -12,11 +14,11 @@ final class MenuNavigationController: UINavigationController {
         button.setImage(UIImage(systemName: "line.3.horizontal"), for: .normal)
         button.accessibilityLabel = "メニュー"
         button.addTarget(self, action: #selector(openMenu), for: .touchUpInside)
-        button.layer.cornerRadius = 8
+        button.layer.cornerRadius = 0
         button.layer.borderWidth = 2
-        button.layer.shadowOpacity = 0.14
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowRadius = 4
+        button.layer.shadowOpacity = 0.2
+        button.layer.shadowOffset = CGSize(width: 2, height: 2)
+        button.layer.shadowRadius = 0
         return button
     }()
     private var sideMenu: SideMenuViewController?
@@ -92,11 +94,7 @@ final class MenuNavigationController: UINavigationController {
 
     private func applyTheme() {
         ThemeManager.applyNavigationAppearance(to: self)
-        let palette = ThemeManager.palette()
-        floatingMenuButton.tintColor = palette.text
-        floatingMenuButton.backgroundColor = palette.surface.withAlphaComponent(0.94)
-        floatingMenuButton.layer.borderColor = palette.border.cgColor
-        floatingMenuButton.layer.shadowColor = palette.border.cgColor
+        ThemeManager.stylePixelIconButton(floatingMenuButton)
     }
 
     @objc private func openMenu() {
@@ -116,6 +114,11 @@ final class MenuNavigationController: UINavigationController {
         if recognizer.state == .recognized {
             openMenu()
         }
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return gestureRecognizer === edgePan
     }
 
     private func buildMenuItems() -> [SideMenuItem] {
