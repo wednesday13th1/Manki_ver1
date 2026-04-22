@@ -10,13 +10,18 @@ import UIKit
 final class ModeViewController: UIViewController {
 
     private let backgroundImageView = UIImageView()
-    private let backgroundOverlayView = UIView()
+    private let colorOverlayView = UIView()
+    private let dimmingOverlayView = UIView()
+    private let contentView = UIView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let startButton = UIButton(type: .system)
+    private let menuButton = UIButton(type: .system)
+    private let settingsButton = UIButton(type: .system)
     private let helperLabel = UILabel()
     private var themeObserver: NSObjectProtocol?
     private var isTransitioning = false
+    private var sideMenu: SideMenuViewController?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,8 +51,13 @@ final class ModeViewController: UIViewController {
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.clipsToBounds = true
 
-        backgroundOverlayView.translatesAutoresizingMaskIntoConstraints = false
-        backgroundOverlayView.isUserInteractionEnabled = false
+        colorOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        colorOverlayView.isUserInteractionEnabled = false
+
+        dimmingOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        dimmingOverlayView.isUserInteractionEnabled = false
+
+        contentView.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = "MANKI"
@@ -62,8 +72,18 @@ final class ModeViewController: UIViewController {
         startButton.setTitle("学習セットを開く", for: .normal)
         startButton.addTarget(self, action: #selector(openStudy), for: .touchUpInside)
 
+        menuButton.translatesAutoresizingMaskIntoConstraints = false
+        menuButton.setImage(UIImage(systemName: "line.3.horizontal"), for: .normal)
+        menuButton.accessibilityLabel = "メニュー"
+        menuButton.addTarget(self, action: #selector(openSideMenu), for: .touchUpInside)
+
+        settingsButton.translatesAutoresizingMaskIntoConstraints = false
+        settingsButton.setImage(UIImage(systemName: "gearshape.fill"), for: .normal)
+        settingsButton.accessibilityLabel = "設定"
+        settingsButton.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
+
         helperLabel.translatesAutoresizingMaskIntoConstraints = false
-        helperLabel.text = "設定・ステッカー・カレンダーは削除済み"
+        helperLabel.text = "色や背景は右上の設定から変更できます"
         helperLabel.numberOfLines = 0
         helperLabel.textAlignment = .center
 
@@ -74,8 +94,12 @@ final class ModeViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(backgroundImageView)
-        view.addSubview(backgroundOverlayView)
-        view.addSubview(stack)
+        view.addSubview(colorOverlayView)
+        view.addSubview(dimmingOverlayView)
+        view.addSubview(contentView)
+        contentView.addSubview(menuButton)
+        contentView.addSubview(settingsButton)
+        contentView.addSubview(stack)
 
         NSLayoutConstraint.activate([
             backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -83,14 +107,34 @@ final class ModeViewController: UIViewController {
             backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            backgroundOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backgroundOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            backgroundOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
-            backgroundOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            colorOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            colorOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            colorOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            colorOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(24)),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(24)),
-            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            dimmingOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            dimmingOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            dimmingOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            dimmingOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            contentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            contentView.topAnchor.constraint(equalTo: view.topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            menuButton.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(14)),
+            menuButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(18)),
+            menuButton.widthAnchor.constraint(equalToConstant: AppSpacing.s(46)),
+            menuButton.heightAnchor.constraint(equalTo: menuButton.widthAnchor),
+
+            settingsButton.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(14)),
+            settingsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(18)),
+            settingsButton.widthAnchor.constraint(equalToConstant: AppSpacing.s(46)),
+            settingsButton.heightAnchor.constraint(equalTo: settingsButton.widthAnchor),
+
+            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppSpacing.s(24)),
+            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppSpacing.s(24)),
+            stack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
 
             startButton.heightAnchor.constraint(equalToConstant: 64)
         ])
@@ -108,12 +152,70 @@ final class ModeViewController: UIViewController {
         }
     }
 
+    @objc private func openSideMenu() {
+        guard sideMenu == nil else { return }
+        let palette = ThemeManager.palette()
+        let items = AppRoute.allCases.map { route in
+            let icon = UIImage(systemName: route.systemImageName)?
+                .withTintColor(palette.text, renderingMode: .alwaysOriginal)
+            return SideMenuItem(
+                route: route,
+                title: route.title,
+                icon: icon,
+                isSelected: route == .home
+            ) { [weak self] in
+                self?.open(routeFromHome: route)
+            }
+        }
+        let menu = SideMenuViewController(items: items)
+        menu.onDismiss = { [weak self] in
+            self?.sideMenu = nil
+        }
+        sideMenu = menu
+        menu.present(in: self)
+    }
+
+    private func open(routeFromHome route: AppRoute) {
+        guard route != .home, !isTransitioning, presentedViewController == nil else { return }
+        guard let controller = storyboard?.instantiateViewController(withIdentifier: "FolderNavigationController") else {
+            return
+        }
+        if let navigationController = controller as? UINavigationController,
+           route != .folder {
+            AppRouter.navigate(to: route, from: navigationController)
+        }
+        isTransitioning = true
+        controller.modalPresentationStyle = .fullScreen
+        present(controller, animated: true) { [weak self] in
+            self?.isTransitioning = false
+        }
+    }
+
+    @objc private func openSettings() {
+        guard presentedViewController == nil else { return }
+        let controller = SettingViewController()
+        let navigationController = UINavigationController(rootViewController: controller)
+        navigationController.modalPresentationStyle = .formSheet
+        present(navigationController, animated: true)
+    }
+
     private func applyTheme() {
         let palette = ThemeManager.palette()
         view.backgroundColor = palette.background
-        backgroundImageView.image = backgroundImage(for: ThemeManager.current)
-        backgroundImageView.alpha = 0.45
-        backgroundOverlayView.backgroundColor = palette.background.withAlphaComponent(0.28)
+        if let customBackground = ThemeManager.modeBackgroundImage() {
+            backgroundImageView.image = customBackground
+            backgroundImageView.alpha = ThemeManager.modeBackgroundAlpha
+            ThemeManager.applyBackgroundOverlays(
+                colorOverlayView: colorOverlayView,
+                dimmingOverlayView: dimmingOverlayView,
+                hasBackgroundImage: true
+            )
+        } else {
+            backgroundImageView.image = backgroundImage(for: ThemeManager.current)
+            backgroundImageView.alpha = 0.45
+            colorOverlayView.backgroundColor = palette.background.withAlphaComponent(0.28)
+            dimmingOverlayView.backgroundColor = .clear
+        }
 
         titleLabel.font = AppFont.title(size: 24)
         titleLabel.textColor = palette.text
@@ -124,12 +226,23 @@ final class ModeViewController: UIViewController {
         helperLabel.font = AppFont.jp(size: 12, weight: .bold)
         helperLabel.textColor = palette.mutedText
 
+        ThemeManager.stylePrimaryButton(startButton)
         startButton.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
-        startButton.setTitleColor(palette.text, for: .normal)
-        startButton.backgroundColor = palette.accent
-        startButton.layer.borderWidth = 2
-        startButton.layer.borderColor = palette.border.cgColor
         startButton.layer.cornerRadius = 0
+        startButton.layer.borderWidth = 2
+
+        [menuButton, settingsButton].forEach { button in
+            button.tintColor = palette.text
+            button.backgroundColor = palette.surface.withAlphaComponent(0.92)
+            button.layer.cornerRadius = AppSpacing.s(23)
+            button.layer.borderWidth = 2
+            button.layer.borderColor = palette.border.cgColor
+            button.layer.shadowColor = palette.border.cgColor
+            button.layer.shadowOpacity = 0.18
+            button.layer.shadowOffset = CGSize(width: 0, height: 2)
+            button.layer.shadowRadius = 4
+        }
+
     }
 
     private func backgroundImage(for theme: AppTheme) -> UIImage? {

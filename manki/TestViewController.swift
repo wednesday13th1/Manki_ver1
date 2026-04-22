@@ -60,6 +60,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private let numQuestionsOptions = Array(stride(from: 0, through: 100, by: 5))
     private var selectedTimeSeconds = 0
     private var favoriteOnly = false
+    private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,7 +69,15 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
 
         configureUI()
         configurePickers()
+        applyTheme()
         resetQuizUI()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
     }
 
     private func configureUI() {
@@ -430,6 +439,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             button.layer.borderColor = UIColor.systemGray4.cgColor
             button.tag = index
             button.addTarget(self, action: #selector(choiceTapped(_:)), for: .touchUpInside)
+            styleChoiceButton(button, selected: false)
             choicesStack.addArrangedSubview(button)
         }
     }
@@ -445,7 +455,7 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
         selectedChoiceIndex = sender.tag
         for case let button as UIButton in choicesStack.arrangedSubviews {
             let isSelected = button.tag == sender.tag
-            button.backgroundColor = isSelected ? UIColor.systemGray5 : .clear
+            styleChoiceButton(button, selected: isSelected)
         }
     }
 
@@ -495,6 +505,52 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
     private func updateFavoriteFilterButton() {
         let imageName = favoriteOnly ? "star.fill" : "star"
         favoriteFilterButton.setImage(UIImage(systemName: imageName), for: .normal)
+        ThemeManager.styleSecondaryButton(favoriteFilterButton)
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        scrollView.backgroundColor = .clear
+        contentStack.backgroundColor = .clear
+        directionSegmented.selectedSegmentTintColor = palette.accent
+        directionSegmented.backgroundColor = palette.surface
+        directionSegmented.setTitleTextAttributes([
+            .font: AppFont.jp(size: 13, weight: .bold),
+            .foregroundColor: palette.text
+        ], for: .normal)
+        directionSegmented.setTitleTextAttributes([
+            .font: AppFont.jp(size: 13, weight: .bold),
+            .foregroundColor: palette.text
+        ], for: .selected)
+        [numQuestionsTextField, timeTextField, answerTextField].forEach { textField in
+            textField.backgroundColor = palette.surface
+            textField.textColor = palette.text
+            textField.layer.cornerRadius = 10
+            textField.layer.borderWidth = 1
+            textField.layer.borderColor = palette.border.cgColor
+        }
+        timeLabel.textColor = palette.mutedText
+        questionLabel.textColor = palette.text
+        ThemeManager.stylePrimaryButton(startButton)
+        ThemeManager.stylePrimaryButton(submitButton)
+        ThemeManager.styleSecondaryButton(favoriteFilterButton)
+        for case let button as UIButton in choicesStack.arrangedSubviews {
+            styleChoiceButton(button, selected: selectedChoiceIndex == button.tag)
+        }
+    }
+
+    private func styleChoiceButton(_ button: UIButton, selected: Bool) {
+        let palette = ThemeManager.palette()
+        button.configuration = nil
+        button.backgroundColor = selected ? palette.surfaceAlt : palette.surface
+        button.setTitleColor(palette.text, for: .normal)
+        button.setTitleColor(palette.text.withAlphaComponent(0.72), for: .highlighted)
+        button.titleLabel?.font = AppFont.jp(size: 16, weight: selected ? .bold : .regular)
+        button.layer.borderWidth = selected ? 2 : 1
+        button.layer.cornerRadius = 8
+        button.layer.borderColor = (selected ? palette.accentStrong : palette.border).cgColor
     }
 
     private func startTimerIfNeeded(limitSeconds: Int) {
@@ -639,6 +695,12 @@ final class TestViewController: UIViewController, UITextFieldDelegate, UIPickerV
             return "日→英"
         default:
             return "混合"
+        }
+    }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 }

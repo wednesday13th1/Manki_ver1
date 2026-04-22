@@ -62,7 +62,12 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        navigationController?.setNavigationBarHidden(false, animated: false)
+        let nextController = transitionCoordinator?.viewController(forKey: .to)
+        if nextController is SetViewController {
+            navigationController?.setNavigationBarHidden(true, animated: false)
+        } else {
+            navigationController?.setNavigationBarHidden(false, animated: false)
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -377,13 +382,19 @@ final class FolderViewController: UIViewController, UITableViewDataSource, UITab
         if indexPath.section == 0 {
             let controller = SetViewController(folderID: nil)
             controller.title = "未分類"
-            navigationController?.pushViewController(controller, animated: true)
+            pushPreparedSetViewController(controller)
             return
         }
         let folder = displayedFolders()[indexPath.row]
         let controller = SetViewController(folderID: folder.id)
         controller.title = folder.name
-        navigationController?.pushViewController(controller, animated: true)
+        pushPreparedSetViewController(controller)
+    }
+
+    private func pushPreparedSetViewController(_ controller: SetViewController) {
+        guard let navigationController else { return }
+        controller.prepareForInitialTransition(in: navigationController.view.bounds)
+        navigationController.pushViewController(controller, animated: true)
     }
 
     func tableView(_ tableView: UITableView,

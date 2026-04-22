@@ -1,18 +1,23 @@
 import UIKit
 
 final class MenuNavigationController: UINavigationController {
-    private lazy var menuButton: UIBarButtonItem = {
-        UIBarButtonItem(
-            title: "メニュー",
-            style: .plain,
-            target: self,
-            action: #selector(openMenu)
-        )
-    }()
     private lazy var edgePan: UIScreenEdgePanGestureRecognizer = {
         let recognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
         recognizer.edges = .left
         return recognizer
+    }()
+    private lazy var floatingMenuButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(systemName: "line.3.horizontal"), for: .normal)
+        button.accessibilityLabel = "メニュー"
+        button.addTarget(self, action: #selector(openMenu), for: .touchUpInside)
+        button.layer.cornerRadius = 8
+        button.layer.borderWidth = 2
+        button.layer.shadowOpacity = 0.14
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowRadius = 4
+        return button
     }()
     private var sideMenu: SideMenuViewController?
 
@@ -21,43 +26,89 @@ final class MenuNavigationController: UINavigationController {
         navigationBar.prefersLargeTitles = false
         delegate = self
         view.addGestureRecognizer(edgePan)
+        configureFloatingMenuButton()
         updateMenuButton(for: topViewController)
+        applyTheme()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateFloatingMenuVisibility()
+    }
+
+    private func configureFloatingMenuButton() {
+        view.addSubview(floatingMenuButton)
+        NSLayoutConstraint.activate([
+            floatingMenuButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(14)),
+            floatingMenuButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(10)),
+            floatingMenuButton.widthAnchor.constraint(equalToConstant: AppSpacing.s(44)),
+            floatingMenuButton.heightAnchor.constraint(equalTo: floatingMenuButton.widthAnchor)
+        ])
     }
 
     private func updateMenuButton(for viewController: UIViewController?) {
         guard let viewController else { return }
-        let hasLeftItem = viewController.navigationItem.leftBarButtonItem != nil
-        let hasLeftItems = (viewController.navigationItem.leftBarButtonItems?.isEmpty == false)
-        if !hasLeftItem && !hasLeftItems {
-            viewController.navigationItem.leftBarButtonItem = menuButton
+        viewController.navigationItem.backButtonDisplayMode = .minimal
+        guard !isNavigationBarHidden else {
+            updateFloatingMenuVisibility()
             return
         }
 
-        let rightItem = viewController.navigationItem.rightBarButtonItem
-        let rightItems = viewController.navigationItem.rightBarButtonItems ?? []
-        let hasMenuInRight = rightItems.contains(where: { $0 === menuButton }) || rightItem === menuButton
-        if !hasMenuInRight {
-            if rightItem == nil && rightItems.isEmpty {
-                viewController.navigationItem.rightBarButtonItem = menuButton
-            } else {
-                var items = rightItems
-                if items.isEmpty, let single = rightItem {
-                    items = [single]
-                }
-                items.append(menuButton)
+        let button = UIBarButtonItem(
+            image: UIImage(systemName: "line.3.horizontal"),
+            style: .plain,
+            target: self,
+            action: #selector(openMenu)
+        )
+        button.accessibilityLabel = "メニュー"
+
+        let hasLeftItem = viewController.navigationItem.leftBarButtonItem != nil
+        let hasLeftItems = (viewController.navigationItem.leftBarButtonItems?.isEmpty == false)
+        if !hasLeftItem && !hasLeftItems {
+            viewController.navigationItem.leftBarButtonItem = button
+            updateFloatingMenuVisibility()
+            return
+        }
+
+        if viewController.navigationItem.rightBarButtonItem == nil {
+            viewController.navigationItem.rightBarButtonItem = button
+        } else {
+            var items = viewController.navigationItem.rightBarButtonItems ?? []
+            if items.isEmpty, let rightItem = viewController.navigationItem.rightBarButtonItem {
+                items = [rightItem]
+            }
+            if items.allSatisfy({ $0.accessibilityLabel != "メニュー" }) {
+                items.append(button)
                 viewController.navigationItem.rightBarButtonItems = items
             }
         }
+        updateFloatingMenuVisibility()
+    }
+
+    private func updateFloatingMenuVisibility() {
+        floatingMenuButton.isHidden = !isNavigationBarHidden || presentedViewController != nil
+        view.bringSubviewToFront(floatingMenuButton)
+    }
+
+    private func applyTheme() {
+        ThemeManager.applyNavigationAppearance(to: self)
+        let palette = ThemeManager.palette()
+        floatingMenuButton.tintColor = palette.text
+        floatingMenuButton.backgroundColor = palette.surface.withAlphaComponent(0.94)
+        floatingMenuButton.layer.borderColor = palette.border.cgColor
+        floatingMenuButton.layer.shadowColor = palette.border.cgColor
     }
 
     @objc private func openMenu() {
         guard sideMenu == nil else { return }
-        let items = buildMenuItems()
-        let menu = SideMenuViewController(items: items)
+        applyTheme()
+        let menu = SideMenuViewController(items: buildMenuItems())
         menu.onDismiss = { [weak self] in
             self?.sideMenu = nil
+            self?.updateFloatingMenuVisibility()
         }
         sideMenu = menu
+        updateFloatingMenuVisibility()
         menu.present(in: self)
     }
 
@@ -69,28 +120,21 @@ final class MenuNavigationController: UINavigationController {
 
     private func buildMenuItems() -> [SideMenuItem] {
         let palette = ThemeManager.palette()
-        let iconColor = palette.text
-        let iconHome = UIImage(systemName: "house")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
-        let iconFolder = UIImage(systemName: "folder")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
+        let currentRoute = AppRoute.route(for: visibleViewController)
 
-        return [
-            SideMenuItem(title: "モード選択に戻る", icon: iconHome) { [weak self] in
-                self?.dismiss(animated: true)
-            },
-            SideMenuItem(title: "学習セット", icon: iconFolder) { [weak self] in
-                self?.switchRoot(to: self?.makeStoryboardController(identifier: "FolderViewController"))
+        return AppRoute.allCases.map { route in
+            let icon = UIImage(systemName: route.systemImageName)?
+                .withTintColor(palette.text, renderingMode: .alwaysOriginal)
+            return SideMenuItem(
+                route: route,
+                title: route.title,
+                icon: icon,
+                isSelected: currentRoute == route
+            ) { [weak self] in
+                guard let self else { return }
+                AppRouter.navigate(to: route, from: self)
             }
-        ]
-    }
-
-    private func makeStoryboardController(identifier: String) -> UIViewController? {
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        return storyboard.instantiateViewController(withIdentifier: identifier)
-    }
-
-    private func switchRoot(to controller: UIViewController?) {
-        guard let controller else { return }
-        setViewControllers([controller], animated: false)
+        }
     }
 }
 
@@ -99,5 +143,12 @@ extension MenuNavigationController: UINavigationControllerDelegate {
                               willShow viewController: UIViewController,
                               animated: Bool) {
         updateMenuButton(for: viewController)
+    }
+
+    func navigationController(_ navigationController: UINavigationController,
+                              didShow viewController: UIViewController,
+                              animated: Bool) {
+        updateMenuButton(for: viewController)
+        applyTheme()
     }
 }

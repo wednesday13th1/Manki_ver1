@@ -161,7 +161,7 @@ final class QuizViewController: UIViewController {
         contentLeadingConstraint?.constant = inset
         contentTrailingConstraint?.constant = -inset
         contentWidthConstraint?.constant = min(AppLayout.maxContentWidth, width - (inset * 2))
-        heroStack.layoutMargins = NSDirectionalEdgeInsets(top: cardPadding, leading: cardPadding, bottom: cardPadding, trailing: cardPadding)
+        heroStack.layoutMargins = UIEdgeInsets(top: cardPadding, left: cardPadding, bottom: cardPadding, right: cardPadding)
         heroStack.isLayoutMarginsRelativeArrangement = true
     }
 

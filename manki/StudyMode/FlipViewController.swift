@@ -84,6 +84,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     private let buttonStack = UIStackView()
     private let prevButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
+    private var isAnimatingFlip = false
     private let emojiMapFileName = "emoji_map.json"
     private var emojiMap: [String: String] = [:]
     private var emojiTask: URLSessionDataTask?
@@ -194,6 +195,8 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
             cardSide.layer.borderWidth = 1
             cardSide.layer.borderColor = UIColor.systemGray4.cgColor
             cardSide.backgroundColor = .systemBackground
+            cardSide.layer.shouldRasterize = true
+            cardSide.layer.rasterizationScale = UIScreen.main.scale
             cardContainer.addSubview(cardSide)
             NSLayoutConstraint.activate([
                 cardSide.leadingAnchor.constraint(equalTo: cardContainer.leadingAnchor),
@@ -785,15 +788,27 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     private func setCardSide(isFront: Bool, animated: Bool) {
         let fromView = isFront ? backView : frontView
         let toView = isFront ? frontView : backView
-        let options: UIView.AnimationOptions = isFront ? .transitionFlipFromLeft : .transitionFlipFromRight
-        if animated {
-            UIView.transition(from: fromView,
-                              to: toView,
-                              duration: 0.5,
-                              options: [options, .showHideTransitionViews])
-        } else {
+        guard animated else {
             fromView.isHidden = true
             toView.isHidden = false
+            cardContainer.layoutIfNeeded()
+            isFlipped = !isFront
+            return
+        }
+
+        guard !isAnimatingFlip else { return }
+        isAnimatingFlip = true
+        view.layoutIfNeeded()
+        cardContainer.layoutIfNeeded()
+
+        let options: UIView.AnimationOptions = isFront ? .transitionFlipFromLeft : .transitionFlipFromRight
+        UIView.transition(with: cardContainer,
+                          duration: 0.26,
+                          options: [options, .curveEaseInOut, .allowUserInteraction]) {
+            fromView.isHidden = true
+            toView.isHidden = false
+        } completion: { [weak self] _ in
+            self?.isAnimatingFlip = false
         }
         isFlipped = !isFront
     }
@@ -811,7 +826,7 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
     }
 
     @objc private func flipCard() {
-        guard !words.isEmpty else { return }
+        guard !words.isEmpty, !isAnimatingFlip else { return }
         setCardSide(isFront: isFlipped, animated: true)
     }
 

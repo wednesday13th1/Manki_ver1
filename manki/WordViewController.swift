@@ -120,7 +120,7 @@ final class WordViewController: UIViewController {
         contentLeadingConstraint?.constant = inset
         contentTrailingConstraint?.constant = -inset
         contentWidthConstraint?.constant = min(AppLayout.maxContentWidth, width - (inset * 2))
-        introStack.layoutMargins = NSDirectionalEdgeInsets(top: cardPadding, leading: cardPadding, bottom: cardPadding, trailing: cardPadding)
+        introStack.layoutMargins = UIEdgeInsets(top: cardPadding, left: cardPadding, bottom: cardPadding, right: cardPadding)
         introStack.isLayoutMarginsRelativeArrangement = true
     }
 

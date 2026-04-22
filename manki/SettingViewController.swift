@@ -16,23 +16,27 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
     private let backgroundTitleLabel = UILabel()
     private let opacityTitleLabel = UILabel()
     private let opacityValueLabel = UILabel()
+    private let tintTitleLabel = UILabel()
+    private let tintValueLabel = UILabel()
+    private let textSizeTitleLabel = UILabel()
+    private let textSizeValueLabel = UILabel()
+    private let readabilityTitleLabel = UILabel()
+    private let readabilityValueLabel = UILabel()
     private let themeStack = UIStackView()
     private let backgroundButton = UIButton(type: .system)
     private let opacitySlider = UISlider()
+    private let tintSlider = UISlider()
+    private let textSizeSegmented = UISegmentedControl(items: AppTextSize.allCases.map { $0.displayName })
+    private let readabilitySlider = UISlider()
     private var themeButtons: [UIButton] = []
     private let cardView = UIView()
     private var themeObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Setting"
+        title = "設定"
         configureUI()
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "閉じる",
-            style: .plain,
-            target: self,
-            action: #selector(closeSelf)
-        )
+        configureCloseButtonIfNeeded()
         applyTheme()
         themeObserver = NotificationCenter.default.addObserver(
             forName: ThemeManager.didChange,
@@ -42,19 +46,48 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
             self?.applyTheme()
         }
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        configureCloseButtonIfNeeded()
+        applyTheme()
+    }
+
+    private func configureCloseButtonIfNeeded() {
+        if let navigationController = navigationController as? MenuNavigationController,
+           navigationController.viewControllers.first === self {
+            navigationItem.leftBarButtonItem = nil
+            return
+        }
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "閉じる",
+            style: .plain,
+            target: self,
+            action: #selector(closeSelf)
+        )
+    }
  
     private func configureUI() {
         titleLabel.text = "THEME"
         titleLabel.textAlignment = .center
-        subtitleLabel.text = "Pick your color"
+        subtitleLabel.text = "Color, background, and comfort"
         subtitleLabel.textAlignment = .center
         themeTitleLabel.text = "テーマカラー"
         themeTitleLabel.textAlignment = .left
-        backgroundTitleLabel.text = "背景画像"
+        backgroundTitleLabel.text = "背景"
         backgroundTitleLabel.textAlignment = .left
-        opacityTitleLabel.text = "背景の透明度"
+        opacityTitleLabel.text = "写真の濃さ"
         opacityTitleLabel.textAlignment = .left
         opacityValueLabel.textAlignment = .right
+        tintTitleLabel.text = "テーマ色味"
+        tintTitleLabel.textAlignment = .left
+        tintValueLabel.textAlignment = .right
+        textSizeTitleLabel.text = "文字サイズ"
+        textSizeTitleLabel.textAlignment = .left
+        textSizeValueLabel.textAlignment = .right
+        readabilityTitleLabel.text = "見やすさ"
+        readabilityTitleLabel.textAlignment = .left
+        readabilityValueLabel.textAlignment = .right
 
         themeStack.axis = .horizontal
         themeStack.spacing = AppSpacing.s(12)
@@ -67,9 +100,22 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         backgroundButton.addTarget(self, action: #selector(openBackgroundMenu), for: .touchUpInside)
 
         opacitySlider.translatesAutoresizingMaskIntoConstraints = false
-        opacitySlider.minimumValue = 0.2
+        opacitySlider.minimumValue = 0.25
         opacitySlider.maximumValue = 1.0
         opacitySlider.addTarget(self, action: #selector(opacityChanged(_:)), for: .valueChanged)
+
+        tintSlider.translatesAutoresizingMaskIntoConstraints = false
+        tintSlider.minimumValue = 0.08
+        tintSlider.maximumValue = 0.28
+        tintSlider.addTarget(self, action: #selector(tintChanged(_:)), for: .valueChanged)
+
+        textSizeSegmented.translatesAutoresizingMaskIntoConstraints = false
+        textSizeSegmented.addTarget(self, action: #selector(textSizeChanged(_:)), for: .valueChanged)
+
+        readabilitySlider.translatesAutoresizingMaskIntoConstraints = false
+        readabilitySlider.minimumValue = 0.0
+        readabilitySlider.maximumValue = 0.55
+        readabilitySlider.addTarget(self, action: #selector(readabilityChanged(_:)), for: .valueChanged)
 
         themeButtons = AppTheme.allCases.enumerated().map { index, theme in
             let button = UIButton(type: .system)
@@ -98,17 +144,35 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         cardView.addSubview(opacityTitleLabel)
         cardView.addSubview(opacityValueLabel)
         cardView.addSubview(opacitySlider)
+        cardView.addSubview(tintTitleLabel)
+        cardView.addSubview(tintValueLabel)
+        cardView.addSubview(tintSlider)
+        cardView.addSubview(textSizeTitleLabel)
+        cardView.addSubview(textSizeValueLabel)
+        cardView.addSubview(textSizeSegmented)
+        cardView.addSubview(readabilityTitleLabel)
+        cardView.addSubview(readabilityValueLabel)
+        cardView.addSubview(readabilitySlider)
         themeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         backgroundTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         opacityTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         opacityValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        tintTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        tintValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        tintSlider.translatesAutoresizingMaskIntoConstraints = false
+        textSizeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        textSizeValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        textSizeSegmented.translatesAutoresizingMaskIntoConstraints = false
+        readabilityTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        readabilityValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        readabilitySlider.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
 
-            cardView.heightAnchor.constraint(equalToConstant: 300),
+            cardView.bottomAnchor.constraint(equalTo: readabilitySlider.bottomAnchor, constant: AppSpacing.s(18)),
 
             themeTitleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: AppSpacing.s(12)),
             themeTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
@@ -139,6 +203,43 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
             opacitySlider.topAnchor.constraint(equalTo: opacityTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
             opacitySlider.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
             opacitySlider.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+
+            tintTitleLabel.topAnchor.constraint(equalTo: opacitySlider.bottomAnchor, constant: AppSpacing.s(18)),
+            tintTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            tintTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: tintValueLabel.leadingAnchor, constant: -AppSpacing.s(8)),
+
+            tintValueLabel.centerYAnchor.constraint(equalTo: tintTitleLabel.centerYAnchor),
+            tintValueLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+            tintValueLabel.widthAnchor.constraint(equalToConstant: 56),
+
+            tintSlider.topAnchor.constraint(equalTo: tintTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            tintSlider.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            tintSlider.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+
+            textSizeTitleLabel.topAnchor.constraint(equalTo: tintSlider.bottomAnchor, constant: AppSpacing.s(18)),
+            textSizeTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            textSizeTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: textSizeValueLabel.leadingAnchor, constant: -AppSpacing.s(8)),
+
+            textSizeValueLabel.centerYAnchor.constraint(equalTo: textSizeTitleLabel.centerYAnchor),
+            textSizeValueLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+            textSizeValueLabel.widthAnchor.constraint(equalToConstant: 64),
+
+            textSizeSegmented.topAnchor.constraint(equalTo: textSizeTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            textSizeSegmented.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            textSizeSegmented.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+            textSizeSegmented.heightAnchor.constraint(equalToConstant: 36),
+
+            readabilityTitleLabel.topAnchor.constraint(equalTo: textSizeSegmented.bottomAnchor, constant: AppSpacing.s(18)),
+            readabilityTitleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            readabilityTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: readabilityValueLabel.leadingAnchor, constant: -AppSpacing.s(8)),
+
+            readabilityValueLabel.centerYAnchor.constraint(equalTo: readabilityTitleLabel.centerYAnchor),
+            readabilityValueLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
+            readabilityValueLabel.widthAnchor.constraint(equalToConstant: 64),
+
+            readabilitySlider.topAnchor.constraint(equalTo: readabilityTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            readabilitySlider.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: AppSpacing.s(16)),
+            readabilitySlider.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -AppSpacing.s(16)),
         ])
     }
 
@@ -192,6 +293,23 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         updateOpacityValueLabel()
     }
 
+    @objc private func tintChanged(_ sender: UISlider) {
+        ThemeManager.setThemeColorOverlayAlpha(CGFloat(sender.value))
+        updateTintValueLabel()
+    }
+
+    @objc private func textSizeChanged(_ sender: UISegmentedControl) {
+        let sizes = AppTextSize.allCases
+        guard sender.selectedSegmentIndex >= 0, sender.selectedSegmentIndex < sizes.count else { return }
+        ThemeManager.setTextSize(sizes[sender.selectedSegmentIndex])
+        updateTextSizeValueLabel()
+    }
+
+    @objc private func readabilityChanged(_ sender: UISlider) {
+        ThemeManager.setReadabilityOverlayAlpha(CGFloat(sender.value))
+        updateReadabilityValueLabel()
+    }
+
     @objc private func selectTheme(_ sender: UIButton) {
         let themes = AppTheme.allCases
         guard sender.tag >= 0, sender.tag < themes.count else { return }
@@ -237,6 +355,18 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         opacityTitleLabel.textColor = palette.text
         opacityValueLabel.font = AppFont.en(size: 18)
         opacityValueLabel.textColor = palette.text
+        tintTitleLabel.font = AppFont.jp(size: 15, weight: .bold)
+        tintTitleLabel.textColor = palette.text
+        tintValueLabel.font = AppFont.en(size: 18)
+        tintValueLabel.textColor = palette.text
+        textSizeTitleLabel.font = AppFont.jp(size: 15, weight: .bold)
+        textSizeTitleLabel.textColor = palette.text
+        textSizeValueLabel.font = AppFont.en(size: 18)
+        textSizeValueLabel.textColor = palette.text
+        readabilityTitleLabel.font = AppFont.jp(size: 15, weight: .bold)
+        readabilityTitleLabel.textColor = palette.text
+        readabilityValueLabel.font = AppFont.en(size: 18)
+        readabilityValueLabel.textColor = palette.text
 
         cardView.backgroundColor = palette.surface
         cardView.layer.borderColor = palette.border.cgColor
@@ -246,7 +376,29 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         opacitySlider.maximumTrackTintColor = palette.surfaceAlt
         opacitySlider.tintColor = palette.accent
         opacitySlider.value = Float(ThemeManager.modeBackgroundAlpha)
+        tintSlider.minimumTrackTintColor = palette.accentStrong
+        tintSlider.maximumTrackTintColor = palette.surfaceAlt
+        tintSlider.tintColor = palette.accent
+        tintSlider.value = Float(ThemeManager.themeColorOverlayAlpha)
+        textSizeSegmented.selectedSegmentTintColor = palette.accent
+        textSizeSegmented.backgroundColor = palette.surfaceAlt
+        textSizeSegmented.setTitleTextAttributes([
+            .font: AppFont.jp(size: 13, weight: .bold),
+            .foregroundColor: palette.text
+        ], for: .normal)
+        textSizeSegmented.setTitleTextAttributes([
+            .font: AppFont.jp(size: 13, weight: .bold),
+            .foregroundColor: palette.text
+        ], for: .selected)
+        textSizeSegmented.selectedSegmentIndex = AppTextSize.allCases.firstIndex(of: ThemeManager.textSize) ?? 1
+        readabilitySlider.minimumTrackTintColor = palette.accentStrong
+        readabilitySlider.maximumTrackTintColor = palette.surfaceAlt
+        readabilitySlider.tintColor = palette.accent
+        readabilitySlider.value = Float(ThemeManager.readabilityOverlayAlpha)
         updateOpacityValueLabel()
+        updateTintValueLabel()
+        updateTextSizeValueLabel()
+        updateReadabilityValueLabel()
         updateBackgroundButtonTitle()
 
         for (index, button) in themeButtons.enumerated() {
@@ -267,6 +419,20 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         opacityValueLabel.text = "\(percent)%"
     }
 
+    private func updateTintValueLabel() {
+        let percent = Int(round(ThemeManager.themeColorOverlayAlpha * 100))
+        tintValueLabel.text = "\(percent)%"
+    }
+
+    private func updateTextSizeValueLabel() {
+        textSizeValueLabel.text = ThemeManager.textSize.displayName
+    }
+
+    private func updateReadabilityValueLabel() {
+        let percent = Int(round(ThemeManager.readabilityOverlayAlpha / 0.55 * 100))
+        readabilityValueLabel.text = "\(percent)%"
+    }
+
     private func updateThemeSelection() {
         let current = ThemeManager.current
         for (index, button) in themeButtons.enumerated() {
@@ -285,7 +451,11 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
     }
 
     @objc private func closeSelf() {
-        dismiss(animated: true)
+        if let navigationController, navigationController.viewControllers.first != self {
+            navigationController.popViewController(animated: true)
+        } else {
+            dismiss(animated: true)
+        }
     }
 
     deinit {

@@ -402,7 +402,7 @@
         <!--Navigation Controller-->
         <scene sceneID="GbI-ca-HQp">
             <objects>
-                <navigationController storyboardIdentifier="FolderNavigationController" automaticallyAdjustsScrollViewInsets="NO" id="8Yb-hr-wwb" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="FolderNavigationController" automaticallyAdjustsScrollViewInsets="NO" id="8Yb-hr-wwb" customClass="MenuNavigationController" customModule="manki" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="ebf-9K-L30">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>

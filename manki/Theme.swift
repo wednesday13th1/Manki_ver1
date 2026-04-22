@@ -25,6 +25,28 @@ enum AppTheme: String, CaseIterable {
     }
 }
 
+enum AppTextSize: String, CaseIterable {
+    case small
+    case medium
+    case large
+
+    var displayName: String {
+        switch self {
+        case .small: return "小"
+        case .medium: return "中"
+        case .large: return "大"
+        }
+    }
+
+    var scale: CGFloat {
+        switch self {
+        case .small: return 0.92
+        case .medium: return 1.0
+        case .large: return 1.14
+        }
+    }
+}
+
 struct ThemePalette {
     let background: UIColor
     let surface: UIColor
@@ -39,25 +61,19 @@ struct ThemePalette {
 
 enum AppFont {
     static func jp(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
-        let name = weight >= .semibold ? "PixelMplus12-Bold" : "PixelMplus12-Regular"
-        if let font = UIFont(name: name, size: size) {
-            return font
-        }
-        return UIFont.systemFont(ofSize: size, weight: weight)
+        FontManager.font(.body, size: size, weight: weight)
     }
 
     static func en(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
-        if let font = UIFont(name: "VT323-Regular", size: size) {
+        let scaledSize = size * ThemeManager.textScale
+        if let font = UIFont(name: "VT323-Regular", size: scaledSize) {
             return font
         }
-        return UIFont.systemFont(ofSize: size, weight: weight)
+        return FontManager.font(.display, size: size, weight: weight)
     }
 
     static func title(size: CGFloat) -> UIFont {
-        if let font = UIFont(name: "PixelMplus12-Regular", size: size) {
-            return font
-        }
-        return UIFont.systemFont(ofSize: size, weight: .regular)
+        FontManager.font(.title, size: size, weight: .bold)
     }
 }
 
@@ -65,7 +81,14 @@ enum ThemeManager {
     static let didChange = Notification.Name("ThemeManagerDidChange")
     private static let storageKey = "manki.theme.current"
     private static let modeBackgroundAlphaKey = "manki.mode.background.alpha"
+    private static let textScaleKey = "manki.display.text.scale"
+    private static let textSizeKey = "manki.display.text.size"
+    private static let readabilityOverlayKey = "manki.display.readability.overlay"
+    private static let themeColorOverlayKey = "manki.display.theme.color.overlay"
+    private static let backgroundImageTag = 9831
     private static let backgroundTag = 9832
+    private static let readabilityOverlayTag = 9833
+    private static let colorOverlayTag = 9834
     private static let modeBackgroundFileName = "mode_custom_background.jpg"
     private static var cachedPatterns: [AppTheme: UIImage] = [:]
 
@@ -115,12 +138,70 @@ enum ThemeManager {
         let stored = UserDefaults.standard.object(forKey: modeBackgroundAlphaKey) as? Double
         let defaultValue = 0.8
         let value = stored ?? defaultValue
-        return CGFloat(min(max(value, 0.2), 1.0))
+        return CGFloat(min(max(value, 0.25), 1.0))
     }
 
     static func setModeBackgroundAlpha(_ alpha: CGFloat) {
-        let clamped = min(max(alpha, 0.2), 1.0)
+        let clamped = min(max(alpha, 0.25), 1.0)
         UserDefaults.standard.set(Double(clamped), forKey: modeBackgroundAlphaKey)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static var textScale: CGFloat {
+        if UserDefaults.standard.object(forKey: textScaleKey) == nil {
+            return textSize.scale
+        }
+        let stored = UserDefaults.standard.object(forKey: textScaleKey) as? Double
+        let value = stored ?? 1.0
+        return CGFloat(min(max(value, 0.85), 1.25))
+    }
+
+    static func setTextScale(_ scale: CGFloat) {
+        let clamped = min(max(scale, 0.85), 1.25)
+        UserDefaults.standard.set(Double(clamped), forKey: textScaleKey)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static var textSize: AppTextSize {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: textSizeKey),
+               let size = AppTextSize(rawValue: raw) {
+                return size
+            }
+            return .medium
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: textSizeKey)
+            UserDefaults.standard.set(Double(newValue.scale), forKey: textScaleKey)
+        }
+    }
+
+    static func setTextSize(_ size: AppTextSize) {
+        textSize = size
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static var readabilityOverlayAlpha: CGFloat {
+        let stored = UserDefaults.standard.object(forKey: readabilityOverlayKey) as? Double
+        let value = stored ?? 0.18
+        return CGFloat(min(max(value, 0.0), 0.55))
+    }
+
+    static func setReadabilityOverlayAlpha(_ alpha: CGFloat) {
+        let clamped = min(max(alpha, 0.0), 0.55)
+        UserDefaults.standard.set(Double(clamped), forKey: readabilityOverlayKey)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    static var themeColorOverlayAlpha: CGFloat {
+        let stored = UserDefaults.standard.object(forKey: themeColorOverlayKey) as? Double
+        let value = stored ?? 0.18
+        return CGFloat(min(max(value, 0.08), 0.28))
+    }
+
+    static func setThemeColorOverlayAlpha(_ alpha: CGFloat) {
+        let clamped = min(max(alpha, 0.08), 0.28)
+        UserDefaults.standard.set(Double(clamped), forKey: themeColorOverlayKey)
         NotificationCenter.default.post(name: didChange, object: nil)
     }
 
@@ -193,6 +274,42 @@ enum ThemeManager {
         let palette = palette()
         view.backgroundColor = palette.background
 
+        let imageView: UIImageView
+        if let existing = view.viewWithTag(backgroundImageTag) as? UIImageView {
+            imageView = existing
+        } else {
+            imageView = UIImageView()
+            imageView.tag = backgroundImageTag
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            imageView.isUserInteractionEnabled = false
+            imageView.contentMode = .scaleAspectFill
+            imageView.clipsToBounds = true
+            view.insertSubview(imageView, at: 0)
+            NSLayoutConstraint.activate([
+                imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                imageView.topAnchor.constraint(equalTo: view.topAnchor),
+                imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            ])
+        }
+
+        let colorOverlayView: UIView
+        if let existing = view.viewWithTag(colorOverlayTag) {
+            colorOverlayView = existing
+        } else {
+            colorOverlayView = UIView()
+            colorOverlayView.tag = colorOverlayTag
+            colorOverlayView.translatesAutoresizingMaskIntoConstraints = false
+            colorOverlayView.isUserInteractionEnabled = false
+            view.insertSubview(colorOverlayView, aboveSubview: imageView)
+            NSLayoutConstraint.activate([
+                colorOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                colorOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                colorOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+                colorOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            ])
+        }
+
         let patternView: UIView
         if let existing = view.viewWithTag(backgroundTag) {
             patternView = existing
@@ -201,14 +318,48 @@ enum ThemeManager {
             patternView.tag = backgroundTag
             patternView.translatesAutoresizingMaskIntoConstraints = false
             patternView.isUserInteractionEnabled = false
-            patternView.alpha = 0.4
-            view.insertSubview(patternView, at: 0)
+            view.insertSubview(patternView, aboveSubview: colorOverlayView)
             NSLayoutConstraint.activate([
                 patternView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
                 patternView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
                 patternView.topAnchor.constraint(equalTo: view.topAnchor),
                 patternView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             ])
+        }
+
+        let overlayView: UIView
+        if let existing = view.viewWithTag(readabilityOverlayTag) {
+            overlayView = existing
+        } else {
+            overlayView = UIView()
+            overlayView.tag = readabilityOverlayTag
+            overlayView.translatesAutoresizingMaskIntoConstraints = false
+            overlayView.isUserInteractionEnabled = false
+            view.insertSubview(overlayView, aboveSubview: patternView)
+            NSLayoutConstraint.activate([
+                overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                overlayView.topAnchor.constraint(equalTo: view.topAnchor),
+                overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            ])
+        }
+
+        if let customBackground = modeBackgroundImage() {
+            imageView.image = customBackground
+            imageView.alpha = modeBackgroundAlpha
+            imageView.isHidden = false
+            applyBackgroundOverlays(
+                colorOverlayView: colorOverlayView,
+                dimmingOverlayView: overlayView,
+                hasBackgroundImage: true
+            )
+            patternView.alpha = 0.1
+        } else {
+            imageView.image = nil
+            imageView.isHidden = true
+            colorOverlayView.backgroundColor = .clear
+            patternView.alpha = 0.4
+            overlayView.backgroundColor = .clear
         }
 
         if let cached = cachedPatterns[current] {
@@ -220,6 +371,23 @@ enum ThemeManager {
         }
     }
 
+    static func applyBackgroundOverlays(
+        colorOverlayView: UIView,
+        dimmingOverlayView: UIView,
+        hasBackgroundImage: Bool
+    ) {
+        guard hasBackgroundImage else {
+            colorOverlayView.backgroundColor = .clear
+            dimmingOverlayView.backgroundColor = .clear
+            return
+        }
+
+        let palette = palette()
+        let colorAlpha = effectiveThemeColorOverlayAlpha(for: palette)
+        colorOverlayView.backgroundColor = palette.accent.withAlphaComponent(colorAlpha)
+        dimmingOverlayView.backgroundColor = UIColor.black.withAlphaComponent(readabilityOverlayAlpha)
+    }
+
     static func applyNavigationAppearance(to navigationController: UINavigationController?) {
         guard let navigationController else { return }
         let palette = palette()
@@ -229,11 +397,11 @@ enum ThemeManager {
         appearance.backgroundColor = palette.surface
         appearance.titleTextAttributes = [
             .foregroundColor: palette.text,
-            .font: AppFont.jp(size: 18, weight: .bold)
+            .font: FontManager.font(.navigationTitle, weight: .bold)
         ]
         let barAttributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: palette.text,
-            .font: AppFont.jp(size: 14, weight: .bold)
+            .font: FontManager.font(.small, size: 14, weight: .bold)
         ]
         appearance.shadowColor = palette.border
         let buttonBackgroundColor = palette.accent
@@ -283,25 +451,13 @@ enum ThemeManager {
 
     static func stylePrimaryButton(_ button: UIButton) {
         let palette = palette()
-        button.backgroundColor = palette.accent
-        button.setTitleColor(palette.text, for: .normal)
-        button.layer.cornerRadius = 12
-        button.layer.borderWidth = 1
-        button.layer.borderColor = palette.border.cgColor
-        button.layer.shadowColor = palette.border.cgColor
-        button.layer.shadowOpacity = 0.2
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowRadius = 4
+        applyThemeButtonStyle(button, palette: palette, cornerRadius: 16, shadowOpacity: 0.18)
         button.applyMankiButtonMetrics()
     }
 
     static func styleSecondaryButton(_ button: UIButton) {
         let palette = palette()
-        button.backgroundColor = palette.surface
-        button.setTitleColor(palette.text, for: .normal)
-        button.layer.cornerRadius = 12
-        button.layer.borderWidth = 1
-        button.layer.borderColor = palette.border.cgColor
+        applyThemeButtonStyle(button, palette: palette, cornerRadius: 14, shadowOpacity: 0.08)
         button.applyMankiButtonMetrics()
     }
 
@@ -332,6 +488,90 @@ enum ThemeManager {
     private static func modeBackgroundFileURL() -> URL? {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(modeBackgroundFileName)
     }
+
+    private static func effectiveThemeColorOverlayAlpha(for palette: ThemePalette) -> CGFloat {
+        var alpha = themeColorOverlayAlpha
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var colorAlpha: CGFloat = 0
+
+        if palette.accent.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &colorAlpha) {
+            if brightness > 0.78 && saturation > 0.45 {
+                alpha -= 0.04
+            }
+            if brightness < 0.55 {
+                alpha -= 0.02
+            }
+        }
+
+        if readabilityOverlayAlpha > 0.35 {
+            alpha -= 0.03
+        }
+
+        return min(max(alpha, 0.08), 0.24)
+    }
+
+    private static func applyThemeButtonStyle(
+        _ button: UIButton,
+        palette: ThemePalette,
+        cornerRadius: CGFloat,
+        shadowOpacity: Float
+    ) {
+        let title = button.title(for: .normal)
+        let image = button.image(for: .normal)
+        let fillColor = readableButtonFillColor(for: palette)
+        let highlightedColor = fillColor.blended(with: .black, amount: 0.14)
+        let disabledColor = fillColor.withAlphaComponent(0.42)
+
+        button.configurationUpdateHandler = { button in
+            var configuration = UIButton.Configuration.filled()
+            configuration.title = title ?? button.configuration?.title
+            configuration.image = image ?? button.configuration?.image
+            configuration.imagePlacement = .leading
+            configuration.imagePadding = 6
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 16, bottom: 9, trailing: 16)
+            configuration.cornerStyle = .fixed
+            configuration.background.cornerRadius = cornerRadius
+            configuration.baseForegroundColor = button.isEnabled ? .white : UIColor.white.withAlphaComponent(0.72)
+
+            if !button.isEnabled {
+                configuration.baseBackgroundColor = disabledColor
+            } else if button.isHighlighted {
+                configuration.baseBackgroundColor = highlightedColor
+            } else {
+                configuration.baseBackgroundColor = fillColor
+            }
+
+            button.configuration = configuration
+        }
+
+        button.backgroundColor = fillColor
+        button.tintColor = .white
+        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(UIColor.white.withAlphaComponent(0.78), for: .highlighted)
+        button.titleLabel?.font = AppFont.jp(size: 15, weight: .bold)
+        button.layer.cornerRadius = cornerRadius
+        button.layer.borderWidth = 1.5
+        button.layer.borderColor = palette.border.withAlphaComponent(0.9).cgColor
+        button.layer.shadowColor = palette.border.cgColor
+        button.layer.shadowOpacity = shadowOpacity
+        button.layer.shadowOffset = CGSize(width: 0, height: 3)
+        button.layer.shadowRadius = 5
+        button.clipsToBounds = false
+        button.setNeedsUpdateConfiguration()
+    }
+
+    private static func readableButtonFillColor(for palette: ThemePalette) -> UIColor {
+        var color = palette.accentStrong
+        if color.relativeLuminance > 0.34 {
+            color = color.blended(with: .black, amount: 0.22)
+        }
+        if color.relativeLuminance > 0.34 {
+            color = color.blended(with: .black, amount: 0.18)
+        }
+        return color
+    }
 }
 
 private extension UIColor {
@@ -340,5 +580,34 @@ private extension UIColor {
         let green = CGFloat((hex >> 8) & 0xFF) / 255.0
         let blue = CGFloat(hex & 0xFF) / 255.0
         self.init(red: red, green: green, blue: blue, alpha: alpha)
+    }
+
+    var relativeLuminance: CGFloat {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    }
+
+    func blended(with color: UIColor, amount: CGFloat) -> UIColor {
+        var red1: CGFloat = 0
+        var green1: CGFloat = 0
+        var blue1: CGFloat = 0
+        var alpha1: CGFloat = 0
+        var red2: CGFloat = 0
+        var green2: CGFloat = 0
+        var blue2: CGFloat = 0
+        var alpha2: CGFloat = 0
+        getRed(&red1, green: &green1, blue: &blue1, alpha: &alpha1)
+        color.getRed(&red2, green: &green2, blue: &blue2, alpha: &alpha2)
+        let clamped = min(max(amount, 0), 1)
+        return UIColor(
+            red: red1 + (red2 - red1) * clamped,
+            green: green1 + (green2 - green1) * clamped,
+            blue: blue1 + (blue2 - blue1) * clamped,
+            alpha: alpha1 + (alpha2 - alpha1) * clamped
+        )
     }
 }

@@ -105,15 +105,15 @@ final class SideMenuViewController: UIViewController {
                                                    left: AppSpacing.s(12),
                                                    bottom: AppSpacing.s(10),
                                                    right: AppSpacing.s(12))
-            button.titleLabel?.font = AppFont.jp(size: 16, weight: .bold)
+            button.titleLabel?.font = FontManager.font(.button, size: 16, weight: .bold)
             button.titleEdgeInsets = UIEdgeInsets(top: 0, left: AppSpacing.s(8), bottom: 0, right: 0)
             button.setTitle(item.title, for: .normal)
             button.tintColor = ThemeManager.palette().text
             if let icon = item.icon {
                 button.setImage(icon, for: .normal)
             }
-            button.layer.cornerRadius = 14
-            button.layer.borderWidth = 1
+            button.layer.cornerRadius = 8
+            button.layer.borderWidth = item.isSelected ? 2 : 1
             button.addTarget(self, action: #selector(handleItemTap(_:)), for: .touchUpInside)
             menuStack.addArrangedSubview(button)
 
@@ -128,13 +128,16 @@ final class SideMenuViewController: UIViewController {
         menuContainer.backgroundColor = palette.surface
         menuContainer.layer.borderColor = palette.border.cgColor
         titleLabel.textColor = palette.text
-        titleLabel.font = AppFont.en(size: 20, weight: .regular)
+        titleLabel.font = FontManager.font(.display, size: 18, weight: .regular)
 
         menuStack.arrangedSubviews.forEach { view in
             guard let button = view as? UIButton else { return }
+            let item = items[button.tag]
             button.setTitleColor(palette.text, for: .normal)
-            button.backgroundColor = palette.surfaceAlt
+            button.backgroundColor = item.isSelected ? palette.accent : palette.surfaceAlt
             button.layer.borderColor = palette.border.cgColor
+            button.layer.borderWidth = item.isSelected ? 2 : 1
+            button.accessibilityTraits = item.isSelected ? [.button, .selected] : [.button]
         }
     }
 

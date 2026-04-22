@@ -31,6 +31,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private var setWordCountByID: [String: Int] = [:]
     private var filteredSets: [SavedSet] = []
     private var displayedSetCache: [SavedSet] = []
+    private var selectedSets: [SavedSet] = []
     private var sortOption: SetSortOption = .created
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let tapGesture = UITapGestureRecognizer()
@@ -41,6 +42,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private let themeHeader = UIView()
     private let themeTitleLabel = UILabel()
     private let themeStack = UIStackView()
+    private let selectedSetsPanel = UIView()
+    private let selectedSetsTitleLabel = UILabel()
+    private let selectedSetsEmptyLabel = UILabel()
+    private let selectedSetsStack = UIStackView()
     private var themeButtons: [UIButton] = []
     private var themeObserver: NSObjectProtocol?
     private let themeHeaderHeight: CGFloat = 120
@@ -142,7 +147,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        navigationController?.setNavigationBarHidden(false, animated: false)
+        let nextController = transitionCoordinator?.viewController(forKey: .to)
+        if nextController is FolderViewController || nextController is SetViewController {
+            navigationController?.setNavigationBarHidden(true, animated: false)
+        } else {
+            navigationController?.setNavigationBarHidden(false, animated: false)
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -151,6 +161,19 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         tableView.delegate = self
         tableView.allowsSelection = true
         tableView.allowsSelectionDuringEditing = true
+    }
+
+    func prepareForInitialTransition(in containerBounds: CGRect) {
+        loadViewIfNeeded()
+        view.frame = containerBounds
+        applyTheme()
+        reloadData()
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        retroShellView.layoutIfNeeded()
+        retroKeypadView.layoutIfNeeded()
+        retroClickWheelView.layoutIfNeeded()
+        tableView.layoutIfNeeded()
     }
 
     override func viewDidLayoutSubviews() {
@@ -236,12 +259,11 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     @objc private func handleTableTap(_ gesture: UITapGestureRecognizer) {
         guard gesture.state == .ended else { return }
         let location = gesture.location(in: tableView)
-        guard let indexPath = tableView.indexPathForRow(at: location) else {
+        guard tableView.indexPathForRow(at: location) != nil else {
             view.endEditing(true)
             return
         }
         view.endEditing(true)
-        handleSelection(at: indexPath)
     }
 
     @objc private func dismissKeyboard() {
@@ -253,6 +275,39 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         guard indexPath.row < displayedSetCache.count else { return }
         isHandlingSelection = true
         let set = displayedSetCache[indexPath.row]
+        toggleSetSelection(set, at: indexPath)
+        DispatchQueue.main.async { [weak self] in
+            self?.isHandlingSelection = false
+        }
+    }
+
+    private func toggleSetSelection(_ set: SavedSet, at indexPath: IndexPath) {
+        if let selectedIndex = selectedSets.firstIndex(where: { $0.id == set.id }) {
+            selectedSets.remove(at: selectedIndex)
+            updateSelectedSetsPanel(animated: true, insertedSetID: nil)
+        } else {
+            selectedSets.append(set)
+            updateSelectedSetsPanel(animated: true, insertedSetID: set.id)
+        }
+        tableView.reloadRows(at: [indexPath], with: .fade)
+    }
+
+    @objc private func removeSelectedSet(_ sender: UIButton) {
+        guard sender.tag >= 0, sender.tag < selectedSets.count else { return }
+        let removedID = selectedSets[sender.tag].id
+        selectedSets.remove(at: sender.tag)
+        updateSelectedSetsPanel(animated: true, insertedSetID: nil)
+        if let row = displayedSetCache.firstIndex(where: { $0.id == removedID }) {
+            tableView.reloadRows(at: [IndexPath(row: row, section: 0)], with: .fade)
+        }
+    }
+
+    @objc private func openSelectedSet(_ sender: UIButton) {
+        guard sender.tag >= 0, sender.tag < selectedSets.count else { return }
+        openSetDetail(selectedSets[sender.tag])
+    }
+
+    private func openSetDetail(_ set: SavedSet) {
         let controller = SetDetailViewController(setID: set.id)
         if let nav = navigationController {
             nav.pushViewController(controller, animated: true)
@@ -260,9 +315,6 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             let nav = UINavigationController(rootViewController: controller)
             nav.modalPresentationStyle = .fullScreen
             present(nav, animated: true)
-        }
-        DispatchQueue.main.async { [weak self] in
-            self?.isHandlingSelection = false
         }
     }
 
@@ -560,9 +612,21 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
     private func configureThemeHeader() {
         themeHeader.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: themeHeaderHeight)
         themeHeader.translatesAutoresizingMaskIntoConstraints = false
+        selectedSetsPanel.translatesAutoresizingMaskIntoConstraints = false
 
         themeTitleLabel.text = "テーマ"
         themeTitleLabel.textAlignment = .left
+        selectedSetsTitleLabel.text = "追加したセット"
+        selectedSetsTitleLabel.textAlignment = .left
+        selectedSetsEmptyLabel.text = "セットをタップすると上から追加されます"
+        selectedSetsEmptyLabel.textAlignment = .left
+        selectedSetsEmptyLabel.numberOfLines = 0
+
+        selectedSetsStack.axis = .vertical
+        selectedSetsStack.spacing = AppSpacing.s(8)
+        selectedSetsStack.alignment = .fill
+        selectedSetsStack.distribution = .fill
+        selectedSetsStack.translatesAutoresizingMaskIntoConstraints = false
 
         themeStack.axis = .horizontal
         themeStack.spacing = AppSpacing.s(12)
@@ -580,11 +644,28 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
         themeButtons.forEach { themeStack.addArrangedSubview($0) }
 
+        selectedSetsPanel.addSubview(selectedSetsTitleLabel)
+        selectedSetsPanel.addSubview(selectedSetsEmptyLabel)
+        selectedSetsPanel.addSubview(selectedSetsStack)
         themeHeader.addSubview(themeTitleLabel)
         themeHeader.addSubview(themeStack)
+        selectedSetsTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        selectedSetsEmptyLabel.translatesAutoresizingMaskIntoConstraints = false
         themeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
+            selectedSetsTitleLabel.topAnchor.constraint(equalTo: selectedSetsPanel.topAnchor, constant: AppSpacing.s(12)),
+            selectedSetsTitleLabel.leadingAnchor.constraint(equalTo: selectedSetsPanel.leadingAnchor, constant: AppSpacing.s(16)),
+            selectedSetsTitleLabel.trailingAnchor.constraint(equalTo: selectedSetsPanel.trailingAnchor, constant: -AppSpacing.s(16)),
+
+            selectedSetsEmptyLabel.topAnchor.constraint(equalTo: selectedSetsTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            selectedSetsEmptyLabel.leadingAnchor.constraint(equalTo: selectedSetsPanel.leadingAnchor, constant: AppSpacing.s(16)),
+            selectedSetsEmptyLabel.trailingAnchor.constraint(equalTo: selectedSetsPanel.trailingAnchor, constant: -AppSpacing.s(16)),
+
+            selectedSetsStack.topAnchor.constraint(equalTo: selectedSetsTitleLabel.bottomAnchor, constant: AppSpacing.s(8)),
+            selectedSetsStack.leadingAnchor.constraint(equalTo: selectedSetsPanel.leadingAnchor, constant: AppSpacing.s(16)),
+            selectedSetsStack.trailingAnchor.constraint(equalTo: selectedSetsPanel.trailingAnchor, constant: -AppSpacing.s(16)),
+
             themeTitleLabel.topAnchor.constraint(equalTo: themeHeader.topAnchor, constant: AppSpacing.s(12)),
             themeTitleLabel.leadingAnchor.constraint(equalTo: themeHeader.leadingAnchor, constant: AppSpacing.s(20)),
             themeTitleLabel.trailingAnchor.constraint(equalTo: themeHeader.trailingAnchor, constant: -AppSpacing.s(20)),
@@ -595,8 +676,10 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             themeStack.heightAnchor.constraint(equalToConstant: 36),
         ])
 
+        headerContainer.addSubview(selectedSetsPanel)
         headerContainer.addSubview(themeHeader)
         tableView.tableHeaderView = headerContainer
+        updateSelectedSetsPanel(animated: false, insertedSetID: nil)
     }
 
     private func reloadData() {
@@ -624,6 +707,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.reloadTaskID == currentTaskID else { return }
                 self.sets = loadedSets
+                self.selectedSets = self.selectedSets.compactMap { selected in
+                    loadedSets.first { $0.id == selected.id }
+                }
                 self.wordsByID = loadedWordsByID
                 self.setWordCountByID = loadedSetWordCount
                 self.applyFilterAndReload()
@@ -640,18 +726,25 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseID)
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: reuseID)
         let set = displayedSets()[indexPath.row]
+        let isSelected = selectedSets.contains { $0.id == set.id }
         cell.accessibilityIdentifier = set.id
         let count = wordCount(for: set)
         cell.textLabel?.text = set.name
         cell.detailTextLabel?.text = "単語 \(count) 個"
-        cell.accessoryType = .disclosureIndicator
+        cell.accessoryType = .none
         cell.textLabel?.font = AppFont.jp(size: 18, weight: .bold)
         cell.detailTextLabel?.font = AppFont.jp(size: 14)
         let palette = ThemeManager.palette()
         cell.backgroundColor = .clear
-        cell.textLabel?.textColor = palette.text
-        cell.detailTextLabel?.textColor = palette.mutedText
-        applyRetroCellStyle(cell)
+        cell.textLabel?.textColor = isSelected ? .white : palette.text
+        cell.detailTextLabel?.textColor = isSelected ? UIColor.white.withAlphaComponent(0.82) : palette.mutedText
+        let accessoryImageName = isSelected ? "checkmark.circle.fill" : "plus.circle"
+        let accessoryView = UIImageView(image: UIImage(systemName: accessoryImageName))
+        accessoryView.tintColor = isSelected ? .white : palette.accentStrong
+        accessoryView.contentMode = .scaleAspectFit
+        accessoryView.frame = CGRect(x: 0, y: 0, width: 24, height: 24)
+        cell.accessoryView = accessoryView
+        applyRetroCellStyle(cell, isSelected: isSelected)
         return cell
     }
 
@@ -1018,6 +1111,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             button.backgroundColor = ThemeManager.palette(for: theme).accent
         }
         updateThemeSelection()
+        updateSelectedSetsPanel(animated: false, insertedSetID: nil)
         updateWordMenuModalTheme()
         tableView.reloadData()
     }
@@ -1157,18 +1251,113 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
     }
 
+    private func updateSelectedSetsPanel(animated: Bool, insertedSetID: String?) {
+        let palette = ThemeManager.palette()
+        selectedSetsPanel.backgroundColor = palette.surface.withAlphaComponent(0.96)
+        selectedSetsPanel.layer.cornerRadius = 16
+        selectedSetsPanel.layer.borderWidth = 1.5
+        selectedSetsPanel.layer.borderColor = palette.border.cgColor
+
+        selectedSetsTitleLabel.font = AppFont.jp(size: 14, weight: .bold)
+        selectedSetsTitleLabel.textColor = palette.text
+        selectedSetsEmptyLabel.font = AppFont.jp(size: 12, weight: .bold)
+        selectedSetsEmptyLabel.textColor = palette.mutedText
+        selectedSetsEmptyLabel.isHidden = !selectedSets.isEmpty
+        selectedSetsStack.isHidden = selectedSets.isEmpty
+
+        selectedSetsStack.arrangedSubviews.forEach { view in
+            selectedSetsStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
+        for (index, set) in selectedSets.enumerated() {
+            let row = makeSelectedSetRow(set: set, index: index, palette: palette)
+            selectedSetsStack.addArrangedSubview(row)
+            row.heightAnchor.constraint(equalToConstant: 40).isActive = true
+
+            if animated, set.id == insertedSetID {
+                row.alpha = 0
+                row.transform = CGAffineTransform(translationX: 0, y: -10)
+                UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) {
+                    row.alpha = 1
+                    row.transform = .identity
+                }
+            }
+        }
+
+        updateHeaderLayout()
+    }
+
+    private func makeSelectedSetRow(set: SavedSet, index: Int, palette: ThemePalette) -> UIView {
+        let row = UIView()
+        row.backgroundColor = palette.accent.withAlphaComponent(0.16)
+        row.layer.cornerRadius = 12
+        row.layer.borderWidth = 1
+        row.layer.borderColor = palette.accentStrong.cgColor
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.jp(size: 13, weight: .bold)
+        label.textColor = palette.text
+        label.text = "\(index + 1). \(set.name)"
+        label.lineBreakMode = .byTruncatingTail
+
+        let openButton = UIButton(type: .system)
+        openButton.translatesAutoresizingMaskIntoConstraints = false
+        openButton.tag = index
+        openButton.setImage(UIImage(systemName: "play.circle.fill"), for: .normal)
+        openButton.tintColor = palette.accentStrong
+        openButton.accessibilityLabel = "\(set.name)を開く"
+        openButton.addTarget(self, action: #selector(openSelectedSet(_:)), for: .touchUpInside)
+
+        let removeButton = UIButton(type: .system)
+        removeButton.translatesAutoresizingMaskIntoConstraints = false
+        removeButton.tag = index
+        removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        removeButton.tintColor = palette.accentStrong
+        removeButton.accessibilityLabel = "\(set.name)を削除"
+        removeButton.addTarget(self, action: #selector(removeSelectedSet(_:)), for: .touchUpInside)
+
+        row.addSubview(label)
+        row.addSubview(openButton)
+        row.addSubview(removeButton)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: AppSpacing.s(12)),
+            label.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            label.trailingAnchor.constraint(equalTo: openButton.leadingAnchor, constant: -AppSpacing.s(8)),
+
+            openButton.trailingAnchor.constraint(equalTo: removeButton.leadingAnchor, constant: -AppSpacing.s(4)),
+            openButton.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            openButton.widthAnchor.constraint(equalToConstant: 28),
+            openButton.heightAnchor.constraint(equalToConstant: 28),
+
+            removeButton.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -AppSpacing.s(10)),
+            removeButton.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            removeButton.widthAnchor.constraint(equalToConstant: 28),
+            removeButton.heightAnchor.constraint(equalToConstant: 28),
+        ])
+        return row
+    }
+
     private func updateHeaderLayout() {
         guard let header = tableView.tableHeaderView else { return }
         let width = tableView.bounds.width
-        let totalHeight = themeHeaderHeight
+        let selectedHeight = selectedSetsPanelHeight
+        let totalHeight = selectedHeight + themeHeaderHeight
         header.frame = CGRect(x: 0, y: 0, width: width, height: totalHeight)
-        themeHeader.frame = CGRect(x: 0, y: 0, width: width, height: themeHeaderHeight)
+        selectedSetsPanel.frame = CGRect(x: 0, y: 0, width: width, height: selectedHeight)
+        themeHeader.frame = CGRect(x: 0, y: selectedHeight, width: width, height: themeHeaderHeight)
         tableView.tableHeaderView = header
 
         let keyHeight = retroKeypadRowTop.bounds.height
         if keyHeight > 0 {
             retroKeyButtons.forEach { $0.layer.cornerRadius = keyHeight / 2 }
         }
+    }
+
+    private var selectedSetsPanelHeight: CGFloat {
+        let rowsHeight = selectedSets.isEmpty ? 28 : CGFloat(selectedSets.count) * 40 + CGFloat(max(selectedSets.count - 1, 0)) * AppSpacing.s(8)
+        return AppSpacing.s(44) + rowsHeight + AppSpacing.s(16)
     }
 
     private func updateThemeSelection() {
@@ -1188,7 +1377,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
     }
 
-    private func applyRetroCellStyle(_ cell: UITableViewCell) {
+    private func applyRetroCellStyle(_ cell: UITableViewCell, isSelected: Bool) {
         let containerTag = 9911
         let container: UIView
         if let existing = cell.contentView.viewWithTag(containerTag) {
@@ -1207,12 +1396,12 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
 
         let palette = ThemeManager.palette()
-        container.backgroundColor = palette.surface
+        container.backgroundColor = isSelected ? palette.accentStrong : palette.surface
         container.layer.cornerRadius = 16
         container.layer.borderWidth = 1.5
-        container.layer.borderColor = palette.border.cgColor
+        container.layer.borderColor = isSelected ? UIColor.white.withAlphaComponent(0.9).cgColor : palette.border.cgColor
         container.layer.shadowColor = palette.border.cgColor
-        container.layer.shadowOpacity = 0.12
+        container.layer.shadowOpacity = isSelected ? 0.18 : 0.12
         container.layer.shadowOffset = CGSize(width: 0, height: 2)
         container.layer.shadowRadius = 4
         container.layer.masksToBounds = false
@@ -1323,6 +1512,7 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         }
         displayedSetCache = sortedSets(base)
         emptyLabel.isHidden = !displayedSetCache.isEmpty
+        updateSelectedSetsPanel(animated: false, insertedSetID: nil)
         tableView.reloadData()
     }
 
@@ -1435,6 +1625,7 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     private let emptyLabel = UILabel()
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchText: String = ""
+    private var themeObserver: NSObjectProtocol?
 
     init(setID: String) {
         self.setID = setID
@@ -1453,6 +1644,14 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         configureEmptyLabel()
         configureSearch()
         configureNavigationItems()
+        applyTheme()
+        themeObserver = NotificationCenter.default.addObserver(
+            forName: ThemeManager.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.applyTheme()
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -1462,6 +1661,9 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        applyTheme()
         reloadData()
     }
 
@@ -1490,6 +1692,10 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
     }
 
     private func configureNavigationItems() {
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "戻る",
+                                                           style: .plain,
+                                                           target: self,
+                                                           action: #selector(backToSetList))
         let addButton = UIBarButtonItem(title: "単語追加",
                                         style: .plain,
                                         target: self,
@@ -1507,6 +1713,19 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
                                            target: self,
                                            action: #selector(renameSet))
         navigationItem.rightBarButtonItems = [addButton, editButton, sortButton, renameButton]
+    }
+
+    private func applyTheme() {
+        let palette = ThemeManager.palette()
+        ThemeManager.applyBackground(to: view)
+        ThemeManager.applyNavigationAppearance(to: navigationController)
+        ThemeManager.applySearchBar(searchController.searchBar)
+        tableView.backgroundColor = .clear
+        tableView.separatorColor = palette.border
+        emptyLabel.font = AppFont.jp(size: 16)
+        emptyLabel.textColor = palette.mutedText
+        ThemeManager.stylePrimaryButton(flipButton)
+        ThemeManager.stylePrimaryButton(testButton)
     }
 
     private func configureTableView() {
@@ -1637,6 +1856,10 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         controller.presetWords = words
         controller.title = "\(setName) テスト"
         navigationController?.pushViewController(controller, animated: true)
+    }
+
+    @objc private func backToSetList() {
+        navigationController?.popViewController(animated: true)
     }
 
     @objc private func toggleEditMode() {
@@ -1905,6 +2128,12 @@ final class SetDetailViewController: UIViewController, UITableViewDataSource, UI
         guard let row = current.firstIndex(where: { $0.id == id }) else { return nil }
         return IndexPath(row: row, section: 0)
     }
+
+    deinit {
+        if let observer = themeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
 }
 
 extension SetDetailViewController: UISearchResultsUpdating {
@@ -1922,6 +2151,7 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
     private let nameTextField = UITextField()
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let emptyLabel = UILabel()
+    private let saveButton = UIButton(type: .system)
 
     init(folderID: String?) {
         self.folderID = folderID
@@ -1937,19 +2167,27 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
         super.viewDidLoad()
         title = "セット追加"
         view.backgroundColor = .systemBackground
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "保存",
-                                                            style: .done,
-                                                            target: self,
-                                                            action: #selector(saveSet))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "キャンセル",
-                                                           style: .plain,
-                                                           target: self,
-                                                           action: #selector(cancel))
-
+        configureNavigationItems()
         configureNameField()
         configureTableView()
         configureEmptyLabel()
         loadWords()
+    }
+
+    private func configureNavigationItems() {
+        styleSaveButton()
+        saveButton.addTarget(self, action: #selector(saveSet), for: .touchUpInside)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: saveButton)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "キャンセル",
+                                                           style: .plain,
+                                                           target: self,
+                                                           action: #selector(cancel))
+    }
+
+    private func styleSaveButton() {
+        saveButton.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
+        saveButton.setTitle("保存", for: .normal)
+        ThemeManager.stylePrimaryButton(saveButton)
     }
 
     private func configureNameField() {
@@ -2003,7 +2241,8 @@ final class SetCreateViewController: UIViewController, UITableViewDataSource, UI
     private func loadWords() {
         words = loadSavedWords()
         emptyLabel.isHidden = !words.isEmpty
-        navigationItem.rightBarButtonItem?.isEnabled = !words.isEmpty
+        saveButton.isEnabled = !words.isEmpty
+        saveButton.setNeedsUpdateConfiguration()
         tableView.reloadData()
     }
 
