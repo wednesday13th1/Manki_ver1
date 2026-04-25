@@ -92,9 +92,6 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
         saveButton.setTitle("保存", for: .normal)
         saveButton.addTarget(self, action: #selector(saveGoal), for: .touchUpInside)
 
-        luckyButton.setTitle("メッセージガチャ", for: .normal)
-        luckyButton.addTarget(self, action: #selector(openLucky), for: .touchUpInside)
-
         let stack = UIStackView(arrangedSubviews: [
             periodSegmented,
             titleLabel,
@@ -276,11 +273,6 @@ final class GoalViewController: UIViewController, UITextFieldDelegate {
             message: "目標 \(clamped)分",
             actions: [UnifiedModalAction(title: "OK")]
         )
-    }
-
-    @objc private func openLucky() {
-        let controller = LuckyViewController()
-        navigationController?.pushViewController(controller, animated: true)
     }
 
     @objc private func closeSelf() {
