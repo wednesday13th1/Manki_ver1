@@ -166,7 +166,10 @@ extension UIButton {
             constraint.firstAttribute == .height && constraint.relation == .greaterThanOrEqual
         }
         if !hasHeightConstraint {
-            heightAnchor.constraint(greaterThanOrEqualToConstant: AppLayout.minButtonHeight).isActive = true
+            let minHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: AppLayout.minButtonHeight)
+            // Let explicit sizing, especially navigation-bar custom views, win without logging constraint conflicts.
+            minHeightConstraint.priority = .defaultHigh
+            minHeightConstraint.isActive = true
         }
     }
 }

@@ -30,6 +30,12 @@ enum AppRoute: CaseIterable {
         }
     }
 
+    func menuIcon(tintColor: UIColor) -> UIImage? {
+        let configuration = UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold, scale: .medium)
+        return UIImage(systemName: systemImageName, withConfiguration: configuration)?
+            .withTintColor(tintColor, renderingMode: .alwaysOriginal)
+    }
+
     static func route(for viewController: UIViewController?) -> AppRoute? {
         guard let viewController else { return nil }
         switch viewController {

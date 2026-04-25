@@ -1,11 +1,12 @@
 import UIKit
 
 final class SideMenuViewController: UIViewController {
-    private let menuWidth: CGFloat = 292
+    private let menuWidth: CGFloat = 304
     private let dimmingView = UIControl()
     private let menuContainer = UIView()
     private let menuStack = UIStackView()
     private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
     private var items: [SideMenuItem]
     private var themeObserver: NSObjectProtocol?
 
@@ -50,25 +51,30 @@ final class SideMenuViewController: UIViewController {
         dimmingView.addTarget(self, action: #selector(handleClose), for: .touchUpInside)
 
         menuContainer.translatesAutoresizingMaskIntoConstraints = false
-        menuContainer.layer.cornerRadius = 0
-        menuContainer.layer.borderWidth = 2
+        menuContainer.layer.cornerRadius = 28
+        menuContainer.layer.borderWidth = 1.5
         menuContainer.layer.shadowColor = UIColor.black.cgColor
-        menuContainer.layer.shadowOpacity = 0.18
-        menuContainer.layer.shadowOffset = CGSize(width: 4, height: 4)
-        menuContainer.layer.shadowRadius = 0
+        menuContainer.layer.shadowOpacity = 0.16
+        menuContainer.layer.shadowOffset = CGSize(width: 0, height: 10)
+        menuContainer.layer.shadowRadius = 18
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = "MANKI MENU"
         titleLabel.textAlignment = .left
 
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subtitleLabel.text = "retro cute navigation"
+        subtitleLabel.textAlignment = .left
+
         menuStack.translatesAutoresizingMaskIntoConstraints = false
         menuStack.axis = .vertical
-        menuStack.spacing = AppSpacing.s(8)
+        menuStack.spacing = AppSpacing.s(12)
         menuStack.alignment = .fill
 
         view.addSubview(dimmingView)
         view.addSubview(menuContainer)
         menuContainer.addSubview(titleLabel)
+        menuContainer.addSubview(subtitleLabel)
         menuContainer.addSubview(menuStack)
 
         NSLayoutConstraint.activate([
@@ -78,18 +84,22 @@ final class SideMenuViewController: UIViewController {
             dimmingView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             menuContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(12)),
-            menuContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(12)),
-            menuContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(12)),
+            menuContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(10)),
+            menuContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(10)),
             menuContainer.widthAnchor.constraint(equalToConstant: menuWidth),
 
-            titleLabel.topAnchor.constraint(equalTo: menuContainer.topAnchor, constant: AppSpacing.s(18)),
-            titleLabel.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(18)),
-            titleLabel.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(18)),
+            titleLabel.topAnchor.constraint(equalTo: menuContainer.topAnchor, constant: AppSpacing.s(22)),
+            titleLabel.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(22)),
+            titleLabel.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(22)),
 
-            menuStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(16)),
-            menuStack.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(14)),
-            menuStack.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(14)),
-            menuStack.bottomAnchor.constraint(lessThanOrEqualTo: menuContainer.bottomAnchor, constant: -AppSpacing.s(18))
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(4)),
+            subtitleLabel.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(22)),
+            subtitleLabel.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(22)),
+
+            menuStack.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: AppSpacing.s(20)),
+            menuStack.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(18)),
+            menuStack.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(18)),
+            menuStack.bottomAnchor.constraint(lessThanOrEqualTo: menuContainer.bottomAnchor, constant: -AppSpacing.s(22))
         ])
 
         updateMenuItems()
@@ -100,27 +110,33 @@ final class SideMenuViewController: UIViewController {
         items.enumerated().forEach { index, item in
             let button = UIButton(type: .system)
             button.tag = index
-            button.contentHorizontalAlignment = .left
-            button.contentEdgeInsets = UIEdgeInsets(top: AppSpacing.s(10),
-                                                   left: AppSpacing.s(14),
-                                                   bottom: AppSpacing.s(10),
-                                                   right: AppSpacing.s(14))
+            var configuration = UIButton.Configuration.plain()
+            configuration.contentInsets = NSDirectionalEdgeInsets(
+                top: AppSpacing.s(12),
+                leading: AppSpacing.s(16),
+                bottom: AppSpacing.s(12),
+                trailing: AppSpacing.s(16)
+            )
+            configuration.imagePlacement = .leading
+            configuration.imagePadding = AppSpacing.s(12)
+            configuration.titleAlignment = .leading
+            button.configuration = configuration
+            button.contentHorizontalAlignment = .leading
             button.titleLabel?.font = FontManager.font(.button, size: 16, weight: .bold)
             button.titleLabel?.adjustsFontSizeToFitWidth = true
             button.titleLabel?.minimumScaleFactor = 0.82
-            button.titleEdgeInsets = UIEdgeInsets(top: 0, left: AppSpacing.s(10), bottom: 0, right: 0)
             button.setTitle(item.title, for: .normal)
             button.tintColor = ThemeManager.palette().text
             if let icon = item.icon {
                 button.setImage(icon, for: .normal)
             }
             button.imageView?.contentMode = .scaleAspectFit
-            button.layer.cornerRadius = 0
+            button.layer.cornerRadius = 20
             button.layer.borderWidth = item.isSelected ? 2 : 1
             button.addTarget(self, action: #selector(handleItemTap(_:)), for: .touchUpInside)
             menuStack.addArrangedSubview(button)
 
-            let height = button.heightAnchor.constraint(equalToConstant: AppSpacing.s(50))
+            let height = button.heightAnchor.constraint(equalToConstant: AppSpacing.s(56))
             height.priority = .required
             height.isActive = true
         }
@@ -128,22 +144,24 @@ final class SideMenuViewController: UIViewController {
 
     private func applyTheme() {
         let palette = ThemeManager.palette()
-        menuContainer.backgroundColor = palette.surface
+        menuContainer.backgroundColor = palette.surface.withAlphaComponent(0.96)
         menuContainer.layer.borderColor = palette.border.cgColor
         titleLabel.textColor = palette.text
         titleLabel.font = FontManager.font(.display, size: 20, weight: .regular)
+        subtitleLabel.textColor = palette.mutedText
+        subtitleLabel.font = AppFont.en(size: 18)
 
         menuStack.arrangedSubviews.forEach { view in
             guard let button = view as? UIButton else { return }
             let item = items[button.tag]
             button.setTitleColor(palette.text, for: .normal)
-            button.backgroundColor = item.isSelected ? palette.accent : palette.surfaceAlt
+            button.backgroundColor = item.isSelected ? palette.accent.withAlphaComponent(0.95) : palette.surfaceAlt.withAlphaComponent(0.88)
             button.layer.borderColor = palette.border.cgColor
             button.layer.borderWidth = item.isSelected ? 2 : 1
             button.layer.shadowColor = palette.border.cgColor
-            button.layer.shadowOpacity = item.isSelected ? 0.22 : 0.08
-            button.layer.shadowOffset = CGSize(width: 2, height: 2)
-            button.layer.shadowRadius = 0
+            button.layer.shadowOpacity = item.isSelected ? 0.16 : 0.07
+            button.layer.shadowOffset = CGSize(width: 0, height: 6)
+            button.layer.shadowRadius = 10
             button.accessibilityTraits = item.isSelected ? [.button, .selected] : [.button]
         }
     }
@@ -157,14 +175,14 @@ final class SideMenuViewController: UIViewController {
     private func animateIn() {
         menuContainer.transform = CGAffineTransform(translationX: -menuWidth, y: 0)
         dimmingView.alpha = 0
-        UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
+        UIView.animate(withDuration: 0.26, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
             self.dimmingView.alpha = 1
             self.menuContainer.transform = .identity
         }
     }
 
     private func animateOut(completion: (() -> Void)? = nil) {
-        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseIn, .allowUserInteraction]) {
+        UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseInOut, .allowUserInteraction]) {
             self.dimmingView.alpha = 0
             self.menuContainer.transform = CGAffineTransform(translationX: -self.menuWidth, y: 0)
         } completion: { _ in

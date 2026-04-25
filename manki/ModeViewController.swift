@@ -154,14 +154,11 @@ final class ModeViewController: UIViewController {
 
     @objc private func openSideMenu() {
         guard sideMenu == nil else { return }
-        let palette = ThemeManager.palette()
         let items = AppRoute.allCases.map { route in
-            let icon = UIImage(systemName: route.systemImageName)?
-                .withTintColor(palette.text, renderingMode: .alwaysOriginal)
             return SideMenuItem(
                 route: route,
                 title: route.title,
-                icon: icon,
+                icon: route.menuIcon(tintColor: ThemeManager.palette().text),
                 isSelected: route == .home
             ) { [weak self] in
                 self?.open(routeFromHome: route)
@@ -194,7 +191,7 @@ final class ModeViewController: UIViewController {
     @objc private func openSettings() {
         guard presentedViewController == nil else { return }
         let controller = SettingViewController()
-        let navigationController = UINavigationController(rootViewController: controller)
+        let navigationController = MenuNavigationController(rootViewController: controller)
         navigationController.modalPresentationStyle = .formSheet
         present(navigationController, animated: true)
     }

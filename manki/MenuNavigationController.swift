@@ -63,27 +63,15 @@ final class MenuNavigationController: UINavigationController, UIGestureRecognize
             action: #selector(openMenu)
         )
         button.accessibilityLabel = "メニュー"
-
-        let hasLeftItem = viewController.navigationItem.leftBarButtonItem != nil
-        let hasLeftItems = (viewController.navigationItem.leftBarButtonItems?.isEmpty == false)
-        if !hasLeftItem && !hasLeftItems {
-            viewController.navigationItem.leftBarButtonItem = button
-            updateFloatingMenuVisibility()
-            return
+        viewController.navigationItem.leftItemsSupplementBackButton = true
+        var leftItems = viewController.navigationItem.leftBarButtonItems ?? []
+        if leftItems.isEmpty, let leftItem = viewController.navigationItem.leftBarButtonItem {
+            leftItems = [leftItem]
         }
-
-        if viewController.navigationItem.rightBarButtonItem == nil {
-            viewController.navigationItem.rightBarButtonItem = button
-        } else {
-            var items = viewController.navigationItem.rightBarButtonItems ?? []
-            if items.isEmpty, let rightItem = viewController.navigationItem.rightBarButtonItem {
-                items = [rightItem]
-            }
-            if items.allSatisfy({ $0.accessibilityLabel != "メニュー" }) {
-                items.append(button)
-                viewController.navigationItem.rightBarButtonItems = items
-            }
+        if leftItems.allSatisfy({ $0.accessibilityLabel != "メニュー" }) {
+            leftItems.insert(button, at: 0)
         }
+        viewController.navigationItem.leftBarButtonItems = leftItems
         updateFloatingMenuVisibility()
     }
 
@@ -122,16 +110,13 @@ final class MenuNavigationController: UINavigationController, UIGestureRecognize
     }
 
     private func buildMenuItems() -> [SideMenuItem] {
-        let palette = ThemeManager.palette()
         let currentRoute = AppRoute.route(for: visibleViewController)
 
         return AppRoute.allCases.map { route in
-            let icon = UIImage(systemName: route.systemImageName)?
-                .withTintColor(palette.text, renderingMode: .alwaysOriginal)
             return SideMenuItem(
                 route: route,
                 title: route.title,
-                icon: icon,
+                icon: route.menuIcon(tintColor: ThemeManager.palette().text),
                 isSelected: currentRoute == route
             ) { [weak self] in
                 guard let self else { return }

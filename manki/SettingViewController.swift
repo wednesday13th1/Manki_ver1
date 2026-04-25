@@ -31,6 +31,7 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
     private var themeButtons: [UIButton] = []
     private let cardView = UIView()
     private var themeObserver: NSObjectProtocol?
+    private let closeButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,17 +55,13 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
     }
 
     private func configureCloseButtonIfNeeded() {
-        if let navigationController = navigationController as? MenuNavigationController,
-           navigationController.viewControllers.first === self {
-            navigationItem.leftBarButtonItem = nil
-            return
-        }
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "閉じる",
-            style: .plain,
-            target: self,
-            action: #selector(closeSelf)
-        )
+        closeButton.setTitle("閉じる", for: .normal)
+        closeButton.accessibilityLabel = "閉じる"
+        closeButton.titleLabel?.font = AppFont.jp(size: 13, weight: .bold)
+        closeButton.removeTarget(self, action: #selector(closeSelf), for: .touchUpInside)
+        closeButton.addTarget(self, action: #selector(closeSelf), for: .touchUpInside)
+        ThemeManager.styleSecondaryButton(closeButton)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: closeButton)
     }
  
     private func configureUI() {
@@ -128,8 +125,8 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         themeButtons.forEach { themeStack.addArrangedSubview($0) }
 
         cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.layer.cornerRadius = 16
-        cardView.layer.borderWidth = 1
+        cardView.layer.cornerRadius = 24
+        cardView.layer.borderWidth = 1.5
 
         let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, cardView])
         stack.axis = .vertical
@@ -171,6 +168,7 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
             stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: AppSpacing.s(16)),
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: AppSpacing.s(16)),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -AppSpacing.s(16)),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(16)),
 
             cardView.bottomAnchor.constraint(equalTo: readabilitySlider.bottomAnchor, constant: AppSpacing.s(18)),
 
@@ -368,10 +366,15 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         readabilityValueLabel.font = AppFont.en(size: 18)
         readabilityValueLabel.textColor = palette.text
 
-        cardView.backgroundColor = palette.surface
+        cardView.backgroundColor = palette.surface.withAlphaComponent(0.95)
         cardView.layer.borderColor = palette.border.cgColor
+        cardView.layer.shadowColor = palette.border.cgColor
+        cardView.layer.shadowOpacity = 0.12
+        cardView.layer.shadowOffset = CGSize(width: 0, height: 8)
+        cardView.layer.shadowRadius = 12
         backgroundButton.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
         ThemeManager.styleSecondaryButton(backgroundButton)
+        ThemeManager.styleSecondaryButton(closeButton)
         opacitySlider.minimumTrackTintColor = palette.accentStrong
         opacitySlider.maximumTrackTintColor = palette.surfaceAlt
         opacitySlider.tintColor = palette.accent
@@ -454,7 +457,7 @@ class SettingViewController: UIViewController, PHPickerViewControllerDelegate {
         if let navigationController, navigationController.viewControllers.first != self {
             navigationController.popViewController(animated: true)
         } else {
-            dismiss(animated: true)
+            presentingViewController?.dismiss(animated: true)
         }
     }
 
