@@ -444,7 +444,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
             button.titleLabel?.font = AppFont.jp(size: 18, weight: .bold)
             button.titleLabel?.adjustsFontSizeToFitWidth = true
             button.titleLabel?.minimumScaleFactor = 0.78
-            button.contentEdgeInsets = UIEdgeInsets(top: 16, left: 18, bottom: 16, right: 18)
+            var configuration = UIButton.Configuration.plain()
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 18, bottom: 16, trailing: 18)
+            button.configuration = configuration
         }
         retroFolderButton.setContentHuggingPriority(.defaultLow, for: .horizontal)
         retroWordButton.setContentHuggingPriority(.required, for: .horizontal)
@@ -462,7 +464,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         [retroClickWheelFolderButton, retroClickWheelWordButton].forEach { button in
             button.layer.borderWidth = 1
             button.titleLabel?.font = AppFont.jp(size: 11, weight: .bold)
-            button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+            var configuration = UIButton.Configuration.plain()
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8)
+            button.configuration = configuration
         }
         retroClickWheelFolderButton.setTitle("戻る", for: .normal)
         retroClickWheelWordButton.setTitle("単語", for: .normal)
@@ -1208,7 +1212,9 @@ final class SetViewController: UIViewController, UITableViewDataSource, UITableV
         button.setTitle(title, for: .normal)
         button.addTarget(self, action: action, for: .touchUpInside)
         button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
-        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8)
+        button.configuration = configuration
         button.layer.borderWidth = 2
         button.layer.cornerRadius = 0
         button.layer.masksToBounds = true

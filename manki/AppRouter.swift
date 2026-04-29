@@ -4,6 +4,7 @@ enum AppRoute: CaseIterable {
     case home
     case folder
     case sets
+    case playlists
     case flip
     case test
     case settings
@@ -13,6 +14,7 @@ enum AppRoute: CaseIterable {
         case .home: return "ホーム"
         case .folder: return "フォルダー検索"
         case .sets: return "学習セット"
+        case .playlists: return "Playlist"
         case .flip: return "フリップ"
         case .test: return "テスト"
         case .settings: return "設定"
@@ -24,6 +26,7 @@ enum AppRoute: CaseIterable {
         case .home: return "house.fill"
         case .folder: return "folder.fill"
         case .sets: return "square.stack.3d.up.fill"
+        case .playlists: return "music.note.list"
         case .flip: return "rectangle.on.rectangle.angled.fill"
         case .test: return "checkmark.seal.fill"
         case .settings: return "gearshape.fill"
@@ -45,6 +48,8 @@ enum AppRoute: CaseIterable {
             return .folder
         case is SetViewController:
             return .sets
+        case is PlaylistListViewController, is PlaylistDetailViewController, is PlaylistSongViewController, is PlaylistEditorViewController:
+            return .playlists
         case is FlipViewController:
             return .flip
         case is TestViewController, is QuizViewController:
@@ -67,6 +72,8 @@ enum AppRouter {
             return storyboard.instantiateViewController(withIdentifier: "FolderViewController")
         case .sets:
             return SetViewController(folderID: nil, showsAll: true)
+        case .playlists:
+            return PlaylistListViewController()
         case .flip:
             return storyboard.instantiateViewController(withIdentifier: "FlipViewController")
         case .test:

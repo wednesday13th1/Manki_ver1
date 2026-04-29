@@ -409,8 +409,8 @@ enum ThemeManager {
         let buttonAppearance = UIBarButtonItemAppearance()
         buttonAppearance.normal.titleTextAttributes = barAttributes
         buttonAppearance.highlighted.titleTextAttributes = barAttributes
-        let normalImage = ThemeManager.makeRoundedImage(color: buttonBackgroundColor, cornerRadius: 10, size: CGSize(width: 80, height: 34))
-        let highlightedImage = ThemeManager.makeRoundedImage(color: buttonHighlightColor, cornerRadius: 10, size: CGSize(width: 80, height: 34))
+        let normalImage = ThemeManager.makeRoundedImage(color: buttonBackgroundColor, cornerRadius: 16, size: CGSize(width: 88, height: 38))
+        let highlightedImage = ThemeManager.makeRoundedImage(color: buttonHighlightColor, cornerRadius: 16, size: CGSize(width: 88, height: 38))
         buttonAppearance.normal.backgroundImage = normalImage
         buttonAppearance.highlighted.backgroundImage = highlightedImage
         buttonAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -1)
@@ -451,49 +451,70 @@ enum ThemeManager {
 
     static func stylePrimaryButton(_ button: UIButton) {
         let palette = palette()
-        applyThemeButtonStyle(button, palette: palette, cornerRadius: 0, shadowOpacity: 0.22)
+        applyThemeButtonStyle(button, palette: palette, cornerRadius: 18, shadowOpacity: 0.22)
         button.applyMankiButtonMetrics()
     }
 
     static func styleSecondaryButton(_ button: UIButton) {
         let palette = palette()
-        applyThemeButtonStyle(button, palette: palette, cornerRadius: 0, shadowOpacity: 0.12)
+        applyThemeButtonStyle(button, palette: palette, cornerRadius: 18, shadowOpacity: 0.12)
         button.applyMankiButtonMetrics()
     }
 
     static func stylePixelIconButton(_ button: UIButton) {
         let palette = palette()
-        button.configurationUpdateHandler = nil
+        let normalBackground = palette.surface.withAlphaComponent(0.96)
+        let highlightedBackground = palette.accent.withAlphaComponent(0.9)
+        button.configurationUpdateHandler = { button in
+            let isPressed = button.isHighlighted
+            button.backgroundColor = isPressed ? highlightedBackground : normalBackground
+            button.tintColor = palette.text
+            applyRetroButtonPressState(
+                button,
+                isPressed: isPressed,
+                shadowColor: palette.border.cgColor,
+                shadowOpacity: 0.18
+            )
+        }
         button.tintColor = palette.text
-        button.backgroundColor = palette.surface.withAlphaComponent(0.96)
-        button.layer.cornerRadius = 0
+        button.backgroundColor = normalBackground
+        button.layer.cornerRadius = 18
         button.layer.borderWidth = 2
         button.layer.borderColor = palette.border.cgColor
-        button.layer.shadowColor = palette.border.cgColor
-        button.layer.shadowOpacity = 0.2
-        button.layer.shadowOffset = CGSize(width: 2, height: 2)
-        button.layer.shadowRadius = 0
         button.clipsToBounds = false
         button.imageView?.contentMode = .scaleAspectFit
+        applyRetroButtonPressState(button, isPressed: false, shadowColor: palette.border.cgColor, shadowOpacity: 0.18)
+        button.setNeedsUpdateConfiguration()
     }
 
     static func stylePixelOutlineButton(_ button: UIButton, selected: Bool = false) {
         let palette = palette()
-        button.configurationUpdateHandler = nil
-        button.backgroundColor = selected ? palette.accent : palette.surfaceAlt
+        let normalColor = selected ? palette.accent : palette.surfaceAlt
+        let highlightedColor = normalColor.blended(with: .black, amount: 0.12)
+        button.configurationUpdateHandler = { button in
+            let isPressed = button.isHighlighted
+            button.backgroundColor = isPressed ? highlightedColor : normalColor
+            button.tintColor = palette.text
+            button.setTitleColor(palette.text, for: .normal)
+            applyRetroButtonPressState(
+                button,
+                isPressed: isPressed,
+                shadowColor: palette.border.cgColor,
+                shadowOpacity: selected ? 0.18 : 0.1
+            )
+        }
+        button.backgroundColor = normalColor
         button.tintColor = palette.text
         button.setTitleColor(palette.text, for: .normal)
         button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
         button.titleLabel?.numberOfLines = 1
         button.titleLabel?.adjustsFontSizeToFitWidth = true
-        button.layer.cornerRadius = 0
+        button.layer.cornerRadius = 18
         button.layer.borderWidth = selected ? 2 : 1.5
         button.layer.borderColor = palette.border.cgColor
-        button.layer.shadowColor = palette.border.cgColor
-        button.layer.shadowOpacity = selected ? 0.22 : 0.1
-        button.layer.shadowOffset = CGSize(width: 2, height: 2)
-        button.layer.shadowRadius = 0
         button.clipsToBounds = false
+        applyRetroButtonPressState(button, isPressed: false, shadowColor: palette.border.cgColor, shadowOpacity: selected ? 0.18 : 0.1)
+        button.setNeedsUpdateConfiguration()
     }
 
     static func styleCard(_ view: UIView, fillColor: UIColor? = nil) {
@@ -565,7 +586,7 @@ enum ThemeManager {
             configuration.image = button.image(for: .normal) ?? button.configuration?.image ?? initialImage
             configuration.imagePlacement = .leading
             configuration.imagePadding = 6
-            configuration.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 16, bottom: 9, trailing: 16)
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 18, bottom: 12, trailing: 18)
             configuration.cornerStyle = .fixed
             configuration.background.cornerRadius = cornerRadius
             configuration.baseForegroundColor = button.isEnabled ? .white : UIColor.white.withAlphaComponent(0.72)
@@ -579,6 +600,12 @@ enum ThemeManager {
             }
 
             button.configuration = configuration
+            applyRetroButtonPressState(
+                button,
+                isPressed: button.isHighlighted && button.isEnabled,
+                shadowColor: palette.border.cgColor,
+                shadowOpacity: shadowOpacity
+            )
         }
 
         button.backgroundColor = fillColor
@@ -587,14 +614,35 @@ enum ThemeManager {
         button.setTitleColor(UIColor.white.withAlphaComponent(0.78), for: .highlighted)
         button.titleLabel?.font = AppFont.jp(size: 15, weight: .bold)
         button.layer.cornerRadius = cornerRadius
-        button.layer.borderWidth = 1.5
+        button.layer.borderWidth = 2
         button.layer.borderColor = palette.border.withAlphaComponent(0.9).cgColor
-        button.layer.shadowColor = palette.border.cgColor
-        button.layer.shadowOpacity = shadowOpacity
-        button.layer.shadowOffset = CGSize(width: 3, height: 3)
-        button.layer.shadowRadius = 0
         button.clipsToBounds = false
+        applyRetroButtonPressState(button, isPressed: false, shadowColor: palette.border.cgColor, shadowOpacity: shadowOpacity)
         button.setNeedsUpdateConfiguration()
+    }
+
+    private static func applyRetroButtonPressState(
+        _ button: UIButton,
+        isPressed: Bool,
+        shadowColor: CGColor,
+        shadowOpacity: Float
+    ) {
+        let transform = isPressed ? CGAffineTransform(translationX: 0, y: 3) : .identity
+        let shadowOffset = isPressed ? CGSize(width: 0, height: 1) : CGSize(width: 0, height: 4)
+        let currentOpacity = isPressed ? max(0.08, shadowOpacity * 0.75) : shadowOpacity
+
+        if UIView.areAnimationsEnabled {
+            UIView.animate(withDuration: 0.08, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
+                button.transform = transform
+            }
+        } else {
+            button.transform = transform
+        }
+
+        button.layer.shadowColor = shadowColor
+        button.layer.shadowOpacity = currentOpacity
+        button.layer.shadowOffset = shadowOffset
+        button.layer.shadowRadius = 0
     }
 
     private static func readableButtonFillColor(for palette: ThemePalette) -> UIColor {

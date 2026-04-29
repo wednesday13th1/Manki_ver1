@@ -1133,7 +1133,9 @@ class FlipViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDa
         button.setTitle(title, for: .normal)
         button.addTarget(self, action: action, for: .touchUpInside)
         button.titleLabel?.font = AppFont.jp(size: 14, weight: .bold)
-        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8)
+        button.configuration = configuration
         button.layer.borderWidth = 2
         button.layer.cornerRadius = 0
         button.layer.masksToBounds = true

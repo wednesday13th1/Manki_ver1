@@ -9,6 +9,7 @@ final class SideMenuViewController: UIViewController {
     private let subtitleLabel = UILabel()
     private var items: [SideMenuItem]
     private var themeObserver: NSObjectProtocol?
+    private let menuHeaderBadge = UIView()
 
     var onDismiss: (() -> Void)?
 
@@ -51,12 +52,16 @@ final class SideMenuViewController: UIViewController {
         dimmingView.addTarget(self, action: #selector(handleClose), for: .touchUpInside)
 
         menuContainer.translatesAutoresizingMaskIntoConstraints = false
-        menuContainer.layer.cornerRadius = 28
-        menuContainer.layer.borderWidth = 1.5
+        menuContainer.layer.cornerRadius = 30
+        menuContainer.layer.borderWidth = 2
         menuContainer.layer.shadowColor = UIColor.black.cgColor
         menuContainer.layer.shadowOpacity = 0.16
         menuContainer.layer.shadowOffset = CGSize(width: 0, height: 10)
         menuContainer.layer.shadowRadius = 18
+
+        menuHeaderBadge.translatesAutoresizingMaskIntoConstraints = false
+        menuHeaderBadge.layer.cornerRadius = 16
+        menuHeaderBadge.layer.borderWidth = 2
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = "MANKI MENU"
@@ -73,6 +78,7 @@ final class SideMenuViewController: UIViewController {
 
         view.addSubview(dimmingView)
         view.addSubview(menuContainer)
+        menuContainer.addSubview(menuHeaderBadge)
         menuContainer.addSubview(titleLabel)
         menuContainer.addSubview(subtitleLabel)
         menuContainer.addSubview(menuStack)
@@ -88,15 +94,20 @@ final class SideMenuViewController: UIViewController {
             menuContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -AppSpacing.s(10)),
             menuContainer.widthAnchor.constraint(equalToConstant: menuWidth),
 
-            titleLabel.topAnchor.constraint(equalTo: menuContainer.topAnchor, constant: AppSpacing.s(22)),
+            menuHeaderBadge.topAnchor.constraint(equalTo: menuContainer.topAnchor, constant: AppSpacing.s(18)),
+            menuHeaderBadge.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(18)),
+            menuHeaderBadge.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(18)),
+
+            titleLabel.topAnchor.constraint(equalTo: menuHeaderBadge.topAnchor, constant: AppSpacing.s(12)),
             titleLabel.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(22)),
             titleLabel.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(22)),
 
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: AppSpacing.s(4)),
             subtitleLabel.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(22)),
             subtitleLabel.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(22)),
+            subtitleLabel.bottomAnchor.constraint(equalTo: menuHeaderBadge.bottomAnchor, constant: -AppSpacing.s(12)),
 
-            menuStack.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: AppSpacing.s(20)),
+            menuStack.topAnchor.constraint(equalTo: menuHeaderBadge.bottomAnchor, constant: AppSpacing.s(20)),
             menuStack.leadingAnchor.constraint(equalTo: menuContainer.leadingAnchor, constant: AppSpacing.s(18)),
             menuStack.trailingAnchor.constraint(equalTo: menuContainer.trailingAnchor, constant: -AppSpacing.s(18)),
             menuStack.bottomAnchor.constraint(lessThanOrEqualTo: menuContainer.bottomAnchor, constant: -AppSpacing.s(22))
@@ -112,10 +123,10 @@ final class SideMenuViewController: UIViewController {
             button.tag = index
             var configuration = UIButton.Configuration.plain()
             configuration.contentInsets = NSDirectionalEdgeInsets(
-                top: AppSpacing.s(12),
-                leading: AppSpacing.s(16),
-                bottom: AppSpacing.s(12),
-                trailing: AppSpacing.s(16)
+                top: AppSpacing.s(14),
+                leading: AppSpacing.s(18),
+                bottom: AppSpacing.s(14),
+                trailing: AppSpacing.s(18)
             )
             configuration.imagePlacement = .leading
             configuration.imagePadding = AppSpacing.s(12)
@@ -131,8 +142,8 @@ final class SideMenuViewController: UIViewController {
                 button.setImage(icon, for: .normal)
             }
             button.imageView?.contentMode = .scaleAspectFit
-            button.layer.cornerRadius = 20
-            button.layer.borderWidth = item.isSelected ? 2 : 1
+            button.layer.cornerRadius = 18
+            button.layer.borderWidth = item.isSelected ? 2 : 1.5
             button.addTarget(self, action: #selector(handleItemTap(_:)), for: .touchUpInside)
             menuStack.addArrangedSubview(button)
 
@@ -146,6 +157,8 @@ final class SideMenuViewController: UIViewController {
         let palette = ThemeManager.palette()
         menuContainer.backgroundColor = palette.surface.withAlphaComponent(0.96)
         menuContainer.layer.borderColor = palette.border.cgColor
+        menuHeaderBadge.backgroundColor = palette.background.withAlphaComponent(0.72)
+        menuHeaderBadge.layer.borderColor = palette.border.cgColor
         titleLabel.textColor = palette.text
         titleLabel.font = FontManager.font(.display, size: 20, weight: .regular)
         subtitleLabel.textColor = palette.mutedText
@@ -155,14 +168,26 @@ final class SideMenuViewController: UIViewController {
             guard let button = view as? UIButton else { return }
             let item = items[button.tag]
             button.setTitleColor(palette.text, for: .normal)
-            button.backgroundColor = item.isSelected ? palette.accent.withAlphaComponent(0.95) : palette.surfaceAlt.withAlphaComponent(0.88)
+            button.configurationUpdateHandler = { button in
+                let isPressed = button.isHighlighted
+                let normalColor = item.isSelected ? palette.accent : palette.surfaceAlt.withAlphaComponent(0.92)
+                let pressedColor = item.isSelected ? palette.accentStrong : palette.surface
+                button.backgroundColor = isPressed ? pressedColor : normalColor
+                button.layer.shadowColor = palette.border.cgColor
+                button.layer.shadowRadius = 0
+                button.layer.shadowOpacity = item.isSelected ? 0.16 : 0.1
+                button.layer.shadowOffset = isPressed ? CGSize(width: 0, height: 1) : CGSize(width: 0, height: 4)
+                button.transform = isPressed ? CGAffineTransform(translationX: 0, y: 3) : .identity
+            }
+            button.backgroundColor = item.isSelected ? palette.accent : palette.surfaceAlt.withAlphaComponent(0.92)
             button.layer.borderColor = palette.border.cgColor
-            button.layer.borderWidth = item.isSelected ? 2 : 1
+            button.layer.borderWidth = item.isSelected ? 2 : 1.5
             button.layer.shadowColor = palette.border.cgColor
-            button.layer.shadowOpacity = item.isSelected ? 0.16 : 0.07
-            button.layer.shadowOffset = CGSize(width: 0, height: 6)
-            button.layer.shadowRadius = 10
+            button.layer.shadowOpacity = item.isSelected ? 0.16 : 0.1
+            button.layer.shadowOffset = CGSize(width: 0, height: 4)
+            button.layer.shadowRadius = 0
             button.accessibilityTraits = item.isSelected ? [.button, .selected] : [.button]
+            button.setNeedsUpdateConfiguration()
         }
     }
 
